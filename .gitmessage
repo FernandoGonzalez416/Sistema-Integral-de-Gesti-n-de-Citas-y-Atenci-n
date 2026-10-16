@@ -1,0 +1,5 @@
+# Plantilla de commit - Conventional Commits
+# Formato: <tipo>(<alcance>): <descripción>
+# Ejemplo: feat(citas): agregar reserva de cita
+#
+# Tipos: feat, fix, docs, style, refactor, test, chore, perf, ci, revert
