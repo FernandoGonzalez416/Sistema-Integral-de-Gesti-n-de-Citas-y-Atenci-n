@@ -182,3 +182,49 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - Descartado: (a) seguir coercionando y limpiar después (el dato ya está corrupto); (b) aceptar números convirtiéndolos a texto en `telefono` (una API JSON debe exigir el tipo declarado); (c) responder 400 por elementos inválidos de `incluye` (se prefirió **descartarlos** para no cambiar el contrato del catálogo, que ya normaliza listas).
 - `String()` que se conserva: usos **internos** (route params, ObjectIds, numeración de comprobantes, seeds) y de **solo validación** sobre valores que no se persisten (`limpiar` en `auth`, cuyos usos pasan por regex o por chequeo `typeof`; `regexBusqueda` escapado; test de forma ISO de `fechaPreferida`).
 - Verificación: reproducción **antes** (6 endpoints guardaban `"[object Object]"`; `telefono` numérico coercionado; login 401) y **después** (tipos inválidos → **400**; `incluye` filtra; **0 documentos** basura; **0 respuestas 5xx**; 9 flujos válidos intactos). Regresión `npm test` **43/43**. Ver `docs/PRUEBAS.md`.
+
+## 2026-10-21 — B1: alineación del contrato con `REQUISITOS.md`
+
+- **Contexto:** la implementación usaba rutas en inglés (`/api/users`, `/api/services`, `/api/contenidos`, `/api/caja`, `/api/solicitudes`), métodos `PATCH` para ediciones completas, estados de cita `PROGRAMADA`/`REPROGRAMADA`/`NO_ASISTIO`, pagos `ACTIVO` y método `OTRO`. El documento `docs/REQUISITOS.md` es la fuente de verdad y define otro contrato.
+- **Decisión:** alinear la API, el cliente y la documentación al contrato del RF sin conservar alias de las rutas antiguas (un contrato único evita dos caminos con reglas distintas).
+
+### Rutas y métodos
+
+- Rutas en español: `/api/servicios`, `/api/usuarios`, `/api/solicitudes-cita`, `/api/cajas` y `/api/contenido`.
+- `PUT` para ediciones completas: `usuarios/:id`, `pacientes/:id`, `responsables/:id`, `servicios/:id`, `citas/:id`, `materiales/:id` y `contenido/:id`.
+- `PATCH` queda reservado a acciones: `pacientes/:id/estado`, `citas/:id/estado`, `pagos/:id/anular`, `solicitudes-cita/:id/estado` y las subrutas de desasociar.
+- Se eliminaron los endpoints `desactivar` de responsables y materiales: la baja lógica se hace con `PUT { activo: false }`. El paciente conserva `PATCH /estado`, que acepta `{ activo }` o `{ estado: 'ACTIVO'|'INACTIVO' }`.
+
+### Citas y pagos
+
+- Estados de cita: `PENDIENTE → CONFIRMADA → COMPLETADA` y `PENDIENTE|CONFIRMADA → CANCELADA`. `COMPLETADA` y `CANCELADA` son terminales. Las citas nuevas nacen `PENDIENTE`.
+- Solo `PENDIENTE` y `CONFIRMADA` ocupan horario (RN-13).
+- `PUT /api/citas/:id` edita o reprograma conservando el estado. Revalida fecha futura, horario, traslape, paciente/profesional/servicio activo y recalcula precio/duración si cambia el servicio. Una cita `COMPLETADA` responde 409 (RN-06); `CANCELADA` también es inmutable.
+- Se añadieron `GET /api/citas/:id/pagos` (historial + saldo) y `GET /api/citas/:id/saldo`. El cálculo se centralizó en `backend/src/utils/saldo.js` y se retiró la ruta antigua `/api/pagos/citas/:id/saldo`.
+- Estados de pago: `REGISTRADO|ANULADO`; métodos: `EFECTIVO|TRANSFERENCIA|TARJETA` (se elimina `OTRO`).
+- Estados de solicitud: `PENDIENTE|ATENDIDA|RECHAZADA` (se elimina `CANCELADA`).
+- Caja usa `GET /api/cajas/actual`; se elimina el total `OTRO` del arqueo.
+
+### Migración de datos
+
+- `backend/scripts/migrarEstados.js` es idempotente, admite `--dry-run` y no elimina documentos. Mapea `PROGRAMADA→PENDIENTE`, `REPROGRAMADA→CONFIRMADA`, `NO_ASISTIO→CANCELADA`, pago `ACTIVO→REGISTRADO`, pago/comprobante `OTRO→TRANSFERENCIA`, solicitud `CANCELADA→RECHAZADA` y suma el total de caja `OTRO` a `TRANSFERENCIA`.
+- Scripts: `npm run migrar:estados` y `npm run migrar:estados:dry`.
+
+### Frontend y Postman
+
+- `frontend/src/constants/sigca.js` centraliza estados de cita, colores, estados de solicitud/pago, métodos y tipos de material. Calendario, Pagos, Caja, Usuarios, Servicios, Pacientes, Responsables, Materiales y Contenido consumen el nuevo contrato.
+- La colección Postman se actualizó con las rutas nuevas, `PUT` de edición, `GET /api/citas/:id/pagos`, `GET /api/citas/:id/saldo`, `PATCH /api/pacientes/:id/estado` y los estados/métodos nuevos.
+
+### Verificación
+
+- `backend`: `npm test` → **67/67 en dos corridas consecutivas** contra `sigca_test_rules` (puerto 3992).
+- `frontend`: `npm run build` → **verde**.
+- Postman: **80 peticiones / 90 asserts, 0 fallos** contra una BD desechable (`sigca_postman_b1`) y el `app.js` real.
+- Migración: `--dry-run` sin escrituras → aplicación correcta → segundo `--dry-run` con **0 documentos por migrar**.
+- **UI no verificada en navegador** (no hay navegador disponible en el entorno); solo se validó el build.
+
+### Diferido
+
+- La relación explícita pago/caja y la caja por usuario se abordan en B2.
+- La atención de solicitudes atómica y el flujo de rechazo se abordan en B4.
+- La deduplicación de helpers HTTP y de formato monetario del frontend se aborda en B2.
