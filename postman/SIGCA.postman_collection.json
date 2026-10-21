@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
     "name": "SIGCA — API REST",
-    "description": "Colección de la API REST de SIGCA (Sistema Integral de Gestión de Citas y Atención).\n\nRequisitos: backend en marcha (por defecto http://localhost:3000), MongoDB y —recomendado— el seed demo activo (`npm run seed:demo`), que crea usuarios demo, servicios, horarios y contenido institucional.\n\nUso: selecciona el entorno «SIGCA — Entorno local», ejecuta «Login administrador» (guarda `token`) y luego las carpetas en orden. Los POST de creación guardan los `_id` en variables del entorno para encadenar el resto.\n\nAntes de crear citas, define `inicioCita`, `inicioCita2` e `inicioCita3` como fechas/horas futuras en días laborables dentro de un horario activo y sin traslapes. Registrar pagos exige una caja ABIERTA (carpeta 17 antes de la 18). Las peticiones (público) no requieren token; las de PROFESIONAL usan `tokenProf`.",
+    "description": "Colección de la API REST de SIGCA (Sistema Integral de Gestión de Citas y Atención).\n\nRequisitos: backend en marcha (por defecto http://localhost:3000), MongoDB y —recomendado— el seed demo activo (`npm run seed:demo`), que crea usuarios demo, servicios, horarios y contenido institucional.\n\nUso: selecciona el entorno «SIGCA — Entorno local», ejecuta «Login administrador» (guarda `token`) y luego las carpetas en orden. Los POST de creación guardan los `_id` en variables del entorno para encadenar el resto.\n\nAntes de crear citas, define `inicioCita`, `inicioCita2` e `inicioCita3` como fechas/horas futuras en días laborables dentro de un horario activo y sin traslapes. Cada usuario tiene su propia caja: abra su caja (carpeta 17) antes de registrar pagos (carpeta 18); los pagos quedan asociados a esa caja y solo pueden anularse mientras siga ABIERTA. Las peticiones (público) no requieren token; las de PROFESIONAL usan `tokenProf`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -2967,7 +2967,7 @@
                 "cajas"
               ]
             },
-            "description": "GET /api/cajas — sesiones de caja (requiere caja cerrada: si ya hay una abierta, omitir «Abrir caja»)."
+            "description": "GET /api/cajas — ADMINISTRADOR ve todas las cajas; RECEPCIONISTA solo las propias (caja por usuario)."
           },
           "response": [],
           "event": [
@@ -2976,7 +2976,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('lista de cajas', () => pm.expect(j.cajas).to.be.an('array'));"
                 ]
               }
             }
@@ -3004,7 +3006,7 @@
                 "actual"
               ]
             },
-            "description": "GET /api/cajas/actual — devuelve la sesión ABIERTA o null."
+            "description": "GET /api/cajas/actual — caja ABIERTA del usuario autenticado (null si no tiene) con el resumen de sus ingresos."
           },
           "response": [],
           "event": [
@@ -3013,7 +3015,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('devuelve la caja del usuario o null', () => pm.expect(j).to.have.property('caja'));",
+                  "if (j.caja && j.caja._id) { pm.environment.set('cajaId', j.caja._id); pm.test('resumen de ingresos', () => pm.expect(j.resumen).to.have.property('totalIngresosCentavos')); }"
                 ]
               }
             }
@@ -3045,7 +3050,7 @@
                 "abrir"
               ]
             },
-            "description": "POST /api/cajas/abrir — solo una caja ABIERTA a la vez. `montoInicialCentavos` entero >= 0.",
+            "description": "POST /api/cajas/abrir — abre la caja del usuario autenticado. RN-22: una sola caja ABIERTA por usuario (409 si ya tiene una).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"montoInicialCentavos\": 0,\n  \"observacionesApertura\": \"Apertura de ejemplo\"\n}",
@@ -3065,6 +3070,8 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
+                  "pm.test('caja ABIERTA', () => pm.expect(j.caja.estado).to.eql('ABIERTA'));",
+                  "pm.test('responsable autenticado', () => pm.expect(j.caja.abiertaPor).to.exist);",
                   "if (j.caja && j.caja._id) pm.environment.set('cajaId', j.caja._id);"
                 ]
               }
@@ -3174,7 +3181,7 @@
                 "pagos"
               ]
             },
-            "description": "POST /api/pagos — requiere caja ABIERTA (si no, 409). Métodos: EFECTIVO, TRANSFERENCIA, TARJETA. No supera el saldo; genera comprobante único y el pago nace REGISTRADO.",
+            "description": "POST /api/pagos — exige una caja ABIERTA del usuario que registra (si no, 409) y asocia el pago a esa caja. Métodos: EFECTIVO, TRANSFERENCIA, TARJETA. No supera el saldo; genera comprobante único.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"citaId\": \"{{citaId}}\",\n  \"montoCentavos\": 5000,\n  \"metodo\": \"EFECTIVO\",\n  \"notas\": \"Pago parcial de ejemplo\"\n}",
@@ -3194,8 +3201,9 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
-                  "if (j.pago && j.pago._id) pm.environment.set('pagoId', j.pago._id);",
-                  "pm.test('pago REGISTRADO', () => pm.expect(j.pago.estado).to.eql('REGISTRADO'));"
+                  "pm.test('pago REGISTRADO', () => pm.expect(j.pago.estado).to.eql('REGISTRADO'));",
+                  "pm.test('pago asociado a la caja abierta', () => pm.expect(j.pago.caja._id).to.eql(pm.environment.get('cajaId')));",
+                  "if (j.pago && j.pago._id) pm.environment.set('pagoId', j.pago._id);"
                 ]
               }
             }
@@ -3305,7 +3313,7 @@
                 "anular"
               ]
             },
-            "description": "PATCH /api/pagos/:id/anular — anulación lógica con motivo; el comprobante pasa a ANULADO.",
+            "description": "PATCH /api/pagos/:id/anular — anulación lógica con motivo. Solo si la caja del pago está ABIERTA (409 si está cerrada). Registra quién anula.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"motivoAnulacion\": \"Anulación de ejemplo\"\n}",
@@ -3335,6 +3343,47 @@
       "name": "19. Caja diaria — cierre (ADMINISTRADOR, RECEPCIONISTA)",
       "item": [
         {
+          "name": "Movimientos de la caja",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cajas/{{cajaId}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cajas",
+                "{{cajaId}}",
+                "movimientos"
+              ]
+            },
+            "description": "GET /api/cajas/:id/movimientos — detalle de pagos de la caja y totales por método (solo REGISTRADO suma). El RECEPCIONISTA solo accede a sus propias cajas (403 en las ajenas)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('movimientos es lista', () => pm.expect(j.movimientos).to.be.an('array'));",
+                  "pm.test('resumen con totales', () => pm.expect(j.resumen.totales).to.have.all.keys('EFECTIVO', 'TARJETA', 'TRANSFERENCIA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Cerrar caja",
           "request": {
             "method": "POST",
@@ -3361,7 +3410,7 @@
                 "cerrar"
               ]
             },
-            "description": "POST /api/cajas/:id/cerrar — snapshot de totales por método y diferencia de arqueo; bloquea pagos retroactivos.",
+            "description": "POST /api/cajas/:id/cerrar — cierra la caja propia (ADMINISTRADOR puede cerrar cualquiera). Snapshot de totales por método, total de ingresos, efectivo esperado = monto inicial + EFECTIVO, y diferencia de arqueo.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"totalRealCentavos\": 0,\n  \"observacionesCierre\": \"Cierre de ejemplo\"\n}",
@@ -3379,7 +3428,12 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json().caja;",
+                  "pm.test('caja CERRADA', () => pm.expect(c.estado).to.eql('CERRADA'));",
+                  "pm.test('efectivo esperado = inicial + efectivo', () => pm.expect(c.totalEsperadoCentavos).to.eql(c.montoInicialCentavos + c.totalesPorMetodo.EFECTIVO));",
+                  "pm.test('diferencia = contado - esperado', () => pm.expect(c.diferenciaCentavos).to.eql(c.totalRealCentavos - c.totalEsperadoCentavos));",
+                  "pm.test('total ingresos = suma de metodos', () => pm.expect(c.totalIngresosCentavos).to.eql(c.totalesPorMetodo.EFECTIVO + c.totalesPorMetodo.TARJETA + c.totalesPorMetodo.TRANSFERENCIA));"
                 ]
               }
             }

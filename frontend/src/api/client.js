@@ -119,6 +119,10 @@ export const getCajas = (token, params = {}) => {
 };
 export const abrirCaja = (token, datos) => authFetch(token, '/api/cajas/abrir', { method: 'POST', body: JSON.stringify(datos) });
 export const cerrarCaja = (token, id, datos) => authFetch(token, `/api/cajas/${id}/cerrar`, { method: 'POST', body: JSON.stringify(datos) });
+export const getMovimientosCaja = (token, id, params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return authFetch(token, `/api/cajas/${id}/movimientos${qs ? '?' + qs : ''}`);
+};
 
 export const getCitas = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();

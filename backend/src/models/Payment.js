@@ -1,14 +1,15 @@
 import mongoose from 'mongoose';
 
-// Pagos asociados a una cita. El monto se guarda en centavos (entero) para evitar
-// errores de punto flotante. Los pagos no se borran: se anulan (histórico).
-//
-// En B2 se añade la referencia explícita a la caja (`caja`) y el usuario que
-// anula (`anuladoPor`); en B1 solo se alinean estados y métodos al requisito.
+// Pagos asociados a una cita y a la caja en la que se registran (RF-10/RF-11).
+// El monto se guarda en centavos (entero) para evitar errores de punto flotante.
+// Los pagos no se borran: se anulan (histórico) y guardan quién anuló.
 const paymentSchema = new mongoose.Schema(
   {
     cita: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true },
     paciente: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
+    // Caja abierta del usuario que registra el pago (RN-20/RN-22). Null solo en
+    // registros históricos previos a B2 (ver scripts/asignarCajasPagos.js).
+    caja: { type: mongoose.Schema.Types.ObjectId, ref: 'CashSession', default: null },
     montoCentavos: { type: Number, required: true, min: 1, validate: Number.isInteger },
     metodo: {
       type: String,
@@ -19,6 +20,7 @@ const paymentSchema = new mongoose.Schema(
     estado: { type: String, enum: ['REGISTRADO', 'ANULADO'], default: 'REGISTRADO' },
     motivoAnulacion: { type: String, default: '', trim: true },
     anuladoEn: { type: Date, default: null },
+    anuladoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     notas: { type: String, default: '', trim: true },
     registradoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
   },
@@ -26,6 +28,7 @@ const paymentSchema = new mongoose.Schema(
 );
 
 paymentSchema.index({ cita: 1, estado: 1 });
+paymentSchema.index({ caja: 1, estado: 1 });
 paymentSchema.index({ paciente: 1, fecha: -1 });
 paymentSchema.index({ fecha: -1 });
 

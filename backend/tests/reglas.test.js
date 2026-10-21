@@ -1,4 +1,4 @@
-// Pruebas de reglas clave de SIGCA — contrato B1.
+// Pruebas de reglas clave de SIGCA — contrato B1/B2.
 //
 // Ejecución:  npm test        (equivale a: node --test tests/)
 //
@@ -10,10 +10,10 @@
 //   A. Roles y seguridad (401/403) y rutas nuevas.
 //   B. Citas: disponibilidad, estados PENDIENTE/CONFIRMADA/COMPLETADA/CANCELADA.
 //   C. Paciente menor: exige responsable activo.
-//   D. Pagos: saldo (PENDIENTE/PARCIAL/PAGADO), métodos y caja obligatoria.
+//   D. Pagos: saldo (PENDIENTE/PARCIAL/PAGADO), métodos y caja propia obligatoria.
 //   E. Comprobante de pago (número único, idempotente y 1:1).
 //   F. Anulación de pagos y cancelación con pagos válidos (RN-27).
-//   G. Caja: apertura única, bloqueo post-cierre y arqueo.
+//   G. Caja: una abierta por usuario, permisos, movimientos y arqueo (B2).
 //   H. Atender solicitud de cita.
 //   I. Materiales: lectura vs gestión por rol.
 //   J. Contrato B1: PUT/PATCH de rutas alineadas y rutas antiguas retiradas.
@@ -43,7 +43,7 @@ const tok = {};
 let server;
 let servicio, servicioLargo, profesional, paciente, menor, responsable;
 let lunesBase, martes, miercoles;
-let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, cajaG4, solicitudH1;
+let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, cajaRecep, pagoRecep, cajaG4, solicitudH1;
 
 function proximoDia(numeroDia) {
   const d = new Date();
@@ -398,21 +398,102 @@ describe('F. Anulación de pagos y cancelación con pagos válidos', () => {
   });
 });
 
-describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
-  test('G1 no se puede abrir una segunda caja → 409', async () => {
+describe('G. Caja: caja por usuario, movimientos y arqueo', () => {
+  test('G1 GET /api/cajas/actual devuelve la caja ABIERTA del usuario', async () => {
+    const r = await api('GET', '/api/cajas/actual', { token: tok.admin });
+    assert.equal(r.status, 200);
+    assert.equal(String(r.json.caja._id), String(cajaC1._id));
+    assert.equal(r.json.caja.abiertaPor.email, 'admin.test@sigca.test');
+    assert.ok(r.json.resumen);
+  });
+
+  test('G2 un segundo usuario puede abrir su propia caja → 201', async () => {
+    const r = await api('POST', '/api/cajas/abrir', {
+      token: tok.recep,
+      body: { montoInicialCentavos: 500 }
+    });
+    assert.equal(r.status, 201);
+    cajaRecep = r.json.caja;
+    assert.equal(cajaRecep.abiertaPor.email, 'recep.test@sigca.test');
+  });
+
+  test('G3 el mismo usuario no puede abrir una segunda caja → 409', async () => {
     const r = await api('POST', '/api/cajas/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
     assert.equal(r.status, 409);
   });
 
-  test('G2 registrar un pago válido para el arqueo', async () => {
+  test('G4 registrar un pago válido para el arqueo (TARJETA, caja del admin)', async () => {
     const c = await crearCita(slot(16, 30, martes));
     citaE = c.json.cita;
     const r = await registrarPago(citaE._id, 5000, 'TARJETA');
     assert.equal(r.status, 201);
     pagoP3 = r.json.pago;
+    assert.equal(String(pagoP3.caja._id), String(cajaC1._id));
   });
 
-  test('G3 cerrar la caja → snapshot de totales, esperado y diferencia', async () => {
+  test('G5 el pago queda asociado a la caja abierta del usuario que lo registra', async () => {
+    const c = await crearCita(slot(13, 0, martes));
+    const r = await api('POST', '/api/pagos', {
+      token: tok.recep,
+      body: { citaId: String(c.json.cita._id), montoCentavos: 2000, metodo: 'EFECTIVO' }
+    });
+    assert.equal(r.status, 201);
+    pagoRecep = r.json.pago;
+    assert.equal(String(pagoRecep.caja._id), String(cajaRecep._id));
+    assert.equal(pagoRecep.registradoPor.email, 'recep.test@sigca.test');
+  });
+
+  test('G6 el ADMINISTRADOR ve todas las cajas; el RECEPCIONISTA solo las suyas', async () => {
+    const admin = await api('GET', '/api/cajas?limit=50', { token: tok.admin });
+    assert.equal(admin.status, 200);
+    assert.ok(admin.json.cajas.length >= 2);
+    const recep = await api('GET', '/api/cajas?limit=50', { token: tok.recep });
+    assert.equal(recep.status, 200);
+    assert.ok(recep.json.cajas.length >= 1);
+    for (const c of recep.json.cajas) {
+      assert.equal(c.abiertaPor.email, 'recep.test@sigca.test');
+    }
+  });
+
+  test('G7 el RECEPCIONISTA no puede consultar la caja de otro → 403', async () => {
+    assert.equal((await api('GET', `/api/cajas/${cajaC1._id}`, { token: tok.recep })).status, 403);
+    const admin = await api('GET', `/api/cajas/${cajaRecep._id}`, { token: tok.admin });
+    assert.equal(admin.status, 200);
+  });
+
+  test('G8 GET /api/cajas/:id/movimientos devuelve detalle y totales válidos', async () => {
+    const propio = await api('GET', `/api/cajas/${cajaRecep._id}/movimientos`, { token: tok.recep });
+    assert.equal(propio.status, 200);
+    assert.equal(propio.json.movimientos.length, 1);
+    assert.equal(propio.json.resumen.totales.EFECTIVO, 2000);
+    assert.equal(propio.json.resumen.totalIngresosCentavos, 2000);
+
+    const ajeno = await api('GET', `/api/cajas/${cajaC1._id}/movimientos`, { token: tok.recep });
+    assert.equal(ajeno.status, 403);
+
+    const admin = await api('GET', `/api/cajas/${cajaRecep._id}/movimientos`, { token: tok.admin });
+    assert.equal(admin.status, 200);
+  });
+
+  test('G9 el RECEPCIONISTA no puede cerrar la caja de otro → 403', async () => {
+    const r = await api('POST', `/api/cajas/${cajaC1._id}/cerrar`, {
+      token: tok.recep,
+      body: { totalRealCentavos: 0 }
+    });
+    assert.equal(r.status, 403);
+  });
+
+  test('G10 un pago con fecha anterior a la apertura de la caja → 409', async () => {
+    const antes = new Date(new Date(cajaRecep.fechaApertura).getTime() - 60 * 60 * 1000).toISOString();
+    const r = await api('POST', '/api/pagos', {
+      token: tok.recep,
+      body: { citaId: String(citaE._id), montoCentavos: 100, metodo: 'EFECTIVO', fecha: antes }
+    });
+    assert.equal(r.status, 409);
+  });
+
+  test('G11 cerrar la caja → totales, efectivo esperado y diferencia', async () => {
+    // Caja: inicial 1000, pagos REGISTRADO 5000 TARJETA (los anulados no suman).
     const r = await api('POST', `/api/cajas/${cajaC1._id}/cerrar`, {
       token: tok.admin,
       body: { totalRealCentavos: 6500 }
@@ -421,28 +502,16 @@ describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
     assert.equal(r.json.caja.totalesPorMetodo.EFECTIVO, 0);
     assert.equal(r.json.caja.totalesPorMetodo.TARJETA, 5000);
     assert.equal(r.json.caja.totalesPorMetodo.TRANSFERENCIA, 0);
-    assert.equal(r.json.caja.totalEsperadoCentavos, 6000);
+    assert.equal(r.json.caja.totalIngresosCentavos, 5000);
+    assert.equal(r.json.caja.totalEsperadoCentavos, 1000);
     assert.equal(r.json.caja.totalRealCentavos, 6500);
-    assert.equal(r.json.caja.diferenciaCentavos, 500);
+    assert.equal(r.json.caja.diferenciaCentavos, 5500);
     assert.equal(r.json.caja.estado, 'CERRADA');
+    assert.equal(r.json.caja.cerradaPor.email, 'admin.test@sigca.test');
     cajaC1 = r.json.caja;
   });
 
-  test('G4 pago con fecha dentro de una caja ya cerrada → 409', async () => {
-    const abrir = await api('POST', '/api/cajas/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
-    assert.equal(abrir.status, 201);
-    cajaG4 = abrir.json.caja;
-    const ini = new Date(cajaC1.fechaApertura).getTime();
-    const fin = new Date(cajaC1.fechaCierre).getTime();
-    const fechaRetro = new Date(ini + Math.floor((fin - ini) / 2)).toISOString();
-    const r = await api('POST', '/api/pagos', {
-      token: tok.admin,
-      body: { citaId: String(citaE._id), montoCentavos: 100, metodo: 'EFECTIVO', fecha: fechaRetro }
-    });
-    assert.equal(r.status, 409);
-  });
-
-  test('G5 anular un pago perteneciente a una caja cerrada → 409', async () => {
+  test('G12 un pago de una caja cerrada no se puede anular → 409', async () => {
     const r = await api('PATCH', `/api/pagos/${pagoP3._id}/anular`, {
       token: tok.admin,
       body: { motivoAnulacion: 'Intento sobre caja cerrada' }
@@ -450,10 +519,27 @@ describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
     assert.equal(r.status, 409);
   });
 
-  test('G6 GET /api/cajas/actual devuelve la caja ABIERTA', async () => {
-    const r = await api('GET', '/api/cajas/actual', { token: tok.admin });
+  test('G13 anular un pago de caja abierta registra al usuario que anula', async () => {
+    const c = await crearCita(slot(14, 0, martes));
+    const alta = await api('POST', '/api/pagos', {
+      token: tok.recep,
+      body: { citaId: String(c.json.cita._id), montoCentavos: 1000, metodo: 'EFECTIVO' }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PATCH', `/api/pagos/${alta.json.pago._id}/anular`, {
+      token: tok.recep,
+      body: { motivoAnulacion: 'Anulación de prueba' }
+    });
     assert.equal(r.status, 200);
-    assert.equal(String(r.json.caja._id), String(cajaG4._id));
+    assert.equal(r.json.pago.estado, 'ANULADO');
+    assert.equal(r.json.pago.anuladoPor.email, 'recep.test@sigca.test');
+    assert.ok(r.json.pago.anuladoEn);
+  });
+
+  test('G14 abrir una caja nueva tras el cierre → 201', async () => {
+    const r = await api('POST', '/api/cajas/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
+    assert.equal(r.status, 201);
+    cajaG4 = r.json.caja;
   });
 });
 

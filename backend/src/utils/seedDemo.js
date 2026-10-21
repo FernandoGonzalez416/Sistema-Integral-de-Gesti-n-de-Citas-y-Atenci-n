@@ -162,11 +162,6 @@ export async function seedDemo({ dryRun = false } = {}) {
   await planificar('cita3', Appointment, () => ({ observaciones: regexMarcador('cita-03') }), 'Cita 03: Sofía Ríos — pendiente', ['pa2', 'pr1', 's2']);
   await planificar('cita4', Appointment, () => ({ observaciones: regexMarcador('cita-04') }), 'Cita 04: Martín Ríos — con pago anulado', ['pa1', 'pr1', 's1']);
 
-  await planificar('pago1', Payment, () => ({ notas: regexMarcador('pago-01') }), 'Pago 01: cita 01 total (EFECTIVO)', ['cita1']);
-  await planificar('pago2', Payment, () => ({ notas: regexMarcador('pago-02') }), 'Pago 02: cita 02 seña (TARJETA)', ['cita2']);
-  await planificar('pago4', Payment, () => ({ notas: regexMarcador('pago-04') }), 'Pago 04: cita 04 ANULADO (TRANSFERENCIA)', ['cita4']);
-  await planificar('pago5', Payment, () => ({ notas: regexMarcador('pago-05') }), 'Pago 05: cita 02 saldo (EFECTIVO, caja abierta)', ['cita2']);
-
   await planificar('caja1', CashSession, () => ({ observacionesApertura: regexMarcador('caja-01') }), 'Caja CERRADA (arqueo con diferencia)');
 
   const cajaAbiertaAjena = await CashSession.findOne({ estado: 'ABIERTA' }).lean();
@@ -180,6 +175,11 @@ export async function seedDemo({ dryRun = false } = {}) {
   } else {
     await planificar('caja2', CashSession, () => ({ observacionesApertura: regexMarcador('caja-02') }), 'Caja ABIERTA (turno de hoy)');
   }
+
+  await planificar('pago1', Payment, () => ({ notas: regexMarcador('pago-01') }), 'Pago 01: cita 01 total (EFECTIVO, caja 01)', ['cita1', 'caja1']);
+  await planificar('pago2', Payment, () => ({ notas: regexMarcador('pago-02') }), 'Pago 02: cita 02 seña (TARJETA, caja 01)', ['cita2', 'caja1']);
+  await planificar('pago4', Payment, () => ({ notas: regexMarcador('pago-04') }), 'Pago 04: cita 04 ANULADO (TRANSFERENCIA, caja 01)', ['cita4', 'caja1']);
+  await planificar('pago5', Payment, () => ({ notas: regexMarcador('pago-05') }), 'Pago 05: cita 02 saldo (EFECTIVO, caja 02)', ['cita2']);
 
   // Mostrar el plan ANTES de escribir.
   console.log('\nPLAN (registros de demostración):');
@@ -322,66 +322,82 @@ export async function seedDemo({ dryRun = false } = {}) {
   }));
 
   // ------------------------------------------------------------------
-  // FASE 8 — PAGOS (coherentes: nunca superan el precio de la cita)
+  // FASE 8 — CAJAS (se crean antes de los pagos para asociarlos)
   // ------------------------------------------------------------------
   const fechaCaja1 = dia(-7, 8, 0);
   const fechaCaja1Fin = dia(-7, 16, 0);
-
-  const pago1 = await aplicar('pago1', Payment, () => ({ notas: regexMarcador('pago-01') }), () => ({
-    cita: cita1._id, paciente: pa1._id, montoCentavos: cita1.precioCentavos, metodo: 'EFECTIVO',
-    fecha: dia(-7, 9, 0), estado: 'REGISTRADO', notas: `${marcador('pago-01')} Pago total`
-  }));
-  const pago2 = await aplicar('pago2', Payment, () => ({ notas: regexMarcador('pago-02') }), () => ({
-    cita: cita2._id, paciente: pa3._id, montoCentavos: 10000, metodo: 'TARJETA',
-    fecha: dia(-7, 10, 0), estado: 'REGISTRADO', notas: `${marcador('pago-02')} Seña`
-  }));
-  await aplicar('pago4', Payment, () => ({ notas: regexMarcador('pago-04') }), () => ({
-    cita: cita4._id, paciente: pa1._id, montoCentavos: cita4.precioCentavos, metodo: 'TRANSFERENCIA',
-    fecha: dia(-7, 11, 0), estado: 'ANULADO', motivoAnulacion: 'Pago duplicado', anuladoEn: dia(-7, 11, 30),
-    notas: `${marcador('pago-04')} Anulado por duplicado`
-  }));
-  let pago5 = null;
-  if (!saltarCajaAbierta) {
-    pago5 = await aplicar('pago5', Payment, () => ({ notas: regexMarcador('pago-05') }), () => ({
-      cita: cita2._id, paciente: pa3._id, montoCentavos: 5000, metodo: 'EFECTIVO',
-      fecha: ahora, estado: 'REGISTRADO', notas: `${marcador('pago-05')} Saldo abonado en caja abierta`
-    }));
-  }
-
-  // ------------------------------------------------------------------
-  // FASE 9 — CAJAS (el cierre refleja los pagos ACTIVOS de su ventana)
-  // ------------------------------------------------------------------
-  const pagosCaja1 = [pago1, pago2].filter(Boolean);
-  const totalesCaja1 = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
-  for (const p of pagosCaja1) totalesCaja1[p.metodo] = (totalesCaja1[p.metodo] || 0) + p.montoCentavos;
-  const totalGeneralCaja1 = Object.values(totalesCaja1).reduce((a, b) => a + b, 0);
   const montoInicialCaja1 = 20000;
-  const totalEsperadoCaja1 = montoInicialCaja1 + totalGeneralCaja1;
-  const totalRealCaja1 = totalEsperadoCaja1 - 500; // pequeña diferencia para demostrar el arqueo
 
-  await aplicar('caja1', CashSession, () => ({ observacionesApertura: regexMarcador('caja-01') }), () => ({
+  const caja1 = await aplicar('caja1', CashSession, () => ({ observacionesApertura: regexMarcador('caja-01') }), () => ({
     estado: 'CERRADA',
     abiertaPor: refs.recepcion, fechaApertura: fechaCaja1,
     montoInicialCentavos: montoInicialCaja1,
     observacionesApertura: `${marcador('caja-01')} Turno de la mañana`,
     cerradaPor: refs.recepcion, fechaCierre: fechaCaja1Fin,
-    totalesPorMetodo: totalesCaja1,
-    totalEsperadoCentavos: totalEsperadoCaja1,
-    totalRealCentavos: totalRealCaja1,
-    diferenciaCentavos: totalRealCaja1 - totalEsperadoCaja1,
     observacionesCierre: 'Falta efectivo en el arqueo'
   }));
 
+  let caja2 = null;
   if (!saltarCajaAbierta) {
     let apertura = dia(0, 8, 0);
     if (apertura > ahora) apertura = new Date(ahora.getTime() - 60 * 60 * 1000);
-    await aplicar('caja2', CashSession, () => ({ observacionesApertura: regexMarcador('caja-02') }), () => ({
+    caja2 = await aplicar('caja2', CashSession, () => ({ observacionesApertura: regexMarcador('caja-02') }), () => ({
       estado: 'ABIERTA',
       abiertaPor: refs.recepcion, fechaApertura: apertura,
       montoInicialCentavos: 10000,
       observacionesApertura: `${marcador('caja-02')} Turno de hoy`
     }));
   }
+
+  // ------------------------------------------------------------------
+  // FASE 9 — PAGOS (coherentes: nunca superan el precio de la cita y
+  // quedan asociados a la caja en la que se registraron)
+  // ------------------------------------------------------------------
+  await aplicar('pago1', Payment, () => ({ notas: regexMarcador('pago-01') }), () => ({
+    cita: cita1._id, paciente: pa1._id, caja: caja1._id, montoCentavos: cita1.precioCentavos, metodo: 'EFECTIVO',
+    fecha: dia(-7, 9, 0), estado: 'REGISTRADO', notas: `${marcador('pago-01')} Pago total`
+  }));
+  await aplicar('pago2', Payment, () => ({ notas: regexMarcador('pago-02') }), () => ({
+    cita: cita2._id, paciente: pa3._id, caja: caja1._id, montoCentavos: 10000, metodo: 'TARJETA',
+    fecha: dia(-7, 10, 0), estado: 'REGISTRADO', notas: `${marcador('pago-02')} Seña`
+  }));
+  await aplicar('pago4', Payment, () => ({ notas: regexMarcador('pago-04') }), () => ({
+    cita: cita4._id, paciente: pa1._id, caja: caja1._id, montoCentavos: cita4.precioCentavos, metodo: 'TRANSFERENCIA',
+    fecha: dia(-7, 11, 0), estado: 'ANULADO', motivoAnulacion: 'Pago duplicado', anuladoEn: dia(-7, 11, 30),
+    anuladoPor: refs.recepcion,
+    notas: `${marcador('pago-04')} Anulado por duplicado`
+  }));
+  if (caja2) {
+    await aplicar('pago5', Payment, () => ({ notas: regexMarcador('pago-05') }), () => ({
+      cita: cita2._id, paciente: pa3._id, caja: caja2._id, montoCentavos: 5000, metodo: 'EFECTIVO',
+      fecha: ahora, estado: 'REGISTRADO', notas: `${marcador('pago-05')} Saldo abonado en caja abierta`
+    }));
+  }
+  // Totales del cierre de caja 1 calculados desde sus pagos REGISTRADO
+  // (un pago anulado no suma; el efectivo esperado es inicial + EFECTIVO).
+  const pagosCaja1 = await Payment.find({ caja: caja1._id, estado: 'REGISTRADO' }).select('montoCentavos metodo');
+  const totalesCaja1 = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
+  let totalIngresosCaja1 = 0;
+  for (const p of pagosCaja1) {
+    totalesCaja1[p.metodo] = (totalesCaja1[p.metodo] || 0) + p.montoCentavos;
+    totalIngresosCaja1 += p.montoCentavos;
+  }
+  const totalEsperadoCaja1 = caja1.montoInicialCentavos + totalesCaja1.EFECTIVO;
+  const totalRealCaja1 = totalEsperadoCaja1 - 500; // pequeña diferencia para demostrar el arqueo
+
+  // Solo se actualizan totales de la caja de demostración (marcador propio).
+  await CashSession.updateOne(
+    { _id: caja1._id, observacionesApertura: regexMarcador('caja-01') },
+    {
+      $set: {
+        totalesPorMetodo: totalesCaja1,
+        totalIngresosCentavos: totalIngresosCaja1,
+        totalEsperadoCentavos: totalEsperadoCaja1,
+        totalRealCentavos: totalRealCaja1,
+        diferenciaCentavos: totalRealCaja1 - totalEsperadoCaja1
+      }
+    }
+  );
 
   // ------------------------------------------------------------------
   // RESUMEN

@@ -10,7 +10,10 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B1 | feat/b1-alineacion | ce95dca | feat(ui): alinear cliente y vistas al contrato B1 | FernandoGonzalez416 | creado |
 | B1 | feat/b1-alineacion | 1c8d821 | test(postman): alinear coleccion al contrato B1 | FernandoGonzalez416 | creado |
 | B1 | feat/b1-alineacion | este commit | docs(b1): registrar decisiones, migracion y control | FernandoGonzalez416 | creado |
-| B2 | feat/b2-caja-pagos | — | — | — | pendiente |
+| B2 | feat/b2-caja-pagos | c1bb8de | feat(api): caja por usuario y pagos asociados a caja (B2) | FernandoGonzalez416 | creado |
+| B2 | feat/b2-caja-pagos | 910d756 | feat(ui): caja propia y movimientos en pagos (B2) | FernandoGonzalez416 | creado |
+| B2 | feat/b2-caja-pagos | 0be4f27 | test(postman): verificar caja por usuario y arqueo (B2) | FernandoGonzalez416 | creado |
+| B2 | feat/b2-caja-pagos | este commit | docs(b2): registrar caja por usuario y migracion | FernandoGonzalez416 | creado |
 | B3 | feat/b3-modelos-relaciones | — | — | — | pendiente |
 | B4 | feat/b4-citas-solicitudes | — | — | — | pendiente |
 | B5 | feat/b5-seed | — | — | — | pendiente |
