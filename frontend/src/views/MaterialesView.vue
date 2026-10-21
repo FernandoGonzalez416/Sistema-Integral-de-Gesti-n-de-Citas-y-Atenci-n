@@ -73,8 +73,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import {
-  getMateriales, createMaterial, updateMaterial, desactivarMaterial
+  getMateriales, createMaterial, updateMaterial
 } from '../api/client.js';
+import { TIPOS_MATERIAL } from '../constants/sigca.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 
@@ -91,7 +92,7 @@ const filtroTipo = ref('');
 const soloActivos = ref(false);
 const editando = ref(false);
 
-const tipos = ['DOCUMENTO', 'VIDEO', 'ENLACE', 'OTRO'];
+const tipos = TIPOS_MATERIAL;
 
 const form = reactive({ _id: '', titulo: '', descripcion: '', tipo: '', url: '' });
 
@@ -154,11 +155,7 @@ function editar(m) {
 async function toggleActivo(m) {
   try {
     error.value = '';
-    if (m.activo) {
-      await desactivarMaterial(auth.token, m._id);
-    } else {
-      await updateMaterial(auth.token, m._id, { activo: true });
-    }
+    await updateMaterial(auth.token, m._id, { activo: !m.activo });
     await cargar();
   } catch (e) {
     error.value = e.message;

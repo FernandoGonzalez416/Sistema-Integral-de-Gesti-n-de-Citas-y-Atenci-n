@@ -37,7 +37,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
-import { getServicesTodos, createService, patchService } from '../api/client.js';
+import { getServiciosTodos, createServicio, updateServicio } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 
@@ -60,7 +60,7 @@ function aCentavos(precio) {
 async function cargar() {
   try {
     error.value = '';
-    const datos = await getServicesTodos(auth.token);
+    const datos = await getServiciosTodos(auth.token);
     servicios.value = datos.servicios;
   } catch (e) {
     error.value = e.message;
@@ -82,9 +82,9 @@ async function guardar() {
       duracionMinutos: Number(form.duracion)
     };
     if (editando.value) {
-      await patchService(auth.token, editando.value, datos);
+      await updateServicio(auth.token, editando.value, datos);
     } else {
-      await createService(auth.token, datos);
+      await createServicio(auth.token, datos);
     }
     limpiar();
     await cargar();
@@ -110,7 +110,7 @@ function cancelar() {
 async function cambiarActivo(s) {
   try {
     error.value = '';
-    await patchService(auth.token, s._id, { activo: !s.activo });
+    await updateServicio(auth.token, s._id, { activo: !s.activo });
     await cargar();
   } catch (e) {
     error.value = e.message;

@@ -42,7 +42,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
-import { getUsers, createUser, patchUser } from '../api/client.js';
+import { getUsuarios, createUsuario, updateUsuario } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 
@@ -54,7 +54,7 @@ const form = reactive({ nombre: '', email: '', password: '', rol: 'RECEPCIONISTA
 async function cargar() {
   try {
     error.value = '';
-    const datos = await getUsers(auth.token);
+    const datos = await getUsuarios(auth.token);
     usuarios.value = datos.usuarios;
   } catch (e) {
     error.value = e.message;
@@ -64,7 +64,7 @@ async function cargar() {
 async function crear() {
   try {
     error.value = '';
-    await createUser(auth.token, { ...form });
+    await createUsuario(auth.token, { ...form });
     Object.assign(form, { nombre: '', email: '', password: '', rol: 'RECEPCIONISTA' });
     await cargar();
   } catch (e) {
@@ -75,7 +75,7 @@ async function crear() {
 async function cambiarActivo(u) {
   try {
     error.value = '';
-    await patchUser(auth.token, u.id, { activo: !u.activo });
+    await updateUsuario(auth.token, u.id, { activo: !u.activo });
     await cargar();
   } catch (e) {
     error.value = e.message;

@@ -19,12 +19,7 @@
           <label>Estado</label>
           <select v-model="filtroEstado" @change="recargar">
             <option value="">Todos</option>
-            <option value="PROGRAMADA">PROGRAMADA</option>
-            <option value="CONFIRMADA">CONFIRMADA</option>
-            <option value="REPROGRAMADA">REPROGRAMADA</option>
-            <option value="CANCELADA">CANCELADA</option>
-            <option value="COMPLETADA">COMPLETADA</option>
-            <option value="NO_ASISTIO">NO_ASISTIO</option>
+            <option v-for="e in estados" :key="e" :value="e">{{ e }}</option>
           </select>
         </div>
         <div class="campo">
@@ -115,6 +110,7 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import Card from '../components/Card.vue';
+import { ESTADOS_CITA, COLORES_ESTADO_CITA } from '../constants/sigca.js';
 
 const auth = useAuthStore();
 const error = ref('');
@@ -127,14 +123,8 @@ const filtroDesde = ref('');
 const filtroHasta = ref('');
 
 const profesionales = ref([]);
-const coloresEstados = {
-  PROGRAMADA: '#3498db',
-  CONFIRMADA: '#2ecc71',
-  REPROGRAMADA: '#f39c12',
-  CANCELADA: '#e74c3c',
-  COMPLETADA: '#9b59b6',
-  NO_ASISTIO: '#95a5a6'
-};
+const estados = ESTADOS_CITA;
+const coloresEstados = COLORES_ESTADO_CITA;
 
 const initialView = 'dayGridMonth';
 const headerToolbar = {

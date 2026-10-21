@@ -59,7 +59,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import {
-  getContentsTodos, patchContent,
+  getContenidosTodos, updateContenido,
   getSchedulesTodos, patchSchedule,
   getPublicationsTodas, createPublication, patchPublication
 } from '../api/client.js';
@@ -78,7 +78,7 @@ const pub = reactive({ titulo: '', descripcion: '', tipo: 'EDUCATIVO', imagenUrl
 async function cargar() {
   try {
     error.value = '';
-    contenidos.value = (await getContentsTodos(auth.token)).contenidos;
+    contenidos.value = (await getContenidosTodos(auth.token)).contenidos;
     horarios.value = (await getSchedulesTodos(auth.token)).horarios;
     publicaciones.value = (await getPublicationsTodas(auth.token)).publicaciones;
   } catch (e) {
@@ -88,7 +88,7 @@ async function cargar() {
 
 async function guardarBloque(c) {
   try {
-    await patchContent(auth.token, c._id, { titulo: c.titulo, cuerpo: c.cuerpo });
+    await updateContenido(auth.token, c._id, { titulo: c.titulo, cuerpo: c.cuerpo });
   } catch (e) {
     error.value = e.message;
   }
@@ -96,7 +96,7 @@ async function guardarBloque(c) {
 
 async function toggleBloque(c) {
   try {
-    await patchContent(auth.token, c._id, { activo: !c.activo });
+    await updateContenido(auth.token, c._id, { activo: !c.activo });
     await cargar();
   } catch (e) {
     error.value = e.message;
