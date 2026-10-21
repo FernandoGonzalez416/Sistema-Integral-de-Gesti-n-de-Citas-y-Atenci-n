@@ -4,6 +4,16 @@
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="mensaje" class="ok">{{ mensaje }}</p>
 
+    <Card titulo="Caja de trabajo">
+      <p v-if="!cajaPropia" class="aviso">
+        No tiene una caja abierta. <RouterLink to="/admin/caja">Abra su caja</RouterLink> antes de registrar pagos.
+      </p>
+      <p v-else>
+        Caja ABIERTA desde {{ formatearFecha(cajaPropia.fechaApertura) }} ·
+        Responsable: {{ cajaPropia.abiertaPor?.nombre || '—' }}
+      </p>
+    </Card>
+
     <Card titulo="Buscar citas">
       <div class="fila">
         <label class="campo">
@@ -69,7 +79,8 @@
           </div>
           <FormField etiqueta="Notas (opcional)" v-model="form.notas" placeholder="Seña, saldo, etc." />
           <button type="submit" :disabled="!puedePagar">Registrar pago</button>
-          <p class="ayuda" v-if="saldo && saldo.estadoSaldo === 'PAGADO'">La cita ya está pagada.</p>
+          <p class="ayuda" v-if="!cajaPropia">Debe abrir su propia caja para registrar pagos.</p>
+          <p class="ayuda" v-else-if="saldo && saldo.estadoSaldo === 'PAGADO'">La cita ya está pagada.</p>
         </form>
       </Card>
 
@@ -77,13 +88,14 @@
         <div v-if="cargandoPagos">Cargando…</div>
         <table v-else>
           <thead>
-            <tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Estado</th><th>Notas</th><th></th></tr>
+            <tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Caja</th><th>Estado</th><th>Notas</th><th></th></tr>
           </thead>
           <tbody>
             <tr v-for="p in pagos" :key="p._id">
               <td>{{ formatearFecha(p.fecha) }}</td>
               <td>{{ formatearMonto(p.montoCentavos) }}</td>
               <td>{{ p.metodo }}</td>
+              <td>{{ formatearFecha(p.caja?.fechaApertura) }}</td>
               <td>{{ p.estado }}<span v-if="p.motivoAnulacion"> ({{ p.motivoAnulacion }})</span></td>
               <td>{{ p.notas || '—' }}</td>
               <td>
@@ -101,7 +113,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
-import { getCitas, getPagosCita, getSaldoCita, createPago, anularPago } from '../api/client.js';
+import { getCitas, getPagosCita, getSaldoCita, createPago, anularPago, getCajaActual } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 import { ESTADOS_CITA, METODOS_PAGO } from '../constants/sigca.js';
@@ -124,13 +136,16 @@ const citaSeleccionada = ref(null);
 const saldo = ref(null);
 const pagos = ref([]);
 const cargandoPagos = ref(false);
+const cajaPropia = ref(null);
 
 const error = ref('');
 const mensaje = ref('');
 
 const form = reactive({ monto: '', metodo: 'EFECTIVO', notas: '' });
 
-const puedePagar = computed(() => saldo.value && saldo.value.estadoSaldo !== 'PAGADO' && Number(form.monto) > 0);
+const puedePagar = computed(
+  () => Boolean(cajaPropia.value) && saldo.value && saldo.value.estadoSaldo !== 'PAGADO' && Number(form.monto) > 0
+);
 
 function formatearMonto(centavos) {
   // Quetzales (GTQ): Q1,250.00
@@ -238,13 +253,25 @@ async function anular(pago) {
   }
 }
 
+async function cargarCaja() {
+  try {
+    const datos = await getCajaActual(auth.token);
+    cajaPropia.value = datos.caja;
+  } catch (e) {
+    error.value = e.message;
+  }
+}
+
 watch([filtroEstado, filtroDesde, filtroHasta], () => {
   if (pagina.value !== 1) pagina.value = 1;
   else cargarCitas();
 });
 watch(pagina, cargarCitas);
 
-onMounted(cargarCitas);
+onMounted(() => {
+  cargarCaja();
+  cargarCitas();
+});
 </script>
 
 <style scoped>
@@ -265,6 +292,7 @@ tr.seleccionada { background: #eef6ff; }
 .estado-PARCIAL { background: #e67e22; }
 .estado-PAGADO { background: #27ae60; }
 .ayuda { color: #2b7a0b; font-size: 0.9rem; }
+.aviso { color: #c0392b; }
 .paginacion { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
