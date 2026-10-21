@@ -5,8 +5,11 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 
 | Bloque | Rama | Commit | Mensaje | Autor | Estado |
 |---|---|---|---|---|---|
-| B0 | integracion | pendiente | chore(docs): crear control de commits | FernandoGonzalez416 | creado |
-| B1 | feat/b1-alineacion | — | — | — | pendiente |
+| B0 | integracion | 11d8987 | chore(docs): crear control de commits | FernandoGonzalez416 | creado |
+| B1 | feat/b1-alineacion | 6052ad6 | feat(api): alinear rutas, estados y edicion de citas (B1) | FernandoGonzalez416 | creado |
+| B1 | feat/b1-alineacion | ce95dca | feat(ui): alinear cliente y vistas al contrato B1 | FernandoGonzalez416 | creado |
+| B1 | feat/b1-alineacion | 1c8d821 | test(postman): alinear coleccion al contrato B1 | FernandoGonzalez416 | creado |
+| B1 | feat/b1-alineacion | este commit | docs(b1): registrar decisiones, migracion y control | FernandoGonzalez416 | creado |
 | B2 | feat/b2-caja-pagos | — | — | — | pendiente |
 | B3 | feat/b3-modelos-relaciones | — | — | — | pendiente |
 | B4 | feat/b4-citas-solicitudes | — | — | — | pendiente |
@@ -18,4 +21,4 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 
 - No se hace `push` desde el agente; al final de cada bloque se entrega el comando exacto.
 - Cada fila se completa después del commit correspondiente (el hash no puede incluirse en el mismo commit que lo crea).
-- `B1` puede contener más de un commit; se listan todos en la sección del bloque.
+- Los hashes de la fila de documentación de B1 se refieren a los commits de código y Postman; el commit de docs se identifica por su mensaje porque su propio hash no puede estar dentro de sí mismo.

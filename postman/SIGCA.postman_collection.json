@@ -239,16 +239,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/api/usuarios",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "users"
+                "usuarios"
               ]
             },
-            "description": "GET /api/users — solo ADMINISTRADOR."
+            "description": "GET /api/usuarios — solo ADMINISTRADOR."
           },
           "response": [],
           "event": [
@@ -279,16 +279,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/api/usuarios",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "users"
+                "usuarios"
               ]
             },
-            "description": "POST /api/users — solo ADMINISTRADOR. Roles: ADMINISTRADOR, RECEPCIONISTA, PROFESIONAL. Password mínimo 6. (El usuario se expone con `id`, no `_id`.)",
+            "description": "POST /api/usuarios — solo ADMINISTRADOR. Roles: ADMINISTRADOR, RECEPCIONISTA, PROFESIONAL. Password mínimo 6. (El usuario se expone con `id`, no `_id`.)",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Usuario Demo\",\n  \"email\": \"usuario.demo.{{$timestamp}}@sigca.local\",\n  \"password\": \"Demo1234\",\n  \"rol\": \"RECEPCIONISTA\"\n}",
@@ -326,17 +326,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{usuarioId}}",
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "users",
+                "usuarios",
                 "{{usuarioId}}"
               ]
             },
-            "description": "GET /api/users/:id — solo ADMINISTRADOR."
+            "description": "GET /api/usuarios/:id — solo ADMINISTRADOR."
           },
           "response": [],
           "event": [
@@ -354,7 +354,7 @@
         {
           "name": "Actualizar usuario",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -367,17 +367,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{usuarioId}}",
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "users",
+                "usuarios",
                 "{{usuarioId}}"
               ]
             },
-            "description": "PATCH /api/users/:id — solo ADMINISTRADOR. Campos: nombre, rol, activo.",
+            "description": "PUT /api/usuarios/:id — solo ADMINISTRADOR. Campos: nombre, rol, activo.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Usuario Demo (editado)\"\n}",
@@ -412,16 +412,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/services",
+              "raw": "{{baseUrl}}/api/servicios",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "services"
+                "servicios"
               ]
             },
-            "description": "GET /api/services — público, solo activos."
+            "description": "GET /api/servicios — público, solo activos."
           },
           "response": [],
           "event": [
@@ -448,18 +448,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/services/admin/todos",
+              "raw": "{{baseUrl}}/api/servicios/admin/todos",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "services",
+                "servicios",
                 "admin",
                 "todos"
               ]
             },
-            "description": "GET /api/services/admin/todos — solo ADMINISTRADOR."
+            "description": "GET /api/servicios/admin/todos — solo ADMINISTRADOR."
           },
           "response": [],
           "event": [
@@ -490,16 +490,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/services",
+              "raw": "{{baseUrl}}/api/servicios",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "services"
+                "servicios"
               ]
             },
-            "description": "POST /api/services — solo ADMINISTRADOR. `precioCentavos` entero >= 0; `duracionMinutos` entero >= 1; nombre único.",
+            "description": "POST /api/servicios — solo ADMINISTRADOR. `precioCentavos` entero >= 0; `duracionMinutos` entero >= 1; nombre único.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Servicio demo {{$timestamp}}\",\n  \"descripcion\": \"Servicio de ejemplo\",\n  \"precioCentavos\": 20000,\n  \"duracionMinutos\": 30\n}",
@@ -531,17 +531,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/services/{{servicioId}}",
+              "raw": "{{baseUrl}}/api/servicios/{{servicioId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "services",
+                "servicios",
                 "{{servicioId}}"
               ]
             },
-            "description": "GET /api/services/:id — público. Usa el `servicioId` creado arriba."
+            "description": "GET /api/servicios/:id — público. Usa el `servicioId` creado arriba."
           },
           "response": [],
           "event": [
@@ -559,7 +559,7 @@
         {
           "name": "Actualizar servicio",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -572,17 +572,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/services/{{servicioId}}",
+              "raw": "{{baseUrl}}/api/servicios/{{servicioId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "services",
+                "servicios",
                 "{{servicioId}}"
               ]
             },
-            "description": "PATCH /api/services/:id — solo ADMINISTRADOR.",
+            "description": "PUT /api/servicios/:id — solo ADMINISTRADOR.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"precioCentavos\": 25000,\n  \"activo\": true\n}",
@@ -617,16 +617,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/contenidos",
+              "raw": "{{baseUrl}}/api/contenido",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "contenidos"
+                "contenido"
               ]
             },
-            "description": "GET /api/contenidos — público, solo activos."
+            "description": "GET /api/contenido — público, solo activos."
           },
           "response": [],
           "event": [
@@ -653,18 +653,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/contenidos/admin/todos",
+              "raw": "{{baseUrl}}/api/contenido/admin/todos",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "contenidos",
+                "contenido",
                 "admin",
                 "todos"
               ]
             },
-            "description": "GET /api/contenidos/admin/todos — solo ADMINISTRADOR."
+            "description": "GET /api/contenido/admin/todos — solo ADMINISTRADOR."
           },
           "response": [],
           "event": [
@@ -685,17 +685,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/contenidos/mision",
+              "raw": "{{baseUrl}}/api/contenido/mision",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "contenidos",
+                "contenido",
                 "mision"
               ]
             },
-            "description": "GET /api/contenidos/:clave — público. Ejemplo con la clave `mision` (creada por el seed demo)."
+            "description": "GET /api/contenido/:clave — público. Ejemplo con la clave `mision` (creada por el seed demo)."
           },
           "response": [],
           "event": [
@@ -726,16 +726,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/contenidos",
+              "raw": "{{baseUrl}}/api/contenido",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "contenidos"
+                "contenido"
               ]
             },
-            "description": "POST /api/contenidos — solo ADMINISTRADOR. `clave` en minúsculas, números y guiones; única.",
+            "description": "POST /api/contenido — solo ADMINISTRADOR. `clave` en minúsculas, números y guiones; única.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"clave\": \"demo-{{$timestamp}}\",\n  \"titulo\": \"Bloque demo\",\n  \"cuerpo\": \"Texto del bloque institucional de ejemplo.\"\n}",
@@ -765,7 +765,7 @@
         {
           "name": "Actualizar contenido",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -778,17 +778,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/contenidos/{{contenidoId}}",
+              "raw": "{{baseUrl}}/api/contenido/{{contenidoId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "contenidos",
+                "contenido",
                 "{{contenidoId}}"
               ]
             },
-            "description": "PATCH /api/contenidos/:id — solo ADMINISTRADOR.",
+            "description": "PUT /api/contenido/:id — solo ADMINISTRADOR.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"Bloque demo (editado)\",\n  \"activo\": true\n}",
@@ -1383,16 +1383,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/solicitudes",
+              "raw": "{{baseUrl}}/api/solicitudes-cita",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "solicitudes"
+                "solicitudes-cita"
               ]
             },
-            "description": "POST /api/solicitudes — público. `nombre` y `telefono` requeridos; `servicio` (ObjectId) opcional pero debe estar activo.",
+            "description": "POST /api/solicitudes-cita — público. `nombre` y `telefono` requeridos; `servicio` (ObjectId) opcional pero debe estar activo.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Solicitante demo\",\n  \"telefono\": \"5551234567\",\n  \"email\": \"solicitante@ejemplo.com\",\n  \"servicio\": \"{{servicioId}}\",\n  \"mensaje\": \"Solicitud de ejemplo.\"\n}",
@@ -1430,16 +1430,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/solicitudes",
+              "raw": "{{baseUrl}}/api/solicitudes-cita",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "solicitudes"
+                "solicitudes-cita"
               ]
             },
-            "description": "GET /api/solicitudes — ADMINISTRADOR o RECEPCIONISTA. Guarda una solicitud PENDIENTE en `solicitudId`."
+            "description": "GET /api/solicitudes-cita — ADMINISTRADOR o RECEPCIONISTA. Guarda una solicitud PENDIENTE en `solicitudId`."
           },
           "response": [],
           "event": [
@@ -1607,7 +1607,7 @@
         {
           "name": "Actualizar paciente",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -1630,7 +1630,7 @@
                 "{{pacienteId}}"
               ]
             },
-            "description": "PATCH /api/pacientes/:id — ADMINISTRADOR o RECEPCIONISTA.",
+            "description": "PUT /api/pacientes/:id — ADMINISTRADOR o RECEPCIONISTA. Datos editables; el estado se cambia con PATCH /api/pacientes/:id/estado.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"telefono\": \"5551112222\"\n}",
@@ -1800,7 +1800,7 @@
         {
           "name": "Actualizar responsable",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -1823,7 +1823,7 @@
                 "{{responsableId}}"
               ]
             },
-            "description": "PATCH /api/responsables/:id.",
+            "description": "PUT /api/responsables/:id — ADMINISTRADOR o RECEPCIONISTA.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"telefono\": \"5554445555\"\n}",
@@ -2264,7 +2264,7 @@
                 "citas"
               ]
             },
-            "description": "POST /api/citas — requiere un horario activo que cubra el día/hora de `inicio`, que no sea pasado ni se traslape. Ajusta `inicioCita` a un día laborable futuro dentro del horario.",
+            "description": "POST /api/citas — requiere un horario activo que cubra el día/hora de `inicio`, que no sea pasado ni se traslape. La cita nace PENDIENTE (RF-07). Ajusta `inicioCita` a un día laborable futuro dentro del horario.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pacienteId\": \"{{pacienteId}}\",\n  \"profesionalId\": \"{{profesionalId}}\",\n  \"servicioId\": \"{{servicioId}}\",\n  \"inicio\": \"{{inicioCita}}\",\n  \"observaciones\": \"Cita de ejemplo\"\n}",
@@ -2284,7 +2284,8 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
-                  "if (j.cita && j.cita._id) pm.environment.set('citaId', j.cita._id);"
+                  "if (j.cita && j.cita._id) pm.environment.set('citaId', j.cita._id);",
+                  "pm.test('nace PENDIENTE', () => pm.expect(j.cita.estado).to.eql('PENDIENTE'));"
                 ]
               }
             }
@@ -2328,6 +2329,46 @@
           ]
         },
         {
+          "name": "Pagos de una cita",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/pagos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "pagos"
+              ]
+            },
+            "description": "GET /api/citas/:id/pagos — historial de pagos de la cita (incluye anulados) y saldo calculado."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('incluye pagos y saldo', () => { pm.expect(Array.isArray(j.pagos)).to.eql(true); pm.expect(j.saldo).to.be.an('object'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Atender solicitud → cita",
           "request": {
             "method": "POST",
@@ -2350,7 +2391,7 @@
               "path": [
                 "api",
                 "citas",
-                "solicitudes",
+                "solicitudes-cita",
                 "{{solicitudId}}",
                 "atender"
               ]
@@ -2408,7 +2449,7 @@
                 "estado"
               ]
             },
-            "description": "PATCH /api/citas/:id/estado — transiciones válidas (PROGRAMADA→CONFIRMADA). Cancelar con pagos ACTIVO responde 409.",
+            "description": "PATCH /api/citas/:id/estado — transiciones válidas: PENDIENTE→CONFIRMADA, PENDIENTE→CANCELADA, CONFIRMADA→COMPLETADA, CONFIRMADA→CANCELADA. Cancelar con pagos REGISTRADO responde 409 (RN-27).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"estado\": \"CONFIRMADA\"\n}",
@@ -2426,16 +2467,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('estado CONFIRMADA', () => pm.expect(j.cita.estado).to.eql('CONFIRMADA'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Reprogramar cita",
+          "name": "Editar o reprogramar cita (PUT)",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -2448,21 +2491,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/citas/{{citaId}}/reprogramar",
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "citas",
-                "{{citaId}}",
-                "reprogramar"
+                "{{citaId}}"
               ]
             },
-            "description": "PATCH /api/citas/:id/reprogramar — nueva `inicio` (`inicioCita3`) sin traslape con otras citas.",
+            "description": "PUT /api/citas/:id — edita o reprograma sin cambiar el estado. Revalida fecha futura, horario, traslape y servicio activo. Una cita COMPLETADA o CANCELADA responde 409.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"inicio\": \"{{inicioCita3}}\"\n}",
+              "raw": "{\n  \"inicio\": \"{{inicioCita3}}\",\n  \"observaciones\": \"Reprogramada por PUT\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2477,7 +2519,49 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('conserva el estado CONFIRMADA', () => pm.expect(j.cita.estado).to.eql('CONFIRMADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Saldo de una cita",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "saldo"
+              ]
+            },
+            "description": "GET /api/citas/:id/saldo — estado PENDIENTE/PARCIAL/PAGADO calculado desde los pagos REGISTRADO."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('saldo calculado', () => { pm.expect(['PENDIENTE', 'PARCIAL', 'PAGADO']).to.include(j.saldo.estadoSaldo); pm.expect(j.saldo.saldoCentavos).to.be.at.least(0); });"
                 ]
               }
             }
@@ -2625,7 +2709,7 @@
         {
           "name": "Actualizar material",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
@@ -2648,7 +2732,7 @@
                 "{{materialId}}"
               ]
             },
-            "description": "PATCH /api/materiales/:id — solo ADMINISTRADOR y RECEPCIONISTA.",
+            "description": "PUT /api/materiales/:id — ADMINISTRADOR o RECEPCIONISTA.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"descripcion\": \"Material actualizado.\"\n}",
@@ -2874,16 +2958,16 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/caja",
+              "raw": "{{baseUrl}}/api/cajas",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "caja"
+                "cajas"
               ]
             },
-            "description": "GET /api/caja — sesiones de caja (requiere caja cerrada: si ya hay una abierta, omitir «Abrir caja»)."
+            "description": "GET /api/cajas — sesiones de caja (requiere caja cerrada: si ya hay una abierta, omitir «Abrir caja»)."
           },
           "response": [],
           "event": [
@@ -2899,7 +2983,7 @@
           ]
         },
         {
-          "name": "Caja abierta actual",
+          "name": "Caja actual",
           "request": {
             "method": "GET",
             "header": [
@@ -2910,17 +2994,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/caja/abierta",
+              "raw": "{{baseUrl}}/api/cajas/actual",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "caja",
-                "abierta"
+                "cajas",
+                "actual"
               ]
             },
-            "description": "GET /api/caja/abierta — devuelve la sesión ABIERTA o null."
+            "description": "GET /api/cajas/actual — devuelve la sesión ABIERTA o null."
           },
           "response": [],
           "event": [
@@ -2951,17 +3035,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/caja/abrir",
+              "raw": "{{baseUrl}}/api/cajas/abrir",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "caja",
+                "cajas",
                 "abrir"
               ]
             },
-            "description": "POST /api/caja/abrir — solo una caja ABIERTA a la vez. `montoInicialCentavos` entero >= 0.",
+            "description": "POST /api/cajas/abrir — solo una caja ABIERTA a la vez. `montoInicialCentavos` entero >= 0.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"montoInicialCentavos\": 0,\n  \"observacionesApertura\": \"Apertura de ejemplo\"\n}",
@@ -2999,17 +3083,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/caja/{{cajaId}}",
+              "raw": "{{baseUrl}}/api/cajas/{{cajaId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "caja",
+                "cajas",
                 "{{cajaId}}"
               ]
             },
-            "description": "GET /api/caja/:id."
+            "description": "GET /api/cajas/:id."
           },
           "response": [],
           "event": [
@@ -3066,45 +3150,6 @@
           ]
         },
         {
-          "name": "Saldo de una cita",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/pagos/citas/{{citaId}}/saldo",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "pagos",
-                "citas",
-                "{{citaId}}",
-                "saldo"
-              ]
-            },
-            "description": "GET /api/pagos/citas/:citaId/saldo — estado PENDIENTE/PARCIAL/PAGADO y saldo en centavos."
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "Registrar pago",
           "request": {
             "method": "POST",
@@ -3129,7 +3174,7 @@
                 "pagos"
               ]
             },
-            "description": "POST /api/pagos — requiere caja ABIERTA (si no, 409). Métodos: EFECTIVO, TARJETA, TRANSFERENCIA, OTRO. No supera el saldo; genera comprobante único.",
+            "description": "POST /api/pagos — requiere caja ABIERTA (si no, 409). Métodos: EFECTIVO, TRANSFERENCIA, TARJETA. No supera el saldo; genera comprobante único y el pago nace REGISTRADO.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"citaId\": \"{{citaId}}\",\n  \"montoCentavos\": 5000,\n  \"metodo\": \"EFECTIVO\",\n  \"notas\": \"Pago parcial de ejemplo\"\n}",
@@ -3149,7 +3194,8 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
-                  "if (j.pago && j.pago._id) pm.environment.set('pagoId', j.pago._id);"
+                  "if (j.pago && j.pago._id) pm.environment.set('pagoId', j.pago._id);",
+                  "pm.test('pago REGISTRADO', () => pm.expect(j.pago.estado).to.eql('REGISTRADO'));"
                 ]
               }
             }
@@ -3304,18 +3350,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/caja/{{cajaId}}/cerrar",
+              "raw": "{{baseUrl}}/api/cajas/{{cajaId}}/cerrar",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "caja",
+                "cajas",
                 "{{cajaId}}",
                 "cerrar"
               ]
             },
-            "description": "POST /api/caja/:id/cerrar — snapshot de totales por método y diferencia de arqueo; bloquea pagos retroactivos.",
+            "description": "POST /api/cajas/:id/cerrar — snapshot de totales por método y diferencia de arqueo; bloquea pagos retroactivos.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"totalRealCentavos\": 0,\n  \"observacionesCierre\": \"Cierre de ejemplo\"\n}",
@@ -3345,7 +3391,7 @@
       "name": "20. Bajas y cambios finales",
       "item": [
         {
-          "name": "Desactivar paciente",
+          "name": "Desactivar paciente (PATCH estado)",
           "request": {
             "method": "PATCH",
             "header": [
@@ -3353,10 +3399,14 @@
                 "key": "Authorization",
                 "value": "Bearer {{token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/pacientes/{{pacienteId}}/desactivar",
+              "raw": "{{baseUrl}}/api/pacientes/{{pacienteId}}/estado",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3364,10 +3414,19 @@
                 "api",
                 "pacientes",
                 "{{pacienteId}}",
-                "desactivar"
+                "estado"
               ]
             },
-            "description": "PATCH /api/pacientes/:id/desactivar — baja lógica."
+            "description": "PATCH /api/pacientes/:id/estado — baja lógica. Body: { \"activo\": false } (también acepta { \"estado\": \"INACTIVO\" }).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": [],
           "event": [
@@ -3383,29 +3442,41 @@
           ]
         },
         {
-          "name": "Desactivar responsable",
+          "name": "Desactivar responsable (PUT)",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/responsables/{{responsableId}}/desactivar",
+              "raw": "{{baseUrl}}/api/responsables/{{responsableId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "responsables",
-                "{{responsableId}}",
-                "desactivar"
+                "{{responsableId}}"
               ]
             },
-            "description": "PATCH /api/responsables/:id/desactivar — baja lógica."
+            "description": "PUT /api/responsables/:id — baja lógica con { \"activo\": false }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": [],
           "event": [
@@ -3459,29 +3530,41 @@
           ]
         },
         {
-          "name": "Desactivar material",
+          "name": "Desactivar material (PUT)",
           "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/materiales/{{materialId}}/desactivar",
+              "raw": "{{baseUrl}}/api/materiales/{{materialId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "materiales",
-                "{{materialId}}",
-                "desactivar"
+                "{{materialId}}"
               ]
             },
-            "description": "PATCH /api/materiales/:id/desactivar — baja lógica."
+            "description": "PUT /api/materiales/:id — baja lógica con { \"activo\": false }.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": [],
           "event": [
@@ -3512,20 +3595,21 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/solicitudes/{{solicitudId}}",
+              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudId}}/estado",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "solicitudes",
-                "{{solicitudId}}"
+                "solicitudes-cita",
+                "{{solicitudId}}",
+                "estado"
               ]
             },
-            "description": "PATCH /api/solicitudes/:id — ADMINISTRADOR o RECEPCIONISTA. Al final para no interferir con «Atender solicitud».",
+            "description": "PATCH /api/solicitudes-cita/:id/estado — ADMINISTRADOR o RECEPCIONISTA. Estados: PENDIENTE, ATENDIDA, RECHAZADA. Al final para no interferir con «Atender solicitud».",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado\": \"CANCELADA\"\n}",
+              "raw": "{\n  \"estado\": \"RECHAZADA\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3540,7 +3624,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('estado RECHAZADA', () => pm.expect(j.solicitud.estado).to.eql('RECHAZADA'));"
                 ]
               }
             }

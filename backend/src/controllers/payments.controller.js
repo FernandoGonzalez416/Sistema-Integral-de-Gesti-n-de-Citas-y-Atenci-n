@@ -3,33 +3,12 @@ import Appointment from '../models/Appointment.js';
 import Receipt from '../models/Receipt.js';
 import { cajaCerradaQueContiene, cajaAbiertaActual } from './cash.controller.js';
 import { emitirComprobante } from '../utils/receipt.js';
+import { calcularSaldo } from '../utils/saldo.js';
 import mongoose from 'mongoose';
 import { paginacion } from '../utils/consulta.js';
 
 function idValido(id) {
   return mongoose.isValidObjectId(id);
-}
-
-// Calcula el saldo de una cita: precio, pagado (solo ACTIVO), saldo y estado.
-// Estados de saldo: PENDIENTE (nada pagado), PARCIAL (algo pero < precio), PAGADO (completo).
-async function calcularSaldo(citaId) {
-  const cita = await Appointment.findById(citaId);
-  if (!cita) return null;
-  const pagos = await Payment.find({ cita: citaId, estado: 'ACTIVO' });
-  const pagadoCentavos = pagos.reduce((acc, p) => acc + p.montoCentavos, 0);
-  const precioCentavos = cita.precioCentavos;
-  const saldoCentavos = Math.max(precioCentavos - pagadoCentavos, 0);
-  let estadoSaldo = 'PENDIENTE';
-  if (pagadoCentavos >= precioCentavos && precioCentavos > 0) estadoSaldo = 'PAGADO';
-  else if (precioCentavos === 0) estadoSaldo = 'PAGADO';
-  else if (pagadoCentavos > 0) estadoSaldo = 'PARCIAL';
-  return {
-    citaId: cita._id,
-    precioCentavos,
-    pagadoCentavos,
-    saldoCentavos,
-    estadoSaldo
-  };
 }
 
 export async function listarPagos(req, res, next) {
@@ -77,20 +56,6 @@ export async function obtenerPago(req, res, next) {
   }
 }
 
-// GET /api/pagos/citas/:citaId/saldo
-export async function obtenerSaldoCita(req, res, next) {
-  try {
-    if (!idValido(req.params.citaId)) {
-      return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
-    }
-    const saldo = await calcularSaldo(req.params.citaId);
-    if (!saldo) return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
-    res.json({ ok: true, saldo });
-  } catch (e) {
-    next(e);
-  }
-}
-
 // GET /api/pagos/:id/comprobante — devuelve el comprobante del pago (lo emite si faltara).
 export async function obtenerComprobantePago(req, res, next) {
   try {
@@ -123,7 +88,10 @@ export async function registrarPago(req, res, next) {
       return res.status(400).json({ ok: false, message: 'montoCentavos debe ser un entero positivo' });
     }
     if (!METODOS_PAGO.includes(metodo)) {
-      return res.status(400).json({ ok: false, message: `Método inválido. Válidos: ${METODOS_PAGO.join(', ')}` });
+      return res.status(400).json({
+        ok: false,
+        message: `Método inválido. Válidos: ${METODOS_PAGO.join(', ')}`
+      });
     }
     const cita = await Appointment.findById(citaId);
     if (!cita) return res.status(400).json({ ok: false, message: 'Cita no encontrada' });
@@ -138,7 +106,11 @@ export async function registrarPago(req, res, next) {
       });
     }
     const fechaPago = fecha ? new Date(fecha) : new Date();
-    // Regla de negocio: solo se pueden registrar pagos si hay una caja ABIERTA.
+    if (Number.isNaN(fechaPago.getTime())) {
+      return res.status(400).json({ ok: false, message: 'Fecha de pago inválida' });
+    }
+    // RN-20/RN-21: B1 conserva el bloqueo por caja abierta y ventana cerrada.
+    // B2 reemplaza esta lógica por una referencia explícita pago→caja.
     const cajaAbierta = await cajaAbiertaActual();
     if (!cajaAbierta) {
       return res.status(409).json({
@@ -146,7 +118,6 @@ export async function registrarPago(req, res, next) {
         message: 'No hay una caja abierta. Debe abrir una caja antes de registrar pagos.'
       });
     }
-    // Bloqueo post-cierre: no se pueden registrar pagos dentro de una caja ya cerrada.
     const cajaCerrada = await cajaCerradaQueContiene(fechaPago);
     if (cajaCerrada) {
       return res.status(409).json({
@@ -176,14 +147,13 @@ export async function registrarPago(req, res, next) {
   }
 }
 
-// Anulación lógica: el pago queda en histórico con motivo.
+// Anulación lógica: el pago queda en el histórico con motivo (RN-19, RN-26).
 export async function anularPago(req, res, next) {
   try {
     if (!idValido(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Pago no encontrado' });
     }
     const { motivoAnulacion } = req.body || {};
-    // Sin coerción: el motivo debe ser texto (no se convierte a "[object Object]").
     if (typeof motivoAnulacion !== 'string' || !motivoAnulacion.trim()) {
       return res.status(400).json({ ok: false, message: 'motivoAnulacion requerido' });
     }
@@ -192,7 +162,7 @@ export async function anularPago(req, res, next) {
     if (pago.estado === 'ANULADO') {
       return res.status(409).json({ ok: false, message: 'El pago ya está anulado' });
     }
-    // Bloqueo post-cierre: no se puede anular un pago dentro de una caja ya cerrada.
+    // B1: bloqueo por ventana de caja cerrada. B2 lo cambia a pago.caja explícita.
     const cajaCerrada = await cajaCerradaQueContiene(pago.fecha);
     if (cajaCerrada) {
       return res.status(409).json({
@@ -204,7 +174,6 @@ export async function anularPago(req, res, next) {
     pago.motivoAnulacion = motivoAnulacion.trim();
     pago.anuladoEn = new Date();
     await pago.save();
-    // Mantener el comprobante coherente con la anulación del pago.
     await Receipt.updateOne({ pago: pago._id }, { $set: { estado: 'ANULADO' } });
     const saldoActualizado = await calcularSaldo(pago.cita);
     res.json({ ok: true, pago, saldo: saldoActualizado });

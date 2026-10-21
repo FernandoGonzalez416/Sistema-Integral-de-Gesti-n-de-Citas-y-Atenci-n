@@ -312,7 +312,7 @@ export async function seedDemo({ dryRun = false } = {}) {
     paciente: pa2._id, profesional: pr1._id, servicio: s2._id,
     inicio: inicio3, fin: new Date(inicio3.getTime() + s2.duracionMinutos * 60000),
     precioCentavos: s2.precioCentavos, duracionMinutos: s2.duracionMinutos,
-    estado: 'PROGRAMADA', observaciones: `${marcador('cita-03')} Limpieza (paciente menor, asiste con responsable)`
+    estado: 'PENDIENTE', observaciones: `${marcador('cita-03')} Limpieza (paciente menor, asiste con responsable)`
   }));
   const cita4 = await aplicar('cita4', Appointment, () => ({ observaciones: regexMarcador('cita-04') }), () => ({
     paciente: pa1._id, profesional: pr1._id, servicio: s1._id,
@@ -329,11 +329,11 @@ export async function seedDemo({ dryRun = false } = {}) {
 
   const pago1 = await aplicar('pago1', Payment, () => ({ notas: regexMarcador('pago-01') }), () => ({
     cita: cita1._id, paciente: pa1._id, montoCentavos: cita1.precioCentavos, metodo: 'EFECTIVO',
-    fecha: dia(-7, 9, 0), estado: 'ACTIVO', notas: `${marcador('pago-01')} Pago total`
+    fecha: dia(-7, 9, 0), estado: 'REGISTRADO', notas: `${marcador('pago-01')} Pago total`
   }));
   const pago2 = await aplicar('pago2', Payment, () => ({ notas: regexMarcador('pago-02') }), () => ({
     cita: cita2._id, paciente: pa3._id, montoCentavos: 10000, metodo: 'TARJETA',
-    fecha: dia(-7, 10, 0), estado: 'ACTIVO', notas: `${marcador('pago-02')} Seña`
+    fecha: dia(-7, 10, 0), estado: 'REGISTRADO', notas: `${marcador('pago-02')} Seña`
   }));
   await aplicar('pago4', Payment, () => ({ notas: regexMarcador('pago-04') }), () => ({
     cita: cita4._id, paciente: pa1._id, montoCentavos: cita4.precioCentavos, metodo: 'TRANSFERENCIA',
@@ -344,7 +344,7 @@ export async function seedDemo({ dryRun = false } = {}) {
   if (!saltarCajaAbierta) {
     pago5 = await aplicar('pago5', Payment, () => ({ notas: regexMarcador('pago-05') }), () => ({
       cita: cita2._id, paciente: pa3._id, montoCentavos: 5000, metodo: 'EFECTIVO',
-      fecha: ahora, estado: 'ACTIVO', notas: `${marcador('pago-05')} Saldo abonado en caja abierta`
+      fecha: ahora, estado: 'REGISTRADO', notas: `${marcador('pago-05')} Saldo abonado en caja abierta`
     }));
   }
 
@@ -352,7 +352,7 @@ export async function seedDemo({ dryRun = false } = {}) {
   // FASE 9 — CAJAS (el cierre refleja los pagos ACTIVOS de su ventana)
   // ------------------------------------------------------------------
   const pagosCaja1 = [pago1, pago2].filter(Boolean);
-  const totalesCaja1 = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0 };
+  const totalesCaja1 = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
   for (const p of pagosCaja1) totalesCaja1[p.metodo] = (totalesCaja1[p.metodo] || 0) + p.montoCentavos;
   const totalGeneralCaja1 = Object.values(totalesCaja1).reduce((a, b) => a + b, 0);
   const montoInicialCaja1 = 20000;

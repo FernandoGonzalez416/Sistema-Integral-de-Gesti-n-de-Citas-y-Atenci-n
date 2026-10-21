@@ -17,7 +17,6 @@
           <span class="dato">Efectivo: {{ formatearMonto(preview.EFECTIVO) }}</span>
           <span class="dato">Tarjeta: {{ formatearMonto(preview.TARJETA) }}</span>
           <span class="dato">Transferencia: {{ formatearMonto(preview.TRANSFERENCIA) }}</span>
-          <span class="dato">Otro: {{ formatearMonto(preview.OTRO) }}</span>
           <span class="dato">Total: {{ formatearMonto(preview.total) }}</span>
         </div>
 
@@ -47,7 +46,7 @@
         <thead>
           <tr>
             <th>Apertura</th><th>Cierre</th><th>Estado</th>
-            <th>Efectivo</th><th>Tarjeta</th><th>Transf.</th><th>Otro</th>
+            <th>Efectivo</th><th>Tarjeta</th><th>Transf.</th>
             <th>Esperado</th><th>Real</th><th>Diferencia</th>
           </tr>
         </thead>
@@ -59,7 +58,6 @@
             <td>{{ formatearMonto(c.totalesPorMetodo?.EFECTIVO) }}</td>
             <td>{{ formatearMonto(c.totalesPorMetodo?.TARJETA) }}</td>
             <td>{{ formatearMonto(c.totalesPorMetodo?.TRANSFERENCIA) }}</td>
-            <td>{{ formatearMonto(c.totalesPorMetodo?.OTRO) }}</td>
             <td>{{ formatearMonto(c.totalEsperadoCentavos) }}</td>
             <td>{{ formatearMonto(c.totalRealCentavos) }}</td>
             <td :class="{ neg: c.diferenciaCentavos < 0, pos: c.diferenciaCentavos > 0 }">
@@ -76,7 +74,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
-import { getCajaAbierta, getCajas, abrirCaja, cerrarCaja, getPagos } from '../api/client.js';
+import { getCajaActual, getCajas, abrirCaja, cerrarCaja, getPagos } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 
@@ -91,7 +89,7 @@ const mensaje = ref('');
 const formApertura = reactive({ montoInicial: '', observaciones: '' });
 const formCierre = reactive({ totalReal: '', observaciones: '' });
 
-const preview = reactive({ EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0, total: 0 });
+const preview = reactive({ EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, total: 0 });
 
 function formatearMonto(centavos) {
   // Quetzales (GTQ): Q1,250.00
@@ -111,7 +109,7 @@ async function cargar() {
     error.value = '';
     cargando.value = true;
     const [abierta, lista] = await Promise.all([
-      getCajaAbierta(auth.token),
+      getCajaActual(auth.token),
       getCajas(auth.token, { limit: 50 })
     ]);
     cajaAbierta.value = abierta.caja;
@@ -125,13 +123,13 @@ async function cargar() {
 }
 
 async function cargarPreview() {
-  const datos = await getPagos(auth.token, { desde: cajaAbierta.value.fechaApertura, estado: 'ACTIVO', limit: 500 });
-  const t = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0 };
+  const datos = await getPagos(auth.token, { desde: cajaAbierta.value.fechaApertura, estado: 'REGISTRADO', limit: 500 });
+  const t = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
   for (const p of datos.pagos) {
     if (t[p.metodo] !== undefined) t[p.metodo] += p.montoCentavos;
   }
   Object.assign(preview, t);
-  preview.total = t.EFECTIVO + t.TARJETA + t.TRANSFERENCIA + t.OTRO;
+  preview.total = t.EFECTIVO + t.TARJETA + t.TRANSFERENCIA;
 }
 
 async function abrir() {

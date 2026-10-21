@@ -7,13 +7,14 @@ function idValido(id) {
   return mongoose.isValidObjectId(id);
 }
 
-// Suma los pagos ACTIVO por método en un rango de fechas.
+// Suma los pagos válidos (REGISTRADO) por método en un rango de fechas.
+// B1 conserva la ventana temporal; B2 reemplaza el cálculo por caja explícita.
 export async function calcularTotalesPorMetodo(desde, hasta) {
   const pagos = await Payment.find({
-    estado: 'ACTIVO',
+    estado: 'REGISTRADO',
     fecha: { $gte: desde, $lte: hasta }
   });
-  const totales = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0 };
+  const totales = { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0 };
   for (const p of pagos) {
     if (totales[p.metodo] === undefined) totales[p.metodo] = 0;
     totales[p.metodo] += p.montoCentavos;
@@ -22,8 +23,8 @@ export async function calcularTotalesPorMetodo(desde, hasta) {
   return { totales, totalGeneral };
 }
 
-// GET /api/caja/abierta
-export async function obtenerCajaAbierta(req, res, next) {
+// GET /api/cajas/actual
+export async function obtenerCajaActual(req, res, next) {
   try {
     const caja = await CashSession.findOne({ estado: 'ABIERTA' })
       .populate('abiertaPor', 'nombre email');
@@ -74,7 +75,7 @@ export async function obtenerCaja(req, res, next) {
   }
 }
 
-// POST /api/caja/abrir
+// POST /api/cajas/abrir
 export async function abrirCaja(req, res, next) {
   try {
     const { montoInicialCentavos = 0, observacionesApertura } = req.body || {};
@@ -83,7 +84,10 @@ export async function abrirCaja(req, res, next) {
     }
     const abierta = await CashSession.findOne({ estado: 'ABIERTA' });
     if (abierta) {
-      return res.status(409).json({ ok: false, message: 'Ya hay una caja abierta. Debe cerrarla antes de abrir otra.' });
+      return res.status(409).json({
+        ok: false,
+        message: 'Ya hay una caja abierta. Debe cerrarla antes de abrir otra.'
+      });
     }
     const caja = new CashSession({
       estado: 'ABIERTA',
@@ -99,7 +103,7 @@ export async function abrirCaja(req, res, next) {
   }
 }
 
-// POST /api/caja/:id/cerrar
+// POST /api/cajas/:id/cerrar
 export async function cerrarCaja(req, res, next) {
   try {
     if (!idValido(req.params.id)) {
@@ -116,7 +120,6 @@ export async function cerrarCaja(req, res, next) {
     }
     const fechaCierre = new Date();
     const { totales, totalGeneral } = await calcularTotalesPorMetodo(caja.fechaApertura, fechaCierre);
-    // El total esperado suma el monto inicial (efectivo de apertura) más lo cobrado.
     const totalEsperadoCentavos = caja.montoInicialCentavos + totalGeneral;
     caja.totalesPorMetodo = totales;
     caja.totalEsperadoCentavos = totalEsperadoCentavos;
@@ -136,8 +139,7 @@ export async function cerrarCaja(req, res, next) {
   }
 }
 
-// Devuelve la sesión CERRADA cuyo rango [fechaApertura, fechaCierre] contiene la fecha dada.
-// Se usa para bloquear pagos/anulaciones posteriores al cierre de esa caja.
+// Devuelve la sesión CERRADA cuyo rango [fechaApertura, fechaCierre] contiene la fecha.
 export async function cajaCerradaQueContiene(fecha) {
   return CashSession.findOne({
     estado: 'CERRADA',
@@ -146,8 +148,7 @@ export async function cajaCerradaQueContiene(fecha) {
   });
 }
 
-// Devuelve la sesión de caja ABIERTA (o null). Por diseño solo puede existir una a la vez.
-// Se usa para exigir una caja abierta antes de registrar pagos.
+// Devuelve la sesión de caja ABIERTA (o null). B1: unicidad global.
 export async function cajaAbiertaActual() {
   return CashSession.findOne({ estado: 'ABIERTA' });
 }

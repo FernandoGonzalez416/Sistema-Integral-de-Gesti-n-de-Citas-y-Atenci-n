@@ -63,3 +63,12 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Alternativas descartadas:** Limpiar el dato después de guardarlo; coercer números a texto en `telefono`; responder 400 por elementos inválidos de `incluye` (se prefirió descartarlos para no cambiar el contrato del catálogo).
 - **Impacto:** Backend, 9 controladores. Sin cambios de contrato para entradas válidas, sin dependencias nuevas y sin cambios en frontend (ya envía texto).
 - **Commit relacionado:** `fix(api): rechazar tipos inválidos en los campos de texto`
+
+## 2026-10-21 - feat(api): alinear el contrato de la API con REQUISITOS.md (B1)
+
+- **Cambio:** se renombraron las rutas a `/api/servicios`, `/api/usuarios`, `/api/solicitudes-cita`, `/api/cajas` y `/api/contenido`; las ediciones completas pasaron a `PUT`; se añadieron `PUT /api/citas/:id`, `GET /api/citas/:id/pagos` y `GET /api/citas/:id/saldo`; se alinearon los estados de cita, solicitud y pago, y los métodos de pago a `EFECTIVO|TRANSFERENCIA|TARJETA`. Se añadió la migración idempotente `backend/scripts/migrarEstados.js` y se actualizaron seed, tests, frontend y Postman.
+- **Motivo:** `docs/REQUISITOS.md` es la fuente de verdad del proyecto; el contrato anterior usaba rutas en inglés, `PATCH` para ediciones y estados que ya no existen, lo que impedía evaluar el sistema contra el RF.
+- **Alternativas descartadas:** mantener alias de las rutas antiguas (duplica el contrato y las reglas de autorización); conservar `REPROGRAMADA` como estado (la reprogramación ahora es una edición que conserva el estado); migrar `OTRO` a un cuarto método (el RF solo admite tres).
+- **Impacto:** backend (modelos, controladores, rutas, seed y tests), frontend (cliente API, constantes y 9 vistas), colección Postman y documentación. Sin dependencias nuevas, sin TypeScript y sin cambios en la base de desarrollo `sigca`. La migración no elimina documentos.
+- **Verificación:** `npm test` **67/67 en dos corridas**; `npm run build` verde; Postman **80 peticiones / 90 asserts, 0 fallos**; migración `--dry-run` sin escrituras, aplicación correcta y segunda simulación con **0 cambios**. **UI no verificada en navegador** (solo build).
+- **Commit relacionado:** `6052ad6` (backend), `ce95dca` (frontend), `1c8d821` (Postman), este commit (docs).

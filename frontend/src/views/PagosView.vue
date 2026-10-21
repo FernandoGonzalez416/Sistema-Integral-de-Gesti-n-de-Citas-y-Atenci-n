@@ -87,7 +87,7 @@
               <td>{{ p.estado }}<span v-if="p.motivoAnulacion"> ({{ p.motivoAnulacion }})</span></td>
               <td>{{ p.notas || '—' }}</td>
               <td>
-                <button v-if="p.estado === 'ACTIVO'" @click="anular(p)">Anular</button>
+                <button v-if="p.estado === 'REGISTRADO'" @click="anular(p)">Anular</button>
               </td>
             </tr>
           </tbody>
@@ -101,14 +101,15 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
-import { getCitas, getPagos, getSaldoCita, createPago, anularPago } from '../api/client.js';
+import { getCitas, getPagosCita, getSaldoCita, createPago, anularPago } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import { ESTADOS_CITA, METODOS_PAGO } from '../constants/sigca.js';
 
 const auth = useAuthStore();
 
-const estados = ['PROGRAMADA', 'CONFIRMADA', 'REPROGRAMADA', 'CANCELADA', 'COMPLETADA', 'NO_ASISTIO'];
-const metodos = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
+const estados = ESTADOS_CITA;
+const metodos = METODOS_PAGO;
 
 const citas = ref([]);
 const totalCitas = ref(0);
@@ -172,15 +173,19 @@ async function seleccionar(cita) {
 
 async function cargarSaldo() {
   if (!citaSeleccionada.value) return;
-  const datos = await getSaldoCita(auth.token, citaSeleccionada.value._id);
-  saldo.value = datos.saldo;
+  try {
+    const datos = await getSaldoCita(auth.token, citaSeleccionada.value._id);
+    saldo.value = datos.saldo;
+  } catch (e) {
+    error.value = e.message;
+  }
 }
 
 async function cargarPagos() {
   if (!citaSeleccionada.value) return;
   try {
     cargandoPagos.value = true;
-    const datos = await getPagos(auth.token, { cita: citaSeleccionada.value._id, limit: 100 });
+    const datos = await getPagosCita(auth.token, citaSeleccionada.value._id);
     pagos.value = datos.pagos;
   } catch (e) {
     error.value = e.message;

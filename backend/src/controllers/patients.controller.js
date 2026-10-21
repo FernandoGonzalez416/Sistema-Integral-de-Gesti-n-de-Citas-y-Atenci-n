@@ -105,16 +105,30 @@ export async function actualizarPaciente(req, res, next) {
   }
 }
 
-export async function desactivarPaciente(req, res, next) {
+// PATCH /api/pacientes/:id/estado — activación/desactivación lógica.
+// Acepta { activo: boolean } o { estado: 'ACTIVO' | 'INACTIVO' }.
+export async function cambiarEstadoPaciente(req, res, next) {
   try {
     if (!idValido(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
+    }
+    const body = req.body || {};
+    let activo;
+    if (typeof body.activo === 'boolean') {
+      activo = body.activo;
+    } else if (body.estado === 'ACTIVO' || body.estado === 'INACTIVO') {
+      activo = body.estado === 'ACTIVO';
+    } else {
+      return res.status(400).json({
+        ok: false,
+        message: "Indique activo (booleano) o estado ('ACTIVO'|'INACTIVO')"
+      });
     }
     const paciente = await Patient.findById(req.params.id);
     if (!paciente) {
       return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
     }
-    paciente.activo = false;
+    paciente.activo = activo;
     await paciente.save();
     res.json({ ok: true, paciente });
   } catch (e) {

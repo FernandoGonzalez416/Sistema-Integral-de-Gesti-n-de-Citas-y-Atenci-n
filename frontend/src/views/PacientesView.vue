@@ -67,7 +67,7 @@
 import { onMounted, reactive, ref, computed } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import {
-  getPacientes, createPaciente, updatePaciente, desactivarPaciente
+  getPacientes, createPaciente, updatePaciente, patchEstadoPaciente
 } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
@@ -138,9 +138,9 @@ async function toggleActivo(p) {
   try {
     error.value = '';
     if (p.activo) {
-      await desactivarPaciente(auth.token, p._id);
+      await patchEstadoPaciente(auth.token, p._id, false);
     } else {
-      await updatePaciente(auth.token, p._id, { activo: true });
+      await patchEstadoPaciente(auth.token, p._id, true);
     }
     await cargar();
   } catch (e) {

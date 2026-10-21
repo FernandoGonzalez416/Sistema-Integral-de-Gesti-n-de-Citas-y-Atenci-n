@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
-// Caja diaria: una sesión de caja. Puede haber una sola ABIERTA a la vez.
+// Caja diaria: una sesión de caja. En B1 se mantiene la unicidad global de caja
+// abierta; B2 la cambia a una caja abierta por usuario y liga cada pago a su caja.
 // Al cerrar se guarda un snapshot de los totales por método y la diferencia de arqueo.
 const cashSessionSchema = new mongoose.Schema(
   {
@@ -15,8 +16,7 @@ const cashSessionSchema = new mongoose.Schema(
     totalesPorMetodo: {
       EFECTIVO: { type: Number, default: 0 },
       TARJETA: { type: Number, default: 0 },
-      TRANSFERENCIA: { type: Number, default: 0 },
-      OTRO: { type: Number, default: 0 }
+      TRANSFERENCIA: { type: Number, default: 0 }
     },
     totalEsperadoCentavos: { type: Number, default: 0 },
     totalRealCentavos: { type: Number, default: 0 },

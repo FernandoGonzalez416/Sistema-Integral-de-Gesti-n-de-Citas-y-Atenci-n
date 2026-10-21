@@ -60,7 +60,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import {
-  getResponsables, createResponsable, updateResponsable, desactivarResponsable
+  getResponsables, createResponsable, updateResponsable
 } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
@@ -126,11 +126,7 @@ function editar(r) {
 async function toggleActivo(r) {
   try {
     error.value = '';
-    if (r.activo) {
-      await desactivarResponsable(auth.token, r._id);
-    } else {
-      await updateResponsable(auth.token, r._id, { activo: true });
-    }
+    await updateResponsable(auth.token, r._id, { activo: !r.activo });
     await cargar();
   } catch (e) {
     error.value = e.message;

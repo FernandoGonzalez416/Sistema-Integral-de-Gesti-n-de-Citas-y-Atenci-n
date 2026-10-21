@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  obtenerCajaAbierta,
+  obtenerCajaActual,
   listarCajas,
   obtenerCaja,
   abrirCaja,
@@ -14,7 +14,7 @@ const router = Router();
 router.use(auth, permitir('ADMINISTRADOR', 'RECEPCIONISTA'));
 
 router.get('/', listarCajas);
-router.get('/abierta', obtenerCajaAbierta);
+router.get('/actual', obtenerCajaActual);
 router.get('/:id', obtenerCaja);
 router.post('/abrir', abrirCaja);
 router.post('/:id/cerrar', cerrarCaja);

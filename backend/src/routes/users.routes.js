@@ -11,6 +11,6 @@ router.use(auth, permitir('ADMINISTRADOR'));
 router.get('/', listar);
 router.post('/', crear);
 router.get('/:id', obtener);
-router.patch('/:id', actualizar);
+router.put('/:id', actualizar);
 
 export default router;

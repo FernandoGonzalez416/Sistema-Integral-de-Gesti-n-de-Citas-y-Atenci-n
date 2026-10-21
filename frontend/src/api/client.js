@@ -9,14 +9,14 @@ export async function getHealth() {
 }
 
 export async function getContenido(clave) {
-  const res = await fetch(`${baseUrl}/api/contenidos/${clave}`);
+  const res = await fetch(`${baseUrl}/api/contenido/${clave}`);
   if (!res.ok) throw new Error('Contenido no disponible');
   const datos = await res.json();
   return datos.contenido;
 }
 
 export async function getServicios() {
-  const res = await fetch(`${baseUrl}/api/services`);
+  const res = await fetch(`${baseUrl}/api/servicios`);
   if (!res.ok) throw new Error('Servicios no disponibles');
   return (await res.json()).servicios;
 }
@@ -28,7 +28,7 @@ export async function getHorarios() {
 }
 
 export async function getContacto() {
-  const res = await fetch(`${baseUrl}/api/contenidos`);
+  const res = await fetch(`${baseUrl}/api/contenido`);
   if (!res.ok) throw new Error('Contacto no disponible');
   return (await res.json()).contenidos;
 }
@@ -45,7 +45,7 @@ export async function postContacto(datos) {
 }
 
 export async function postSolicitud(datos) {
-  const res = await fetch(`${baseUrl}/api/solicitudes`, {
+  const res = await fetch(`${baseUrl}/api/solicitudes-cita`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos)
@@ -76,16 +76,15 @@ export const getPacientes = (token, params = {}) => {
   return authFetch(token, `/api/pacientes${qs ? '?' + qs : ''}`);
 };
 export const createPaciente = (token, datos) => authFetch(token, '/api/pacientes', { method: 'POST', body: JSON.stringify(datos) });
-export const updatePaciente = (token, id, datos) => authFetch(token, `/api/pacientes/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
-export const desactivarPaciente = (token, id) => authFetch(token, `/api/pacientes/${id}/desactivar`, { method: 'PATCH' });
+export const updatePaciente = (token, id, datos) => authFetch(token, `/api/pacientes/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const patchEstadoPaciente = (token, id, activo) => authFetch(token, `/api/pacientes/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ activo }) });
 
 export const getResponsables = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
   return authFetch(token, `/api/responsables${qs ? '?' + qs : ''}`);
 };
 export const createResponsable = (token, datos) => authFetch(token, '/api/responsables', { method: 'POST', body: JSON.stringify(datos) });
-export const updateResponsable = (token, id, datos) => authFetch(token, `/api/responsables/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
-export const desactivarResponsable = (token, id) => authFetch(token, `/api/responsables/${id}/desactivar`, { method: 'PATCH' });
+export const updateResponsable = (token, id, datos) => authFetch(token, `/api/responsables/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 
 export const getRelaciones = (token, pacienteId) => authFetch(token, `/api/pacientes/${pacienteId}/responsables`);
 export const asociarResponsable = (token, pacienteId, responsableId) => authFetch(token, `/api/pacientes/${pacienteId}/responsables`, { method: 'POST', body: JSON.stringify({ responsableId }) });
@@ -98,8 +97,7 @@ export const getMateriales = (token, params = {}) => {
   return authFetch(token, `/api/materiales${qs ? '?' + qs : ''}`);
 };
 export const createMaterial = (token, datos) => authFetch(token, '/api/materiales', { method: 'POST', body: JSON.stringify(datos) });
-export const updateMaterial = (token, id, datos) => authFetch(token, `/api/materiales/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
-export const desactivarMaterial = (token, id) => authFetch(token, `/api/materiales/${id}/desactivar`, { method: 'PATCH' });
+export const updateMaterial = (token, id, datos) => authFetch(token, `/api/materiales/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 
 export const getMaterialesPaciente = (token, pacienteId) => authFetch(token, `/api/pacientes/${pacienteId}/materiales`);
 export const asignarMaterial = (token, pacienteId, materialId, notas = '') => authFetch(token, `/api/pacientes/${pacienteId}/materiales`, { method: 'POST', body: JSON.stringify({ materialId, notas }) });
@@ -109,23 +107,25 @@ export const getPagos = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
   return authFetch(token, `/api/pagos${qs ? '?' + qs : ''}`);
 };
-export const getSaldoCita = (token, citaId) => authFetch(token, `/api/pagos/citas/${citaId}/saldo`);
+export const getSaldoCita = (token, citaId) => authFetch(token, `/api/citas/${citaId}/saldo`);
+export const getPagosCita = (token, citaId) => authFetch(token, `/api/citas/${citaId}/pagos`);
 export const createPago = (token, datos) => authFetch(token, '/api/pagos', { method: 'POST', body: JSON.stringify(datos) });
 export const anularPago = (token, id, motivoAnulacion) => authFetch(token, `/api/pagos/${id}/anular`, { method: 'PATCH', body: JSON.stringify({ motivoAnulacion }) });
 
-export const getCajaAbierta = (token) => authFetch(token, '/api/caja/abierta');
+export const getCajaActual = (token) => authFetch(token, '/api/cajas/actual');
 export const getCajas = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
-  return authFetch(token, `/api/caja${qs ? '?' + qs : ''}`);
+  return authFetch(token, `/api/cajas${qs ? '?' + qs : ''}`);
 };
-export const abrirCaja = (token, datos) => authFetch(token, '/api/caja/abrir', { method: 'POST', body: JSON.stringify(datos) });
-export const cerrarCaja = (token, id, datos) => authFetch(token, `/api/caja/${id}/cerrar`, { method: 'POST', body: JSON.stringify(datos) });
+export const abrirCaja = (token, datos) => authFetch(token, '/api/cajas/abrir', { method: 'POST', body: JSON.stringify(datos) });
+export const cerrarCaja = (token, id, datos) => authFetch(token, `/api/cajas/${id}/cerrar`, { method: 'POST', body: JSON.stringify(datos) });
 
 export const getCitas = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
   return authFetch(token, `/api/citas${qs ? '?' + qs : ''}`);
 };
 export const getCita = (token, id) => authFetch(token, `/api/citas/${id}`);
+export const updateCita = (token, id, datos) => authFetch(token, `/api/citas/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 
 export const getProfesionales = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
@@ -182,19 +182,19 @@ async function conAuth(token, ruta, opciones = {}) {
   return datos;
 }
 
-export const getUsers = (token) => conAuth(token, '/api/users');
-export const createUser = (token, datos) =>
-  conAuth(token, '/api/users', { method: 'POST', body: JSON.stringify(datos) });
-export const patchUser = (token, id, datos) =>
-  conAuth(token, `/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
-export const getServicesTodos = (token) => conAuth(token, '/api/services/admin/todos');
-export const createService = (token, datos) =>
-  conAuth(token, '/api/services', { method: 'POST', body: JSON.stringify(datos) });
-export const patchService = (token, id, datos) =>
-  conAuth(token, `/api/services/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
-export const getContentsTodos = (token) => conAuth(token, '/api/contenidos/admin/todos');
-export const patchContent = (token, id, datos) =>
-  conAuth(token, `/api/contenidos/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
+export const getUsuarios = (token) => conAuth(token, '/api/usuarios');
+export const createUsuario = (token, datos) =>
+  conAuth(token, '/api/usuarios', { method: 'POST', body: JSON.stringify(datos) });
+export const updateUsuario = (token, id, datos) =>
+  conAuth(token, `/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const getServiciosTodos = (token) => conAuth(token, '/api/servicios/admin/todos');
+export const createServicio = (token, datos) =>
+  conAuth(token, '/api/servicios', { method: 'POST', body: JSON.stringify(datos) });
+export const updateServicio = (token, id, datos) =>
+  conAuth(token, `/api/servicios/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const getContenidosTodos = (token) => conAuth(token, '/api/contenido/admin/todos');
+export const updateContenido = (token, id, datos) =>
+  conAuth(token, `/api/contenido/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 export const getSchedulesTodos = (token) => conAuth(token, '/api/horarios/admin/todos');
 export const createSchedule = (token, datos) =>
   conAuth(token, '/api/horarios', { method: 'POST', body: JSON.stringify(datos) });

@@ -8,6 +8,8 @@
     "start": "node server.js",
     "seed:demo": "node seedDemo.js",
     "seed:demo:dry": "node seedDemo.js --dry-run",
+    "migrar:estados": "node scripts/migrarEstados.js",
+    "migrar:estados:dry": "node scripts/migrarEstados.js --dry-run",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {
