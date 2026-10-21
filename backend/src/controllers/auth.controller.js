@@ -104,6 +104,7 @@ export function sanitizarPerfil(entrada, rol) {
   if (!entrada || typeof entrada !== 'object') return err('Datos de perfil inválidos');
 
   if (entrada.telefono !== undefined) {
+    if (entrada.telefono !== null && typeof entrada.telefono !== 'string') return err('Teléfono inválido');
     const t = limpiar(entrada.telefono);
     if (!RE_TELEFONO.test(t)) return err('Teléfono inválido');
     salida.telefono = t;
@@ -147,6 +148,13 @@ export function sanitizarPerfil(entrada, rol) {
   }
   if (entrada.contactoEmergencia !== undefined) {
     const c = entrada.contactoEmergencia || {};
+    // Sin coerción: si llegan, nombre y teléfono deben ser texto (no "[object Object]").
+    if (
+      (c.nombre !== undefined && typeof c.nombre !== 'string') ||
+      (c.telefono !== undefined && typeof c.telefono !== 'string')
+    ) {
+      return err('Contacto de emergencia inválido');
+    }
     const nombre = limpiar(c.nombre);
     const telefono = limpiar(c.telefono);
     if (nombre.length > 80 || !RE_TELEFONO.test(telefono)) return err('Contacto de emergencia inválido');
@@ -160,14 +168,15 @@ export function sanitizarPerfil(entrada, rol) {
 export async function login(req, res, next) {
   try {
     const { email, password } = req.body || {};
-    if (!email || !password) {
+    // Sin coerción: email y password deben ser texto.
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
       return res.status(400).json({ ok: false, message: 'Email y password requeridos' });
     }
-    const usuario = await User.findOne({ email: String(email).toLowerCase().trim() }).select('+password');
+    const usuario = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
     if (!usuario || !usuario.activo) {
       return res.status(401).json({ ok: false, message: 'Credenciales inválidas' });
     }
-    const coincide = await usuario.compararPassword(String(password));
+    const coincide = await usuario.compararPassword(password);
     if (!coincide) {
       return res.status(401).json({ ok: false, message: 'Credenciales inválidas' });
     }
@@ -183,7 +192,7 @@ export async function registrar(req, res, next) {
     const { nombre, email, password, foto } = req.body || {};
     const n = validarNombre(nombre);
     if (n.error) return res.status(400).json({ ok: false, message: n.error });
-    const correo = String(email || '').toLowerCase().trim();
+    const correo = (typeof email === 'string' ? email : '').toLowerCase().trim();
     if (!RE_EMAIL.test(correo) || correo.length > 120) {
       return res.status(400).json({ ok: false, message: 'Correo electrónico inválido' });
     }
@@ -241,7 +250,7 @@ export async function cambiarPassword(req, res, next) {
   try {
     const { actual, nueva } = req.body || {};
     const usuario = await User.findById(req.usuario._id).select('+password');
-    if (!actual || !(await usuario.compararPassword(String(actual)))) {
+    if (typeof actual !== 'string' || !actual || !(await usuario.compararPassword(actual))) {
       return res.status(400).json({ ok: false, message: 'La contraseña actual no es correcta' });
     }
     const p = validarPassword(nueva);

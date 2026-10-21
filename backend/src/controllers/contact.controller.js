@@ -8,13 +8,17 @@ export async function crear(req, res, next) {
     if (!nombre || !email || !mensaje) {
       return res.status(400).json({ ok: false, message: 'Nombre, email y mensaje requeridos' });
     }
-    if (!/.+@.+\..+/.test(String(email))) {
+    // Sin coerción: un tipo inválido (objeto, número…) no se convierte a "[object Object]".
+    if (typeof nombre !== 'string' || typeof email !== 'string' || typeof mensaje !== 'string') {
+      return res.status(400).json({ ok: false, message: 'Nombre, email y mensaje deben ser texto' });
+    }
+    if (!/.+@.+\..+/.test(email)) {
       return res.status(400).json({ ok: false, message: 'Email inválido' });
     }
-    if (String(mensaje).trim().length < 10) {
+    if (mensaje.trim().length < 10) {
       return res.status(400).json({ ok: false, message: 'Mensaje mínimo de 10 caracteres' });
     }
-    const msg = new ContactMessage({ nombre: String(nombre).trim(), email, mensaje });
+    const msg = new ContactMessage({ nombre: nombre.trim(), email, mensaje });
     await msg.save();
     res.status(201).json({ ok: true, mensaje: 'Mensaje recibido. Te contactaremos pronto.' });
   } catch (e) {

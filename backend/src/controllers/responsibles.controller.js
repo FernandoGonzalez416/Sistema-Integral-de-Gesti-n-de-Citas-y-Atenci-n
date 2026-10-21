@@ -20,7 +20,7 @@ function validarResponsable(datos, esActualizacion = false) {
       return 'Nombre, apellido, teléfono y parentesco requeridos';
     }
   }
-  if (telefono && String(telefono).trim().length < 6) {
+  if (telefono && (typeof telefono !== 'string' || telefono.trim().length < 6)) {
     return 'Teléfono muy corto';
   }
   return null;

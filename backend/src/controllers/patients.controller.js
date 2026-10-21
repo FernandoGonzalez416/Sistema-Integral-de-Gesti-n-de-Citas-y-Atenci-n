@@ -28,7 +28,7 @@ function validarPaciente(datos, esActualizacion = false) {
   if (sexo && !['M', 'F', 'Otro'].includes(sexo)) {
     return "sexo debe ser 'M', 'F' o 'Otro'";
   }
-  if (telefono && String(telefono).trim().length < 6) {
+  if (telefono && (typeof telefono !== 'string' || telefono.trim().length < 6)) {
     return 'Teléfono muy corto';
   }
   return null;

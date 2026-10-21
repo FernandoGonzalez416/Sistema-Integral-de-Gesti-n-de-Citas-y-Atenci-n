@@ -1361,6 +1361,46 @@ app.use('/api/pacientes', patientsRoutes);
 
 **Regresión:** `npm test` → **43/43**; `node --check` de los 5 archivos tocados → OK.
 
-**Observación relacionada NO cerrada (nueva, fuera de alcance):** el patrón `String(valor).trim()` (coerción de tipos inválidos a texto) también existe en `contact`, `requests` y `publications` (alta) y en `payments` (`motivoAnulacion`) y `auth` (login). Requiere una revisión transversal aparte; no se tocó.
+**Observación relacionada → ✅ CERRADA el 2026-10-21** (ver la sección siguiente: "Cierre de la coerción de tipos a texto").
 
 **Aislamiento y limpieza:** BD `sigca_verif_obs` eliminada; script temporal borrado; `sigca` **intacta**. Sin commits.
+
+## 2026-10-21 — Cierre de la coerción de tipos a texto (`String(...)`) en contact/requests/publications/payments/auth
+
+**Contexto:** el 2026-10-16 quedó abierta la observación (no defecto) de que el patrón `String(valor).trim()` convierte cualquier tipo inválido en `"[object Object]"` en lugar de rechazarlo. El usuario autorizó cerrarla en la rama `fix/validaciones-tipos`.
+
+**Regla aplicada:** todo campo de **texto** que llega del cliente debe ser `string`; si no lo es → **400** (sin guardar nada). No se coerciona ningún valor de entrada antes de persistirlo.
+
+**Reproducción ANTES** (HTTP real + lectura en MongoDB, BD desechable `sigca_verif_coercion_before`, puerto 3995, 19 peticiones):
+
+| Caso | Antes | Dato guardado |
+|---|---|---|
+| `POST /api/contacto {nombre:{}}` | **201** | `nombre = "[object Object]"` |
+| `POST /api/solicitudes {nombre:{}}` | **201** | `nombre = "[object Object]"` |
+| `POST /api/publicaciones {titulo:{}}` (ADMIN) | **201** | `titulo = "[object Object]"` |
+| `PATCH /api/pagos/:id/anular {motivoAnulacion:{}}` | **200** | `motivoAnulacion = "[object Object]"` |
+| `POST /api/services {incluye:[{}, "Limpieza"]}` | **201** | `incluye = ["[object Object]", "Limpieza"]` |
+| `PATCH /api/auth/perfil {perfil:{contactoEmergencia:{nombre:{}}}}` | **200** | `perfil.contactoEmergencia.nombre = "[object Object]"` |
+| `POST /api/pacientes {telefono:1234567890}` (número) | **201** | `telefono` coercionado a texto |
+| `POST /api/auth/login {email:{}, password:{}}` | **401** | (no guarda; coerción en la consulta) |
+
+**Causa raíz:** coerción explícita `String(valor)` **antes** de asignar/guardar (o antes de comparar, en `login`): un objeto se convierte en `"[object Object]"`, que supera las validaciones de longitud y se persiste como texto válido.
+
+**Corrección (mínima, por controlador):**
+- `contact.controller.js`: `nombre`/`email`/`mensaje` deben ser texto → **400**; se guarda `nombre.trim()` (sin `String()`).
+- `requests.controller.js`: `nombre`/`telefono`/`email`/`mensaje` deben ser texto → **400**; se elimina `String()` de las comprobaciones y del alta.
+- `publications.controller.js` (alta): `titulo`/`descripcion` (y `imagenUrl`/`enlace` si llegan) deben ser texto → **400**; se guarda `titulo.trim()`.
+- `payments.controller.js` (`anularPago`): `motivoAnulacion` debe ser texto no vacío → **400**; se guarda `motivoAnulacion.trim()`.
+- `services.controller.js` (`catalogo`): `incluye` solo conserva elementos de texto (los demás se descartan) y se recortan.
+- `auth.controller.js`: `login` exige `email`/`password` de texto (**400** si no); `registro` no coerciona `email` (sigue devolviendo **400** "Correo electrónico inválido"); `cambiarPassword` exige `actual` de texto; `sanitizarPerfil` exige `telefono` y `contactoEmergencia.{nombre,telefono}` de texto (**400**).
+- `patients/professionals/responsibles.controller.js`: `telefono` debe ser texto (antes solo se medía su longitud coercionando); los teléfonos válidos se comportan igual.
+
+**Verificación DESPUÉS** (mismo guion, BD `sigca_verif_coercion_after`, puerto 3994, 19 peticiones): los casos con tipo inválido → **400** (salvo `incluye`, que devuelve **201** guardando solo `["Limpieza"]`); **0 documentos** con `"[object Object]"` en las 6 colecciones; **0 respuestas 5xx**.
+
+**Positivos intactos (9/9):** alta válida de contacto (**201**), solicitud (**201**), publicación (**201**, `titulo` recortado), servicio (**201**, `incluye` intacto), perfil (**200**, `contactoEmergencia` guardado), paciente (**201**, `telefono` texto), anulación (**200**, motivo recortado), profesional (**201**) y responsable (**201**).
+
+**Regresión:** `npm test` → **43/43**.
+
+**`String()` que se mantiene (solo validación o uso interno; no pueden guardar datos coercionados):** `auth` `limpiar()` (sus usos pasan por `RE_NOMBRE`/`RE_TELEFONO` o por el chequeo `typeof`), `utils/consulta.js` `regexBusqueda` (búsqueda escapada, no persiste), `content.controller.js` (`req.params.clave`, siempre texto), `receipt.js`/`seedDemo.js`/`users.controller.js` (ObjectIds y numeración internos) y `requests.controller.js` (test de forma ISO sobre `fechaPreferida`, ya validada con `new Date` y no persistida tal cual).
+
+**Aislamiento y limpieza:** BDs `sigca_verif_coercion_before`/`_after` eliminadas; script temporal borrado; `sigca` **intacta**.

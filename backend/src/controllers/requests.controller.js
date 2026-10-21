@@ -12,8 +12,14 @@ const MAX_DIAS_ADELANTE = 90;
 export async function crear(req, res, next) {
   try {
     const { nombre, telefono, email, servicio, fechaPreferida, mensaje, franja, primeraVez } = req.body || {};
-    const nombreLimpio = String(nombre ?? '').trim();
-    const telefonoLimpio = String(telefono ?? '').trim();
+    // Sin coerción: los campos de texto deben ser texto (no se convierten a "[object Object]").
+    for (const [campo, valor] of [['nombre', nombre], ['telefono', telefono], ['email', email], ['mensaje', mensaje]]) {
+      if (valor !== undefined && typeof valor !== 'string') {
+        return res.status(400).json({ ok: false, message: `El campo ${campo} debe ser texto` });
+      }
+    }
+    const nombreLimpio = (nombre ?? '').trim();
+    const telefonoLimpio = (telefono ?? '').trim();
     if (!nombreLimpio || !telefonoLimpio) {
       return res.status(400).json({ ok: false, message: 'Nombre y teléfono requeridos' });
     }
@@ -24,10 +30,10 @@ export async function crear(req, res, next) {
     if (!/^[\d\s+()-]+$/.test(telefonoLimpio) || digitos.length < 7 || digitos.length > 15) {
       return res.status(400).json({ ok: false, message: 'Teléfono inválido' });
     }
-    if (email && (String(email).length > 254 || !EMAIL_RE.test(String(email).trim()))) {
+    if (email && (email.length > 254 || !EMAIL_RE.test(email.trim()))) {
       return res.status(400).json({ ok: false, message: 'Email inválido' });
     }
-    if (mensaje && String(mensaje).length > 1000) {
+    if (mensaje && mensaje.length > 1000) {
       return res.status(400).json({ ok: false, message: 'El mensaje no puede superar 1000 caracteres' });
     }
     if (franja !== undefined && !FRANJAS.includes(franja)) {
@@ -71,7 +77,7 @@ export async function crear(req, res, next) {
     const solicitud = new AppointmentRequest({
       nombre: nombreLimpio,
       telefono: telefonoLimpio,
-      email: email ? String(email).trim() : '',
+      email: email ? email.trim() : '',
       servicio: servicioId,
       fechaPreferida: fecha,
       franja: franja || '',

@@ -43,3 +43,23 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Impacto:** Solo configs globales de agente. No toca código del proyecto. Requiere previo fix de `@opencode/plugin@2.0.4` que hoy bloquea `sync` (ver `gentle-ai sync --dry-run`).
 - **Commit relacionado:** pendiente
 - **Comando propuesto (primero dry-run):** `gentle-ai install --agent opencode --component engram,skills,context7,gga,persona,permissions --persona gentleman --preset full-gentleman --skill judgment-day,work-unit-commits,branch-pr,issue-creation,cognitive-doc-design,skill-registry --dry-run`
+
+---
+
+## 2026-10-21 - docs(proyecto): incorporar requisitos y pendientes al repositorio
+
+- **Cambio:** Se agregaron `docs/REQUISITOS.md` y `docs/PENDIENTES.md` al control de versiones (sin modificar su contenido), en la rama `fix/validaciones-tipos`.
+- **Motivo:** Eran los únicos archivos sin rastrear tras sincronizar con `origin/master`; el usuario pidió conservarlos e incorporarlos antes de avanzar.
+- **Alternativas descartadas:** Dejarlos sin rastrear (se perderían en cualquier limpieza o cambio de rama).
+- **Impacto:** Solo documentación (1008 líneas agregadas). Sin cambios en código.
+- **Commit relacionado:** `docs(proyecto): incorporar requisitos y pendientes`
+
+---
+
+## 2026-10-21 - fix(api): rechazar tipos inválidos en los campos de texto
+
+- **Cambio:** Se elimina la coerción `String(valor)` sobre campos de texto del cliente en `contact`, `requests`, `publications` (alta), `payments` (`motivoAnulacion`), `auth` (login/registro/perfil) y `services` (`incluye`), y en la validación de `telefono` de pacientes/profesionales/responsables. Los tipos inválidos responden **400** (en `incluye` se descarta el elemento).
+- **Motivo:** `String({})` produce `"[object Object]"`, que pasaba las validaciones de longitud y se guardaba como dato válido sin error; cierra la observación abierta el 2026-10-16.
+- **Alternativas descartadas:** Limpiar el dato después de guardarlo; coercer números a texto en `telefono`; responder 400 por elementos inválidos de `incluye` (se prefirió descartarlos para no cambiar el contrato del catálogo).
+- **Impacto:** Backend, 9 controladores. Sin cambios de contrato para entradas válidas, sin dependencias nuevas y sin cambios en frontend (ya envía texto).
+- **Commit relacionado:** `fix(api): rechazar tipos inválidos en los campos de texto`

@@ -183,7 +183,8 @@ export async function anularPago(req, res, next) {
       return res.status(404).json({ ok: false, message: 'Pago no encontrado' });
     }
     const { motivoAnulacion } = req.body || {};
-    if (!motivoAnulacion || !String(motivoAnulacion).trim()) {
+    // Sin coerción: el motivo debe ser texto (no se convierte a "[object Object]").
+    if (typeof motivoAnulacion !== 'string' || !motivoAnulacion.trim()) {
       return res.status(400).json({ ok: false, message: 'motivoAnulacion requerido' });
     }
     const pago = await Payment.findById(req.params.id);
@@ -200,7 +201,7 @@ export async function anularPago(req, res, next) {
       });
     }
     pago.estado = 'ANULADO';
-    pago.motivoAnulacion = String(motivoAnulacion).trim();
+    pago.motivoAnulacion = motivoAnulacion.trim();
     pago.anuladoEn = new Date();
     await pago.save();
     // Mantener el comprobante coherente con la anulación del pago.

@@ -8,7 +8,9 @@ const CAMPOS_CATALOGO = ['categoria', 'icono', 'incluye', 'preparacion'];
 function catalogo(body) {
   const d = soloCampos(body, CAMPOS_CATALOGO);
   if (d.incluye !== undefined) {
-    d.incluye = Array.isArray(d.incluye) ? d.incluye.map((t) => String(t).trim()).filter(Boolean).slice(0, 10) : [];
+    d.incluye = Array.isArray(d.incluye)
+      ? d.incluye.filter((t) => typeof t === 'string').map((t) => t.trim()).filter(Boolean).slice(0, 10)
+      : [];
   }
   return d;
 }

@@ -62,8 +62,17 @@ export async function crear(req, res, next) {
     const error = validar(req.body || {});
     if (error) return res.status(400).json({ ok: false, message: error });
     const { titulo, descripcion, tipo, fecha, imagenUrl, enlace } = req.body;
+    // Sin coerción: los campos de texto deben ser texto (no se convierten a "[object Object]").
+    if (
+      typeof titulo !== 'string' ||
+      typeof descripcion !== 'string' ||
+      (imagenUrl !== undefined && typeof imagenUrl !== 'string') ||
+      (enlace !== undefined && typeof enlace !== 'string')
+    ) {
+      return res.status(400).json({ ok: false, message: 'Título, descripción, imagenUrl y enlace deben ser texto' });
+    }
     const publicacion = new Publication({
-      titulo: String(titulo).trim(),
+      titulo: titulo.trim(),
       descripcion,
       tipo,
       fecha: fecha ? new Date(fecha) : undefined,
