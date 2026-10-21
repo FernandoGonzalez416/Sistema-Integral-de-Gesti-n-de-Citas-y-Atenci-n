@@ -6,6 +6,7 @@
     <form @submit.prevent="guardar">
       <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Limpieza dental" />
       <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Opcional" />
+      <FormField etiqueta="Imagen URL" v-model="form.imagenUrl" placeholder="https://... (opcional)" />
       <FormField etiqueta="Precio (Q)" type="number" v-model="form.precio" placeholder="250.00" />
       <FormField etiqueta="Duración (minutos)" type="number" v-model="form.duracion" placeholder="60" />
       <button type="submit">{{ editando ? 'Guardar' : 'Registrar' }}</button>
@@ -16,13 +17,14 @@
   <Card titulo="Lista de servicios">
     <table>
       <thead>
-        <tr><th>Nombre</th><th>Precio</th><th>Duración</th><th>Activo</th><th></th></tr>
+        <tr><th>Nombre</th><th>Precio</th><th>Duración</th><th>Imagen</th><th>Activo</th><th></th></tr>
       </thead>
       <tbody>
         <tr v-for="s in servicios" :key="s._id">
           <td>{{ s.nombre }}</td>
           <td>{{ formatoMoneda(s.precioCentavos) }}</td>
           <td>{{ s.duracionMinutos }} min</td>
+          <td><a v-if="s.imagenUrl" :href="s.imagenUrl" target="_blank" rel="noopener">Ver</a><span v-else>—</span></td>
           <td>{{ s.activo ? 'Sí' : 'No' }}</td>
           <td>
             <button @click="editar(s)">Editar</button>
@@ -45,7 +47,7 @@ const auth = useAuthStore();
 const servicios = ref([]);
 const error = ref('');
 const editando = ref(null);
-const form = reactive({ nombre: '', descripcion: '', precio: '', duracion: '' });
+const form = reactive({ nombre: '', descripcion: '', imagenUrl: '', precio: '', duracion: '' });
 
 function formatoMoneda(centavos) {
   // Quetzales (GTQ): Q1,250.00
@@ -68,7 +70,7 @@ async function cargar() {
 }
 
 function limpiar() {
-  Object.assign(form, { nombre: '', descripcion: '', precio: '', duracion: '' });
+  Object.assign(form, { nombre: '', descripcion: '', imagenUrl: '', precio: '', duracion: '' });
   editando.value = null;
 }
 
@@ -78,6 +80,7 @@ async function guardar() {
     const datos = {
       nombre: form.nombre,
       descripcion: form.descripcion,
+      imagenUrl: form.imagenUrl,
       precioCentavos: aCentavos(form.precio),
       duracionMinutos: Number(form.duracion)
     };
@@ -98,6 +101,7 @@ function editar(s) {
   Object.assign(form, {
     nombre: s.nombre,
     descripcion: s.descripcion,
+    imagenUrl: s.imagenUrl || '',
     precio: (s.precioCentavos / 100).toFixed(2),
     duracion: String(s.duracionMinutos)
   });
