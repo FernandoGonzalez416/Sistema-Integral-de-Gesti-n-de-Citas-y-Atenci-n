@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
-// Solicitudes del portal. La Fase 7 las convertirá en citas con pacientes registrados.
+// Solicitudes del portal. Una solicitud PENDIENTE se convierte en cita con un
+// paciente registrado; ATENDIDA conserva la referencia a la cita generada (B4).
 const requestSchema = new mongoose.Schema(
   {
     nombre: { type: String, required: true, trim: true },
@@ -12,11 +13,11 @@ const requestSchema = new mongoose.Schema(
     franja: { type: String, enum: ['', 'MANANA', 'TARDE'], default: '' },
     primeraVez: { type: Boolean, default: false },
     mensaje: { type: String, default: '' },
-    estado: { type: String, enum: ['PENDIENTE', 'ATENDIDA', 'CANCELADA'], default: 'PENDIENTE' }
+    estado: { type: String, enum: ['PENDIENTE', 'ATENDIDA', 'RECHAZADA'], default: 'PENDIENTE' }
   },
   { timestamps: true }
 );
 
-export const ESTADOS_SOLICITUD = ['PENDIENTE', 'ATENDIDA', 'CANCELADA'];
+export const ESTADOS_SOLICITUD = ['PENDIENTE', 'ATENDIDA', 'RECHAZADA'];
 
 export default mongoose.model('AppointmentRequest', requestSchema);

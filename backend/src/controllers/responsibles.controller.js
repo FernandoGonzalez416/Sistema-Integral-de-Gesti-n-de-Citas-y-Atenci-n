@@ -97,20 +97,3 @@ export async function actualizarResponsable(req, res, next) {
     next(e);
   }
 }
-
-export async function desactivarResponsable(req, res, next) {
-  try {
-    if (!idValido(req.params.id)) {
-      return res.status(404).json({ ok: false, message: 'Responsable no encontrado' });
-    }
-    const responsable = await Responsible.findById(req.params.id);
-    if (!responsable) {
-      return res.status(404).json({ ok: false, message: 'Responsable no encontrado' });
-    }
-    responsable.activo = false;
-    await responsable.save();
-    res.json({ ok: true, responsable });
-  } catch (e) {
-    next(e);
-  }
-}

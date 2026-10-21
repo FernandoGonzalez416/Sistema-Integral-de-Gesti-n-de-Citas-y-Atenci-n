@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 
 // Pagos asociados a una cita. El monto se guarda en centavos (entero) para evitar
 // errores de punto flotante. Los pagos no se borran: se anulan (histórico).
+//
+// En B2 se añade la referencia explícita a la caja (`caja`) y el usuario que
+// anula (`anuladoPor`); en B1 solo se alinean estados y métodos al requisito.
 const paymentSchema = new mongoose.Schema(
   {
     cita: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true },
@@ -10,10 +13,10 @@ const paymentSchema = new mongoose.Schema(
     metodo: {
       type: String,
       required: true,
-      enum: ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO']
+      enum: ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']
     },
     fecha: { type: Date, default: Date.now },
-    estado: { type: String, enum: ['ACTIVO', 'ANULADO'], default: 'ACTIVO' },
+    estado: { type: String, enum: ['REGISTRADO', 'ANULADO'], default: 'REGISTRADO' },
     motivoAnulacion: { type: String, default: '', trim: true },
     anuladoEn: { type: Date, default: null },
     notas: { type: String, default: '', trim: true },
@@ -26,7 +29,7 @@ paymentSchema.index({ cita: 1, estado: 1 });
 paymentSchema.index({ paciente: 1, fecha: -1 });
 paymentSchema.index({ fecha: -1 });
 
-export const METODOS_PAGO = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'];
-export const ESTADOS_PAGO = ['ACTIVO', 'ANULADO'];
+export const METODOS_PAGO = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA'];
+export const ESTADOS_PAGO = ['REGISTRADO', 'ANULADO'];
 
 export default mongoose.model('Payment', paymentSchema);

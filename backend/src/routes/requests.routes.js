@@ -7,6 +7,6 @@ const router = Router();
 
 router.post('/', crear);
 router.get('/', auth, permitir('ADMINISTRADOR', 'RECEPCIONISTA'), listar);
-router.patch('/:id', auth, permitir('ADMINISTRADOR', 'RECEPCIONISTA'), cambiarEstado);
+router.patch('/:id/estado', auth, permitir('ADMINISTRADOR', 'RECEPCIONISTA'), cambiarEstado);
 
 export default router;

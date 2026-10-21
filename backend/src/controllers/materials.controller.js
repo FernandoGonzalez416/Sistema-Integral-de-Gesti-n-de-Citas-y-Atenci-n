@@ -120,20 +120,3 @@ export async function actualizarMaterial(req, res, next) {
     next(e);
   }
 }
-
-export async function desactivarMaterial(req, res, next) {
-  try {
-    if (!idValido(req.params.id)) {
-      return res.status(404).json({ ok: false, message: 'Material no encontrado' });
-    }
-    const material = await EducationalMaterial.findById(req.params.id);
-    if (!material) {
-      return res.status(404).json({ ok: false, message: 'Material no encontrado' });
-    }
-    material.activo = false;
-    await material.save();
-    res.json({ ok: true, material });
-  } catch (e) {
-    next(e);
-  }
-}

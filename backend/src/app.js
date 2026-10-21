@@ -30,13 +30,13 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/services', servicesRoutes);
-app.use('/api/contenidos', contentRoutes);
+app.use('/api/usuarios', usersRoutes);
+app.use('/api/servicios', servicesRoutes);
+app.use('/api/contenido', contentRoutes);
 app.use('/api/horarios', schedulesRoutes);
 app.use('/api/publicaciones', publicationsRoutes);
 app.use('/api/contacto', contactRoutes);
-app.use('/api/solicitudes', requestsRoutes);
+app.use('/api/solicitudes-cita', requestsRoutes);
 // Las subrutas de /api/pacientes deben montarse ANTES de /api/pacientes: si no,
 // el guard de /api/pacientes (ADMIN/RECEP) intercepta las subrutas y bloquea a
 // PROFESIONAL en /api/pacientes/:id/materiales (que su propio router sí permite).
@@ -48,7 +48,7 @@ app.use('/api/profesionales', professionalsRoutes);
 app.use('/api/citas', appointmentsRoutes);
 app.use('/api/materiales', materialsRoutes);
 app.use('/api/pagos', paymentsRoutes);
-app.use('/api/caja', cashRoutes);
+app.use('/api/cajas', cashRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,4 +1,4 @@
-// Pruebas de reglas clave de SIGCA — FASE 12, paso 2.
+// Pruebas de reglas clave de SIGCA — contrato B1.
 //
 // Ejecución:  npm test        (equivale a: node --test tests/)
 //
@@ -6,16 +6,18 @@
 // y un puerto propio (3992). NO tocan la base de desarrollo `sigca`.
 // Al terminar, la base de pruebas se elimina.
 //
-// Cobertura (reglas de negocio):
-//   A. Roles y seguridad (401/403).
-//   B. Citas: validación de fecha/horario, traslapes y transiciones de estado.
-//   C. Paciente menor de edad: exige responsable activo.
+// Cobertura:
+//   A. Roles y seguridad (401/403) y rutas nuevas.
+//   B. Citas: disponibilidad, estados PENDIENTE/CONFIRMADA/COMPLETADA/CANCELADA.
+//   C. Paciente menor: exige responsable activo.
 //   D. Pagos: saldo (PENDIENTE/PARCIAL/PAGADO), métodos y caja obligatoria.
 //   E. Comprobante de pago (número único, idempotente y 1:1).
-//   F. Anulación de pagos y bloqueo de cancelación con pagos activos.
-//   G. Caja: una sola abierta, bloqueo post-cierre y arqueo al cerrar.
-//   H. Atender solicitud de cita (conversión a cita).
-//   I. Materiales: lectura vs gestión por rol (PROFESIONAL).
+//   F. Anulación de pagos y cancelación con pagos válidos (RN-27).
+//   G. Caja: apertura única, bloqueo post-cierre y arqueo.
+//   H. Atender solicitud de cita.
+//   I. Materiales: lectura vs gestión por rol.
+//   J. Contrato B1: PUT/PATCH de rutas alineadas y rutas antiguas retiradas.
+//   K. Edición/reprogramación de citas y endpoints de pagos/saldo por cita.
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
@@ -39,18 +41,21 @@ const AppointmentRequest = (await import('../src/models/AppointmentRequest.js'))
 const PASS = 'Test1234';
 const tok = {};
 let server;
-let servicio, profesional, paciente, menor, responsable;
-let lunesBase, martes;
-let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, solicitudH1;
+let servicio, servicioLargo, profesional, paciente, menor, responsable;
+let lunesBase, martes, miercoles;
+let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, cajaG4, solicitudH1;
 
-// Próximo lunes a las 00:00 (día laborable dentro del horario 08:00–17:00).
-function proximoLunes() {
+function proximoDia(numeroDia) {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
-  let add = (1 - d.getDay() + 7) % 7;
+  let add = (numeroDia - d.getDay() + 7) % 7;
   if (add === 0) add = 7;
   d.setDate(d.getDate() + add);
   return d;
+}
+
+function proximoLunes() {
+  return proximoDia(1);
 }
 
 // Fecha ISO (misma máquina ⇒ round-trip seguro) para una hora del día base.
@@ -77,11 +82,11 @@ async function api(method, path, { token, body } = {}) {
   return { status: res.status, json };
 }
 
-function datosCita(inicio, pacienteId = paciente._id) {
+function datosCita(inicio, pacienteId = paciente._id, servicioId = servicio._id) {
   return {
     pacienteId: String(pacienteId),
     profesionalId: String(profesional._id),
-    servicioId: String(servicio._id),
+    servicioId: String(servicioId),
     inicio
   };
 }
@@ -110,7 +115,12 @@ before(async () => {
   await new User({ nombre: 'Recep', email: 'recep.test@sigca.test', password: PASS, rol: 'RECEPCIONISTA' }).save();
   await new User({ nombre: 'Prof', email: 'prof.test@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
 
-  servicio = await new Service({ nombre: 'Consulta test', precioCentavos: 10000, duracionMinutos: 30 }).save();
+  servicio = await new Service({
+    nombre: 'Consulta test', precioCentavos: 10000, duracionMinutos: 30
+  }).save();
+  servicioLargo = await new Service({
+    nombre: 'Consulta larga test', precioCentavos: 20000, duracionMinutos: 60
+  }).save();
   profesional = await new Professional({
     nombre: 'Prof', apellido: 'Base', especialidad: 'General',
     telefono: '5551000', email: 'prof.base@test', dni: '70000001', matricula: 'MP-70001'
@@ -128,8 +138,8 @@ before(async () => {
   }).save();
 
   lunesBase = proximoLunes();
-  martes = new Date(lunesBase);
-  martes.setDate(martes.getDate() + 1);
+  martes = proximoDia(2);
+  miercoles = proximoDia(3);
 
   server = app.listen(PORT);
   const login = async (email) =>
@@ -151,8 +161,8 @@ describe('A. Roles y seguridad', () => {
     assert.equal(r.status, 401);
   });
 
-  test('A2 POST /api/users con token PROFESIONAL → 403', async () => {
-    const r = await api('POST', '/api/users', {
+  test('A2 POST /api/usuarios con token PROFESIONAL → 403', async () => {
+    const r = await api('POST', '/api/usuarios', {
       token: tok.prof,
       body: { nombre: 'X', email: 'x@test.local', password: '123456', rol: 'RECEPCIONISTA' }
     });
@@ -183,10 +193,10 @@ describe('B. Citas: disponibilidad y transiciones', () => {
     assert.equal(r.status, 400);
   });
 
-  test('B3 cita válida → 201 PROGRAMADA', async () => {
+  test('B3 cita válida → 201 PENDIENTE', async () => {
     const r = await crearCita(slot(9));
     assert.equal(r.status, 201);
-    assert.equal(r.json.cita.estado, 'PROGRAMADA');
+    assert.equal(r.json.cita.estado, 'PENDIENTE');
   });
 
   test('B4 cita en horario ya ocupado (traslape) → 400', async () => {
@@ -194,21 +204,22 @@ describe('B. Citas: disponibilidad y transiciones', () => {
     assert.equal(r.status, 400);
   });
 
-  test('B5 transición de estado inválida (CANCELADA→CONFIRMADA) → 400', async () => {
+  test('B5 transición inválida (CANCELADA→CONFIRMADA) → 400', async () => {
     const c = await crearCita(slot(10));
     assert.equal((await cambiarEstado(c.json.cita._id, 'CANCELADA')).status, 200);
     const r = await cambiarEstado(c.json.cita._id, 'CONFIRMADA');
     assert.equal(r.status, 400);
   });
 
-  test('B6 reprogramar a un horario libre → 200 REPROGRAMADA', async () => {
+  test('B6 reprogramar por PUT conserva el estado CONFIRMADA', async () => {
     const c = await crearCita(slot(11));
-    const r = await api('PATCH', `/api/citas/${c.json.cita._id}/reprogramar`, {
+    assert.equal((await cambiarEstado(c.json.cita._id, 'CONFIRMADA')).status, 200);
+    const r = await api('PUT', `/api/citas/${c.json.cita._id}`, {
       token: tok.admin,
       body: { inicio: slot(12) }
     });
     assert.equal(r.status, 200);
-    assert.equal(r.json.cita.estado, 'REPROGRAMADA');
+    assert.equal(r.json.cita.estado, 'CONFIRMADA');
   });
 
   test('B7 cancelar cita sin pagos → 200 CANCELADA', async () => {
@@ -217,6 +228,12 @@ describe('B. Citas: disponibilidad y transiciones', () => {
     const r = await cambiarEstado(citaB7._id, 'CANCELADA');
     assert.equal(r.status, 200);
     assert.equal(r.json.cita.estado, 'CANCELADA');
+  });
+
+  test('B8 PENDIENTE→COMPLETADA directa → 400', async () => {
+    const c = await crearCita(slot(13, 30));
+    const r = await cambiarEstado(c.json.cita._id, 'COMPLETADA');
+    assert.equal(r.status, 400);
   });
 });
 
@@ -234,9 +251,10 @@ describe('C. Paciente menor de edad', () => {
     assert.equal(r.status, 201);
   });
 
-  test('C3 cita del menor con responsable → 201', async () => {
+  test('C3 cita del menor con responsable → 201 PENDIENTE', async () => {
     const r = await crearCita(slot(15), menor._id);
     assert.equal(r.status, 201);
+    assert.equal(r.json.cita.estado, 'PENDIENTE');
   });
 });
 
@@ -249,7 +267,7 @@ describe('D. Pagos: saldo, métodos y caja obligatoria', () => {
   });
 
   test('D2 abrir caja → 201', async () => {
-    const r = await api('POST', '/api/caja/abrir', {
+    const r = await api('POST', '/api/cajas/abrir', {
       token: tok.admin,
       body: { montoInicialCentavos: 1000 }
     });
@@ -268,6 +286,7 @@ describe('D. Pagos: saldo, métodos y caja obligatoria', () => {
     assert.equal(r.status, 201);
     assert.equal(r.json.saldo.estadoSaldo, 'PARCIAL');
     assert.equal(r.json.saldo.saldoCentavos, 7000);
+    assert.equal(r.json.pago.estado, 'REGISTRADO');
     pagoP1 = r.json.pago;
   });
 
@@ -279,8 +298,13 @@ describe('D. Pagos: saldo, métodos y caja obligatoria', () => {
     pagoP2 = r.json.pago;
   });
 
-  test('D6 método de pago inválido → 400', async () => {
+  test('D6 método de pago inválido (BITCOIN) → 400', async () => {
     const r = await registrarPago(citaD._id, 100, 'BITCOIN');
+    assert.equal(r.status, 400);
+  });
+
+  test('D6b método OTRO eliminado por RF-10 → 400', async () => {
+    const r = await registrarPago(citaD._id, 100, 'OTRO');
     assert.equal(r.status, 400);
   });
 
@@ -293,9 +317,14 @@ describe('D. Pagos: saldo, métodos y caja obligatoria', () => {
     const r = await registrarPago(citaD._id, 10.5);
     assert.equal(r.status, 400);
   });
+
+  test('D9 fecha de pago inválida → 400', async () => {
+    const r = await registrarPago(citaD._id, 100, 'EFECTIVO', { fecha: 'no-es-fecha' });
+    assert.equal(r.status, 400);
+  });
 });
 
-describe('E. Comprobante de pago (F09)', () => {
+describe('E. Comprobante de pago (RF-10)', () => {
   test('E1 el pago tiene comprobante con número único y referencia 1:1', async () => {
     const r = await api('GET', `/api/pagos/${pagoP1._id}/comprobante`, { token: tok.admin });
     assert.equal(r.status, 200);
@@ -319,8 +348,8 @@ describe('E. Comprobante de pago (F09)', () => {
   });
 });
 
-describe('F. Anulación de pagos y cancelación con pagos activos', () => {
-  test('F1 no se puede cancelar una cita con pagos ACTIVO → 409', async () => {
+describe('F. Anulación de pagos y cancelación con pagos válidos', () => {
+  test('F1 no se puede cancelar una cita con pagos REGISTRADO → 409', async () => {
     const r = await cambiarEstado(citaD._id, 'CANCELADA');
     assert.equal(r.status, 409);
   });
@@ -343,7 +372,7 @@ describe('F. Anulación de pagos y cancelación con pagos activos', () => {
     assert.equal(r.json.saldo.estadoSaldo, 'PARCIAL');
   });
 
-  test('F4 con un pago aún ACTIVO, cancelar sigue bloqueado → 409', async () => {
+  test('F4 con un pago aún válido, cancelar sigue bloqueado → 409', async () => {
     assert.equal((await cambiarEstado(citaD._id, 'CANCELADA')).status, 409);
   });
 
@@ -356,7 +385,7 @@ describe('F. Anulación de pagos y cancelación con pagos activos', () => {
     assert.equal(r.json.saldo.estadoSaldo, 'PENDIENTE');
   });
 
-  test('F6 sin pagos activos, cancelar la cita → 200 CANCELADA', async () => {
+  test('F6 sin pagos válidos, cancelar la cita → 200 CANCELADA', async () => {
     const r = await cambiarEstado(citaD._id, 'CANCELADA');
     assert.equal(r.status, 200);
     assert.equal(r.json.cita.estado, 'CANCELADA');
@@ -371,12 +400,12 @@ describe('F. Anulación de pagos y cancelación con pagos activos', () => {
 
 describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
   test('G1 no se puede abrir una segunda caja → 409', async () => {
-    const r = await api('POST', '/api/caja/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
+    const r = await api('POST', '/api/cajas/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
     assert.equal(r.status, 409);
   });
 
-  test('G2 registrar un pago que quedará activo para el arqueo', async () => {
-    const c = await crearCita(slot(16, 30));
+  test('G2 registrar un pago válido para el arqueo', async () => {
+    const c = await crearCita(slot(16, 30, martes));
     citaE = c.json.cita;
     const r = await registrarPago(citaE._id, 5000, 'TARJETA');
     assert.equal(r.status, 201);
@@ -384,15 +413,15 @@ describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
   });
 
   test('G3 cerrar la caja → snapshot de totales, esperado y diferencia', async () => {
-    const r = await api('POST', `/api/caja/${cajaC1._id}/cerrar`, {
+    const r = await api('POST', `/api/cajas/${cajaC1._id}/cerrar`, {
       token: tok.admin,
       body: { totalRealCentavos: 6500 }
     });
     assert.equal(r.status, 200);
-    // Los pagos EFECTIVO fueron anulados en F ⇒ solo cuenta el pago TARJETA activo.
     assert.equal(r.json.caja.totalesPorMetodo.EFECTIVO, 0);
     assert.equal(r.json.caja.totalesPorMetodo.TARJETA, 5000);
-    assert.equal(r.json.caja.totalEsperadoCentavos, 6000); // 1000 inicial + 5000 cobrado
+    assert.equal(r.json.caja.totalesPorMetodo.TRANSFERENCIA, 0);
+    assert.equal(r.json.caja.totalEsperadoCentavos, 6000);
     assert.equal(r.json.caja.totalRealCentavos, 6500);
     assert.equal(r.json.caja.diferenciaCentavos, 500);
     assert.equal(r.json.caja.estado, 'CERRADA');
@@ -400,9 +429,9 @@ describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
   });
 
   test('G4 pago con fecha dentro de una caja ya cerrada → 409', async () => {
-    const abrir = await api('POST', '/api/caja/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
+    const abrir = await api('POST', '/api/cajas/abrir', { token: tok.admin, body: { montoInicialCentavos: 0 } });
     assert.equal(abrir.status, 201);
-    // Punto medio de la ventana de la caja CERRADA (garantiza que la fecha cae dentro).
+    cajaG4 = abrir.json.caja;
     const ini = new Date(cajaC1.fechaApertura).getTime();
     const fin = new Date(cajaC1.fechaCierre).getTime();
     const fechaRetro = new Date(ini + Math.floor((fin - ini) / 2)).toISOString();
@@ -420,11 +449,17 @@ describe('G. Caja: unidad, bloqueo post-cierre y arqueo', () => {
     });
     assert.equal(r.status, 409);
   });
+
+  test('G6 GET /api/cajas/actual devuelve la caja ABIERTA', async () => {
+    const r = await api('GET', '/api/cajas/actual', { token: tok.admin });
+    assert.equal(r.status, 200);
+    assert.equal(String(r.json.caja._id), String(cajaG4._id));
+  });
 });
 
 describe('H. Atender solicitud de cita', () => {
   test('H1 atender una solicitud PENDIENTE con paciente registrado → 201', async () => {
-    await api('POST', '/api/solicitudes', {
+    await api('POST', '/api/solicitudes-cita', {
       body: { nombre: 'Solicitante', telefono: '5559999', servicio: String(servicio._id), mensaje: 'h1-demo' }
     });
     solicitudH1 = await AppointmentRequest.findOne({ mensaje: 'h1-demo' });
@@ -439,12 +474,13 @@ describe('H. Atender solicitud de cita', () => {
       }
     });
     assert.equal(r.status, 201);
+    assert.equal(r.json.cita.estado, 'PENDIENTE');
     const refrescada = await AppointmentRequest.findById(solicitudH1._id);
     assert.equal(refrescada.estado, 'ATENDIDA');
   });
 
   test('H2 atender sin servicio (solicitud sin servicio y sin servicioId) → 400', async () => {
-    await api('POST', '/api/solicitudes', {
+    await api('POST', '/api/solicitudes-cita', {
       body: { nombre: 'Sin servicio', telefono: '5558888', mensaje: 'h2-demo' }
     });
     const sol = await AppointmentRequest.findOne({ mensaje: 'h2-demo' });
@@ -472,7 +508,7 @@ describe('H. Atender solicitud de cita', () => {
   });
 });
 
-describe('I. Materiales: lectura vs gestión por rol (D16)', () => {
+describe('I. Materiales: lectura vs gestión por rol', () => {
   test('I1 PROFESIONAL puede consultar el catálogo → 200', async () => {
     assert.equal((await api('GET', '/api/materiales', { token: tok.prof })).status, 200);
   });
@@ -491,5 +527,241 @@ describe('I. Materiales: lectura vs gestión por rol (D16)', () => {
       body: { titulo: 'Material test', descripcion: 'x', tipo: 'DOCUMENTO' }
     });
     assert.equal(r.status, 201);
+  });
+});
+
+describe('J. Contrato B1: rutas y métodos alineados', () => {
+  test('J1 ruta antigua /api/users → 404', async () => {
+    assert.equal((await api('GET', '/api/users', { token: tok.admin })).status, 404);
+  });
+
+  test('J2 PUT /api/usuarios/:id actualiza sin exponer hash', async () => {
+    const alta = await api('POST', '/api/usuarios', {
+      token: tok.admin,
+      body: { nombre: 'Usuario B1', email: 'usuario.b1@sigca.test', password: PASS, rol: 'RECEPCIONISTA' }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PUT', `/api/usuarios/${alta.json.usuario.id}`, {
+      token: tok.admin,
+      body: { nombre: 'Usuario B1 Editado' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.usuario.nombre, 'Usuario B1 Editado');
+    assert.equal(r.json.usuario.password, undefined);
+  });
+
+  test('J3 PUT /api/servicios/:id actualiza precio y estado', async () => {
+    const alta = await api('POST', '/api/servicios', {
+      token: tok.admin,
+      body: { nombre: 'Servicio B1', precioCentavos: 12345, duracionMinutos: 45 }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PUT', `/api/servicios/${alta.json.servicio._id}`, {
+      token: tok.admin,
+      body: { precioCentavos: 15000, activo: false }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.servicio.precioCentavos, 15000);
+    assert.equal(r.json.servicio.activo, false);
+  });
+
+  test('J4 PUT /api/pacientes/:id y PATCH /api/pacientes/:id/estado', async () => {
+    const alta = await api('POST', '/api/pacientes', {
+      token: tok.admin,
+      body: {
+        nombre: 'Paciente', apellido: 'B1', fechaNacimiento: '1991-02-03',
+        sexo: 'F', telefono: '5557777'
+      }
+    });
+    assert.equal(alta.status, 201);
+    const id = alta.json.paciente._id;
+    const edit = await api('PUT', `/api/pacientes/${id}`, {
+      token: tok.admin,
+      body: { direccion: 'Zona 1' }
+    });
+    assert.equal(edit.status, 200);
+    assert.equal(edit.json.paciente.direccion, 'Zona 1');
+
+    const baja = await api('PATCH', `/api/pacientes/${id}/estado`, {
+      token: tok.admin,
+      body: { activo: false }
+    });
+    assert.equal(baja.status, 200);
+    assert.equal(baja.json.paciente.activo, false);
+
+    const altaEstado = await api('PATCH', `/api/pacientes/${id}/estado`, {
+      token: tok.admin,
+      body: { estado: 'ACTIVO' }
+    });
+    assert.equal(altaEstado.status, 200);
+    assert.equal(altaEstado.json.paciente.activo, true);
+  });
+
+  test('J5 PUT /api/responsables/:id actualiza', async () => {
+    const alta = await api('POST', '/api/responsables', {
+      token: tok.admin,
+      body: { nombre: 'Resp', apellido: 'B1', telefono: '5556666', parentesco: 'Padre' }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PUT', `/api/responsables/${alta.json.responsable._id}`, {
+      token: tok.admin,
+      body: { nombre: 'Resp Editado' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.responsable.nombre, 'Resp Editado');
+  });
+
+  test('J6 PUT /api/materiales/:id actualiza y desactiva', async () => {
+    const alta = await api('POST', '/api/materiales', {
+      token: tok.admin,
+      body: { titulo: 'Material B1', descripcion: 'x', tipo: 'DOCUMENTO' }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PUT', `/api/materiales/${alta.json.material._id}`, {
+      token: tok.admin,
+      body: { titulo: 'Material B1 editado', activo: false }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.material.titulo, 'Material B1 editado');
+    assert.equal(r.json.material.activo, false);
+  });
+
+  test('J7 PUT /api/contenido/:id actualiza', async () => {
+    const alta = await api('POST', '/api/contenido', {
+      token: tok.admin,
+      body: { clave: 'b1-test', titulo: 'Título B1', cuerpo: 'Cuerpo B1' }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PUT', `/api/contenido/${alta.json.contenido._id}`, {
+      token: tok.admin,
+      body: { titulo: 'Título B1 editado' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.contenido.titulo, 'Título B1 editado');
+  });
+
+  test('J8 PATCH /api/materiales/:id (método antiguo) → 404', async () => {
+    const lista = await api('GET', '/api/materiales', { token: tok.admin });
+    const id = lista.json.materiales[0]._id;
+    const r = await api('PATCH', `/api/materiales/${id}`, {
+      token: tok.admin,
+      body: { titulo: 'No debe aplicarse' }
+    });
+    assert.equal(r.status, 404);
+  });
+
+  test('J9 PATCH /api/solicitudes-cita/:id/estado permite RECHAZADA', async () => {
+    const alta = await api('POST', '/api/solicitudes-cita', {
+      body: {
+        nombre: 'Solicitud B1', telefono: '5551234', email: 'solicitud.b1@test.local',
+        servicio: String(servicio._id)
+      }
+    });
+    assert.equal(alta.status, 201);
+    const sol = await AppointmentRequest.findOne({ nombre: 'Solicitud B1' });
+    const r = await api('PATCH', `/api/solicitudes-cita/${sol._id}/estado`, {
+      token: tok.admin,
+      body: { estado: 'RECHAZADA' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.solicitud.estado, 'RECHAZADA');
+  });
+
+  test('J10 ruta antigua /api/solicitudes → 404', async () => {
+    assert.equal((await api('GET', '/api/solicitudes', { token: tok.admin })).status, 404);
+  });
+});
+
+describe('K. Edición de citas, pagos y saldo por cita', () => {
+  test('K1 PUT reprograma y conserva el estado CONFIRMADA', async () => {
+    const c = await crearCita(slot(9, 0, miercoles));
+    assert.equal((await cambiarEstado(c.json.cita._id, 'CONFIRMADA')).status, 200);
+    const r = await api('PUT', `/api/citas/${c.json.cita._id}`, {
+      token: tok.admin,
+      body: { inicio: slot(10, 0, miercoles) }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.cita.estado, 'CONFIRMADA');
+  });
+
+  test('K2 PUT con traslape → 400', async () => {
+    const a = await crearCita(slot(11, 0, miercoles));
+    const b = await crearCita(slot(12, 0, miercoles));
+    assert.equal(a.status, 201);
+    assert.equal(b.status, 201);
+    const r = await api('PUT', `/api/citas/${a.json.cita._id}`, {
+      token: tok.admin,
+      body: { inicio: slot(12, 0, miercoles) }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('K3 PUT a una fecha pasada → 400', async () => {
+    const c = await crearCita(slot(13, 0, miercoles));
+    const pasado = new Date(lunesBase);
+    pasado.setDate(pasado.getDate() - 7);
+    const r = await api('PUT', `/api/citas/${c.json.cita._id}`, {
+      token: tok.admin,
+      body: { inicio: slot(10, 0, pasado) }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('K4 PUT sobre COMPLETADA → 409 (RN-06)', async () => {
+    const c = await crearCita(slot(14, 0, miercoles));
+    assert.equal((await cambiarEstado(c.json.cita._id, 'CONFIRMADA')).status, 200);
+    assert.equal((await cambiarEstado(c.json.cita._id, 'COMPLETADA')).status, 200);
+    const r = await api('PUT', `/api/citas/${c.json.cita._id}`, {
+      token: tok.admin,
+      body: { inicio: slot(15, 0, miercoles) }
+    });
+    assert.equal(r.status, 409);
+  });
+
+  test('K5 PUT cambio de servicio recalcula precio y duración', async () => {
+    const c = await crearCita(slot(15, 0, miercoles));
+    const r = await api('PUT', `/api/citas/${c.json.cita._id}`, {
+      token: tok.admin,
+      body: { servicioId: String(servicioLargo._id) }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.cita.precioCentavos, 20000);
+    assert.equal(r.json.cita.duracionMinutos, 60);
+    const minutos = (new Date(r.json.cita.fin) - new Date(r.json.cita.inicio)) / 60000;
+    assert.equal(minutos, 60);
+  });
+
+  test('K6 GET /api/citas/:id/pagos devuelve historial y saldo', async () => {
+    const r = await api('GET', `/api/citas/${citaE._id}/pagos`, { token: tok.admin });
+    assert.equal(r.status, 200);
+    assert.ok(Array.isArray(r.json.pagos));
+    assert.equal(r.json.pagos.length, 1);
+    assert.equal(String(r.json.pagos[0]._id), String(pagoP3._id));
+    assert.equal(r.json.saldo.estadoSaldo, 'PARCIAL');
+  });
+
+  test('K7 GET /api/citas/:id/saldo calcula desde pagos válidos', async () => {
+    const r = await api('GET', `/api/citas/${citaE._id}/saldo`, { token: tok.admin });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.saldo.precioCentavos, 10000);
+    assert.equal(r.json.saldo.pagadoCentavos, 5000);
+    assert.equal(r.json.saldo.saldoCentavos, 5000);
+    assert.equal(r.json.saldo.estadoSaldo, 'PARCIAL');
+  });
+
+  test('K8 GET /api/citas/:id/saldo con id inválido → 404', async () => {
+    assert.equal((await api('GET', '/api/citas/no-es-id/saldo', { token: tok.admin })).status, 404);
+  });
+
+  test('K9 filtro por estado eliminado (PROGRAMADA) → 400', async () => {
+    assert.equal((await api('GET', '/api/citas?estado=PROGRAMADA', { token: tok.admin })).status, 400);
+  });
+
+  test('K10 PENDIENTE→CONFIRMADA→COMPLETADA → 200', async () => {
+    const c = await crearCita(slot(16, 0, miercoles));
+    assert.equal((await cambiarEstado(c.json.cita._id, 'CONFIRMADA')).status, 200);
+    const r = await cambiarEstado(c.json.cita._id, 'COMPLETADA');
+    assert.equal(r.status, 200);
+    assert.equal(r.json.cita.estado, 'COMPLETADA');
   });
 });
