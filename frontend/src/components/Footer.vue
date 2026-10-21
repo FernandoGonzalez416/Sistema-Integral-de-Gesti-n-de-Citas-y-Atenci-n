@@ -64,7 +64,7 @@ const LOGOS = [
 ];
 
 const ESTUDIANTES = [
-  { nombre: 'María Edelmira Méndez Royán', carne: '5932-19-8934' },
+  { nombre: 'María Edelmira Méndez Royán', carne: '090-14-13932' },
   { nombre: 'Walter Josué Ruiz Gálvez', carne: '0910-20-10484' },
   { nombre: 'Fernando Javier Gonzalez Ovando', carne: '5190-21-4854' }
 ];
