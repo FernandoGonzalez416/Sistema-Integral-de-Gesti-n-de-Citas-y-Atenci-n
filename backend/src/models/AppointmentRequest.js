@@ -13,7 +13,12 @@ const requestSchema = new mongoose.Schema(
     franja: { type: String, enum: ['', 'MANANA', 'TARDE'], default: '' },
     primeraVez: { type: Boolean, default: false },
     mensaje: { type: String, default: '' },
-    estado: { type: String, enum: ['PENDIENTE', 'ATENDIDA', 'RECHAZADA'], default: 'PENDIENTE' }
+    estado: { type: String, enum: ['PENDIENTE', 'ATENDIDA', 'RECHAZADA'], default: 'PENDIENTE' },
+    // RF-06: la solicitud atendida conserva la cita generada y quién la atendió.
+    citaGenerada: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', default: null },
+    atendidaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    fechaAtencion: { type: Date, default: null },
+    motivoRechazo: { type: String, default: '', trim: true }
   },
   { timestamps: true }
 );

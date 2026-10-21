@@ -8,6 +8,8 @@ const patientMaterialSchema = new mongoose.Schema(
     material: { type: mongoose.Schema.Types.ObjectId, ref: 'EducationalMaterial', required: true },
     notas: { type: String, default: '', trim: true },
     fechaAsignacion: { type: Date, default: Date.now },
+    // Trazabilidad: usuario que asignó el material (PENDIENTES 13).
+    asignadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     activo: { type: Boolean, default: true }
   },
   { timestamps: true }

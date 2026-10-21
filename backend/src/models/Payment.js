@@ -17,6 +17,8 @@ const paymentSchema = new mongoose.Schema(
       enum: ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']
     },
     fecha: { type: Date, default: Date.now },
+    // RF-10: número de comprobante interno (1:1 con Receipt; se copia al emitirlo).
+    numeroComprobante: { type: String, default: null, trim: true },
     estado: { type: String, enum: ['REGISTRADO', 'ANULADO'], default: 'REGISTRADO' },
     motivoAnulacion: { type: String, default: '', trim: true },
     anuladoEn: { type: Date, default: null },
@@ -31,6 +33,10 @@ paymentSchema.index({ cita: 1, estado: 1 });
 paymentSchema.index({ caja: 1, estado: 1 });
 paymentSchema.index({ paciente: 1, fecha: -1 });
 paymentSchema.index({ fecha: -1 });
+paymentSchema.index(
+  { numeroComprobante: 1 },
+  { unique: true, partialFilterExpression: { numeroComprobante: { $type: 'string' } } }
+);
 
 export const METODOS_PAGO = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA'];
 export const ESTADOS_PAGO = ['REGISTRADO', 'ANULADO'];

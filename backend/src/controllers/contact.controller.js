@@ -4,21 +4,38 @@ import mongoose from 'mongoose';
 // POST /api/contacto — público. Guarda el mensaje del portal.
 export async function crear(req, res, next) {
   try {
-    const { nombre, email, mensaje } = req.body || {};
-    if (!nombre || !email || !mensaje) {
-      return res.status(400).json({ ok: false, message: 'Nombre, email y mensaje requeridos' });
+    const { nombre, email, telefono, asunto, mensaje } = req.body || {};
+    if (!nombre || !email || !telefono || !asunto || !mensaje) {
+      return res.status(400).json({ ok: false, message: 'Nombre, email, teléfono, asunto y mensaje requeridos' });
     }
     // Sin coerción: un tipo inválido (objeto, número…) no se convierte a "[object Object]".
-    if (typeof nombre !== 'string' || typeof email !== 'string' || typeof mensaje !== 'string') {
-      return res.status(400).json({ ok: false, message: 'Nombre, email y mensaje deben ser texto' });
+    if (typeof nombre !== 'string' || typeof email !== 'string' || typeof telefono !== 'string'
+      || typeof asunto !== 'string' || typeof mensaje !== 'string') {
+      return res.status(400).json({ ok: false, message: 'Los campos del formulario deben ser texto' });
     }
-    if (!/.+@.+\..+/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
       return res.status(400).json({ ok: false, message: 'Email inválido' });
+    }
+    const digitos = telefono.replace(/\D/g, '');
+    if (!/^[\d\s+()-]+$/.test(telefono.trim()) || digitos.length < 7 || digitos.length > 15) {
+      return res.status(400).json({ ok: false, message: 'Teléfono inválido' });
+    }
+    if (asunto.trim().length < 3 || asunto.trim().length > 120) {
+      return res.status(400).json({ ok: false, message: 'El asunto debe tener entre 3 y 120 caracteres' });
     }
     if (mensaje.trim().length < 10) {
       return res.status(400).json({ ok: false, message: 'Mensaje mínimo de 10 caracteres' });
     }
-    const msg = new ContactMessage({ nombre: nombre.trim(), email, mensaje });
+    if (mensaje.length > 2000) {
+      return res.status(400).json({ ok: false, message: 'Mensaje máximo de 2000 caracteres' });
+    }
+    const msg = new ContactMessage({
+      nombre: nombre.trim(),
+      email: email.trim(),
+      telefono: telefono.trim(),
+      asunto: asunto.trim(),
+      mensaje: mensaje.trim()
+    });
     await msg.save();
     res.status(201).json({ ok: true, mensaje: 'Mensaje recibido. Te contactaremos pronto.' });
   } catch (e) {

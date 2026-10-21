@@ -11,6 +11,8 @@ import AppointmentRequest from '../models/AppointmentRequest.js';
 import Appointment from '../models/Appointment.js';
 import Payment from '../models/Payment.js';
 import CashSession from '../models/CashSession.js';
+import Receipt from '../models/Receipt.js';
+import { emitirComprobante } from './receipt.js';
 import { env } from '../config/env.js';
 
 // ---------------------------------------------------------------------------
@@ -121,6 +123,7 @@ export async function seedDemo({ dryRun = false } = {}) {
   await planificar('admin', User, () => ({ email: env.adminEmail.toLowerCase() }), 'Usuario ADMINISTRADOR (admin@sigca.local)');
   await planificar('recepcion', User, () => ({ email: 'recepcion.demo@demo.sigca' }), 'Usuario RECEPCIONISTA (recepcion.demo@demo.sigca)');
   await planificar('profesionalUser', User, () => ({ email: 'profesional.demo@demo.sigca' }), 'Usuario PROFESIONAL (profesional.demo@demo.sigca)');
+  await planificar('profesionalUser2', User, () => ({ email: 'pablo.herrera@demo.sigca' }), 'Usuario PROFESIONAL (pablo.herrera@demo.sigca)');
 
   await planificar('s1', Service, () => ({ nombre: 'Consulta odontológica general' }), 'Servicio: Consulta odontológica general');
   await planificar('s2', Service, () => ({ nombre: 'Limpieza dental' }), 'Servicio: Limpieza dental');
@@ -155,7 +158,7 @@ export async function seedDemo({ dryRun = false } = {}) {
     ['pa2', 'm3']);
 
   await planificar('sol1', AppointmentRequest, () => ({ mensaje: regexMarcador('sol-01') }), 'Solicitud: Javier Lemos (PENDIENTE)');
-  await planificar('sol2', AppointmentRequest, () => ({ mensaje: regexMarcador('sol-02') }), 'Solicitud: Lucía Fernández (ATENDIDA)');
+  await planificar('sol2', AppointmentRequest, () => ({ mensaje: regexMarcador('sol-02') }), 'Solicitud: Carla Méndez (ATENDIDA)');
 
   await planificar('cita1', Appointment, () => ({ observaciones: regexMarcador('cita-01') }), 'Cita 01: Martín Ríos — total pagada', ['pa1', 'pr1', 's1']);
   await planificar('cita2', Appointment, () => ({ observaciones: regexMarcador('cita-02') }), 'Cita 02: Carla Méndez — parcial', ['pa3', 'pr2', 's3']);
@@ -209,45 +212,56 @@ export async function seedDemo({ dryRun = false } = {}) {
   await aplicar('profesionalUser', User, () => ({ email: 'profesional.demo@demo.sigca' }), () => ({
     nombre: 'Profesional Demo', email: 'profesional.demo@demo.sigca', password: 'Demo1234', rol: 'PROFESIONAL', activo: true
   }));
+  await aplicar('profesionalUser2', User, () => ({ email: 'pablo.herrera@demo.sigca' }), () => ({
+    nombre: 'Pablo Herrera', email: 'pablo.herrera@demo.sigca', password: 'Demo1234', rol: 'PROFESIONAL', activo: true
+  }));
 
   // ------------------------------------------------------------------
   // FASE 3 — SERVICIOS y PROFESIONALES
   // ------------------------------------------------------------------
   const s1 = await aplicar('s1', Service, () => ({ nombre: 'Consulta odontológica general' }), () => ({
-    nombre: 'Consulta odontológica general', descripcion: 'Evaluación y diagnóstico odontológico', precioCentavos: 25000, duracionMinutos: 30, activo: true
+    nombre: 'Consulta odontológica general', descripcion: 'Evaluación y diagnóstico odontológico', precioCentavos: 25000, duracionMinutos: 30, activo: true,
+    imagenUrl: 'https://ejemplo.sigca/servicios/consulta-odontologica.jpg', categoria: 'Odontología', icono: 'diente'
   }));
   const s2 = await aplicar('s2', Service, () => ({ nombre: 'Limpieza dental' }), () => ({
-    nombre: 'Limpieza dental', descripcion: 'Profilaxis y pulido dental', precioCentavos: 18000, duracionMinutos: 30, activo: true
+    nombre: 'Limpieza dental', descripcion: 'Profilaxis y pulido dental', precioCentavos: 18000, duracionMinutos: 30, activo: true,
+    imagenUrl: 'https://ejemplo.sigca/servicios/limpieza-dental.jpg', categoria: 'Odontología', icono: 'diente'
   }));
   const s3 = await aplicar('s3', Service, () => ({ nombre: 'Sesión de psicología' }), () => ({
-    nombre: 'Sesión de psicología', descripcion: 'Consulta psicológica individual', precioCentavos: 30000, duracionMinutos: 45, activo: true
+    nombre: 'Sesión de psicología', descripcion: 'Consulta psicológica individual', precioCentavos: 30000, duracionMinutos: 45, activo: true,
+    imagenUrl: 'https://ejemplo.sigca/servicios/sesion-psicologia.jpg', categoria: 'Psicología', icono: 'mente'
   }));
   await aplicar('s4', Service, () => ({ nombre: 'Control de niño sano' }), () => ({
-    nombre: 'Control de niño sano', descripcion: 'Control pediátrico', precioCentavos: 20000, duracionMinutos: 30, activo: true
+    nombre: 'Control de niño sano', descripcion: 'Control pediátrico', precioCentavos: 20000, duracionMinutos: 30, activo: true,
+    imagenUrl: 'https://ejemplo.sigca/servicios/control-nino-sano.jpg', categoria: 'Pediatría', icono: 'corazon'
   }));
 
   const pr1 = await aplicar('pr1', Professional, () => ({ dni: '30000001' }), () => ({
-    nombre: 'Laura', apellido: 'Giménez', especialidad: 'Odontología general', telefono: '5551-1001', email: 'laura.gimenez@demo.sigca', dni: '30000001', matricula: 'MP-30001', activo: true
+    nombre: 'Laura', apellido: 'Giménez', especialidad: 'Odontología general', telefono: '5551-1001', email: 'profesional.demo@demo.sigca', dni: '30000001', matricula: 'MP-30001', usuario: refs.profesionalUser, activo: true
   }));
   const pr2 = await aplicar('pr2', Professional, () => ({ dni: '30000002' }), () => ({
-    nombre: 'Pablo', apellido: 'Herrera', especialidad: 'Psicología', telefono: '5551-1002', email: 'pablo.herrera@demo.sigca', dni: '30000002', matricula: 'MP-30002', activo: true
+    nombre: 'Pablo', apellido: 'Herrera', especialidad: 'Psicología', telefono: '5551-1002', email: 'pablo.herrera@demo.sigca', dni: '30000002', matricula: 'MP-30002', usuario: refs.profesionalUser2, activo: true
   }));
 
   // ------------------------------------------------------------------
   // FASE 4 — PACIENTES y RESPONSABLES
   // ------------------------------------------------------------------
   const pa1 = await aplicar('pa1', Patient, () => ({ email: 'paciente.adulto@demo.sigca' }), () => ({
-    nombre: 'Martín', apellido: 'Ríos', fechaNacimiento: new Date('1990-04-12'), sexo: 'M', telefono: '5551-0001', email: 'paciente.adulto@demo.sigca', activo: true
+    nombre: 'Martín', apellido: 'Ríos', fechaNacimiento: new Date('1990-04-12'), sexo: 'M', telefono: '5551-0001', email: 'paciente.adulto@demo.sigca',
+    fechaInicioProceso: dia(-90, 9, 0), observacionesAdministrativas: 'Paciente adulto, seguimiento odontológico.', activo: true
   }));
   const pa2 = await aplicar('pa2', Patient, () => ({ email: 'paciente.menor@demo.sigca' }), () => ({
-    nombre: 'Sofía', apellido: 'Ríos', fechaNacimiento: new Date('2015-09-30'), sexo: 'F', telefono: '5551-0002', email: 'paciente.menor@demo.sigca', activo: true
+    nombre: 'Sofía', apellido: 'Ríos', fechaNacimiento: new Date('2015-09-30'), sexo: 'F', telefono: '5551-0002', email: 'paciente.menor@demo.sigca',
+    fechaInicioProceso: dia(-60, 9, 0), observacionesAdministrativas: 'Menor de edad; asiste con su madre (Ana Ríos).', activo: true
   }));
   const pa3 = await aplicar('pa3', Patient, () => ({ email: 'paciente.carla@demo.sigca' }), () => ({
-    nombre: 'Carla', apellido: 'Méndez', fechaNacimiento: new Date('1985-01-20'), sexo: 'F', telefono: '5551-0003', email: 'paciente.carla@demo.sigca', activo: true
+    nombre: 'Carla', apellido: 'Méndez', fechaNacimiento: new Date('1985-01-20'), sexo: 'F', telefono: '5551-0003', email: 'paciente.carla@demo.sigca',
+    fechaInicioProceso: dia(-30, 9, 0), observacionesAdministrativas: 'Inició terapia psicológica.', activo: true
   }));
 
   const r1 = await aplicar('r1', Responsible, () => ({ email: 'responsable.ana@demo.sigca' }), () => ({
-    nombre: 'Ana', apellido: 'Ríos', telefono: '5551-0001', email: 'responsable.ana@demo.sigca', parentesco: 'Madre', activo: true
+    nombre: 'Ana', apellido: 'Ríos', telefono: '5551-0001', email: 'responsable.ana@demo.sigca',
+    direccion: 'Colonia Centro, calle 1, casa 10', parentesco: 'Madre', activo: true
   }));
 
   await aplicar('pr_menor', PatientResponsible,
@@ -269,10 +283,10 @@ export async function seedDemo({ dryRun = false } = {}) {
 
   await aplicar('pm1', PatientMaterial,
     () => ({ paciente: pa1._id, material: m1._id }),
-    () => ({ paciente: pa1._id, material: m1._id, notas: 'Entregado en la consulta', activo: true }));
+    () => ({ paciente: pa1._id, material: m1._id, notas: 'Entregado en la consulta', asignadoPor: refs.recepcion, activo: true }));
   await aplicar('pm2', PatientMaterial,
     () => ({ paciente: pa2._id, material: m3._id }),
-    () => ({ paciente: pa2._id, material: m3._id, notas: 'Para ver en casa con la madre', activo: true }));
+    () => ({ paciente: pa2._id, material: m3._id, notas: 'Para ver en casa con la madre', asignadoPor: refs.recepcion, activo: true }));
 
   // ------------------------------------------------------------------
   // FASE 6 — SOLICITUDES
@@ -283,9 +297,10 @@ export async function seedDemo({ dryRun = false } = {}) {
     mensaje: `${marcador('sol-01')} Quisiera un turno por la mañana.`, estado: 'PENDIENTE'
   }));
   await aplicar('sol2', AppointmentRequest, () => ({ mensaje: regexMarcador('sol-02') }), () => ({
-    nombre: 'Lucía Fernández', telefono: '5551-0005', email: 'lucia.fernandez@demo.sigca',
+    nombre: 'Carla Méndez', telefono: '5551-0003', email: 'paciente.carla@demo.sigca',
     servicio: s3._id,
-    mensaje: `${marcador('sol-02')} Consulta de psicología.`, estado: 'ATENDIDA'
+    mensaje: `${marcador('sol-02')} Consulta de psicología.`, estado: 'ATENDIDA',
+    atendidaPor: refs.recepcion, fechaAtencion: dia(-2, 10, 0)
   }));
 
   // ------------------------------------------------------------------
@@ -320,6 +335,19 @@ export async function seedDemo({ dryRun = false } = {}) {
     precioCentavos: s1.precioCentavos, duracionMinutos: s1.duracionMinutos,
     estado: 'CONFIRMADA', observaciones: `${marcador('cita-04')} Control general`
   }));
+
+  // RF-06: la solicitud ATENDIDA conserva la cita generada (y la cita su origen).
+  // Solo se completan referencias nulas, sin sobrescribir datos existentes.
+  if (refs.sol2 && cita2?._id) {
+    await AppointmentRequest.updateOne(
+      { _id: refs.sol2, citaGenerada: null },
+      { $set: { citaGenerada: cita2._id } }
+    );
+    await Appointment.updateOne(
+      { _id: cita2._id, solicitudOrigen: null },
+      { $set: { solicitudOrigen: refs.sol2 } }
+    );
+  }
 
   // ------------------------------------------------------------------
   // FASE 8 — CAJAS (se crean antes de los pagos para asociarlos)
@@ -372,6 +400,15 @@ export async function seedDemo({ dryRun = false } = {}) {
       cita: cita2._id, paciente: pa3._id, caja: caja2._id, montoCentavos: 5000, metodo: 'EFECTIVO',
       fecha: ahora, estado: 'REGISTRADO', notas: `${marcador('pago-05')} Saldo abonado en caja abierta`
     }));
+  }
+
+  // RF-10: los pagos de demostración reciben su comprobante único (idempotente).
+  // El número se copia al pago; la fuente de verdad sigue siendo Receipt.
+  const pagosDemo = await Payment.find({ notas: /^\[seedDemo:pago-/ });
+  for (const pago of pagosDemo) await emitirComprobante(pago);
+  const comprobantesDemo = await Receipt.countDocuments({ pago: { $in: pagosDemo.map((p) => p._id) } });
+  if (comprobantesDemo < pagosDemo.length) {
+    advertencias.push(`Hay ${pagosDemo.length - comprobantesDemo} pago(s) de demostración sin comprobante.`);
   }
   // Totales del cierre de caja 1 calculados desde sus pagos REGISTRADO
   // (un pago anulado no suma; el efectivo esperado es inicial + EFECTIVO).
