@@ -8,6 +8,11 @@ const serviceSchema = new mongoose.Schema(
     descripcion: { type: String, default: '', trim: true },
     precioCentavos: { type: Number, required: true, min: 0, validate: Number.isInteger },
     duracionMinutos: { type: Number, required: true, min: 1, validate: Number.isInteger },
+    // Datos opcionales para el catálogo público (no afectan precio ni duración).
+    categoria: { type: String, default: 'General', trim: true },
+    icono: { type: String, default: 'estetoscopio', trim: true },
+    incluye: { type: [String], default: [] },
+    preparacion: { type: String, default: '', trim: true },
     activo: { type: Boolean, default: true }
   },
   { timestamps: true }

@@ -8,6 +8,9 @@ const requestSchema = new mongoose.Schema(
     email: { type: String, default: '', lowercase: true, trim: true },
     servicio: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', default: null },
     fechaPreferida: { type: Date, default: null },
+    // Franja preferida dentro del horario de atención ('' = sin preferencia).
+    franja: { type: String, enum: ['', 'MANANA', 'TARDE'], default: '' },
+    primeraVez: { type: Boolean, default: false },
     mensaje: { type: String, default: '' },
     estado: { type: String, enum: ['PENDIENTE', 'ATENDIDA', 'CANCELADA'], default: 'PENDIENTE' }
   },

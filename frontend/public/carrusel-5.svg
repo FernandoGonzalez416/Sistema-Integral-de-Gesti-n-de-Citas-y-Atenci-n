@@ -1,1 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="#8a1a3c"/><text x="400" y="210" font-family="sans-serif" font-size="42" fill="#ffffff" text-anchor="middle">Reserva tu cita hoy</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fondo5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a1a45"/>
+      <stop offset="1" stop-color="#d04a72"/>
+    </linearGradient>
+    <pattern id="cruces5" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M60 46v28M46 60h28" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0.09"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#fondo5)"/>
+  <rect width="1600" height="900" fill="url(#cruces5)"/>
+  <circle cx="1060" cy="440" r="380" fill="#fff" opacity="0.07"/>
+  <circle cx="1060" cy="440" r="290" fill="#fff" opacity="0.07"/>
+  <circle cx="1480" cy="90" r="190" fill="#fff" opacity="0.05"/>
+  <circle cx="140" cy="820" r="230" fill="#fff" opacity="0.05"/>
+  <g>
+    <rect x="850" y="320" width="420" height="340" rx="38" fill="#fff" fill-opacity="0.96"/>
+    <path d="M850 358a38 38 0 0 1 38-38H1232a38 38 0 0 1 38 38V410H850Z" fill="#ffd27a"/>
+    <rect x="930" y="288" width="24" height="64" rx="12" fill="#fff"/>
+    <rect x="1166" y="288" width="24" height="64" rx="12" fill="#fff"/>
+    <g fill="#d04a72" fill-opacity="0.28">
+      <circle cx="925" cy="470" r="17"/><circle cx="1005" cy="470" r="17"/><circle cx="1085" cy="470" r="17"/><circle cx="1165" cy="470" r="17"/>
+      <circle cx="925" cy="540" r="17"/><circle cx="1005" cy="540" r="17"/>
+      <circle cx="925" cy="610" r="17"/><circle cx="1005" cy="610" r="17"/><circle cx="1085" cy="610" r="17"/>
+    </g>
+    <circle cx="1200" cy="600" r="78" fill="#3ddc84"/>
+    <path d="M1166 600L1192 626L1240 574" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

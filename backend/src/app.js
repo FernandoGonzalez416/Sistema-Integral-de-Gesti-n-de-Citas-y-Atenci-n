@@ -25,7 +25,8 @@ import { errorHandler } from './middlewares/errorHandler.js';
 const app = express();
 
 app.use(cors({ origin: env.frontendUrl }));
-app.use(express.json());
+// 1 MB: el perfil incluye la foto (data URL ya comprimida por el frontend, ~20-60 KB).
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);

@@ -1,5 +1,17 @@
 import Service from '../models/Service.js';
 import mongoose from 'mongoose';
+import { soloCampos } from '../utils/campos.js';
+
+const CAMPOS_CATALOGO = ['categoria', 'icono', 'incluye', 'preparacion'];
+
+// Normaliza los datos opcionales del catálogo (incluye debe ser lista de textos).
+function catalogo(body) {
+  const d = soloCampos(body, CAMPOS_CATALOGO);
+  if (d.incluye !== undefined) {
+    d.incluye = Array.isArray(d.incluye) ? d.incluye.map((t) => String(t).trim()).filter(Boolean).slice(0, 10) : [];
+  }
+  return d;
+}
 
 function idValido(id) {
   return mongoose.isValidObjectId(id);
@@ -59,7 +71,7 @@ export async function crear(req, res, next) {
     const error = validar(req.body || {});
     if (error) return res.status(400).json({ ok: false, message: error });
     const { nombre, descripcion, precioCentavos, duracionMinutos } = req.body;
-    const servicio = new Service({ nombre, descripcion, precioCentavos, duracionMinutos });
+    const servicio = new Service({ nombre, descripcion, precioCentavos, duracionMinutos, ...catalogo(req.body) });
     await servicio.save();
     res.status(201).json({ ok: true, servicio });
   } catch (e) {
@@ -88,6 +100,7 @@ export async function actualizar(req, res, next) {
     const error = validar(combinado);
     if (error) return res.status(400).json({ ok: false, message: error });
     Object.assign(servicio, { ...combinado, descripcion: descripcion ?? servicio.descripcion });
+    Object.assign(servicio, catalogo(req.body));
     if (activo !== undefined) servicio.activo = !!activo;
     await servicio.save();
     res.json({ ok: true, servicio });

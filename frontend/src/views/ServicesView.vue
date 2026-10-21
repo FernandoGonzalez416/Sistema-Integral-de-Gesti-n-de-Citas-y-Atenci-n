@@ -6,7 +6,7 @@
     <form @submit.prevent="guardar">
       <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Limpieza dental" />
       <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Opcional" />
-      <FormField etiqueta="Precio ($)" type="number" v-model="form.precio" placeholder="250.00" />
+      <FormField etiqueta="Precio (Q)" type="number" v-model="form.precio" placeholder="250.00" />
       <FormField etiqueta="Duración (minutos)" type="number" v-model="form.duracion" placeholder="60" />
       <button type="submit">{{ editando ? 'Guardar' : 'Registrar' }}</button>
       <button v-if="editando" type="button" @click="cancelar">Cancelar</button>
@@ -48,7 +48,9 @@ const editando = ref(null);
 const form = reactive({ nombre: '', descripcion: '', precio: '', duracion: '' });
 
 function formatoMoneda(centavos) {
-  return `$${(centavos / 100).toFixed(2)}`;
+  // Quetzales (GTQ): Q1,250.00
+  const monto = (Number(centavos || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Q${monto}`;
 }
 
 function aCentavos(precio) {

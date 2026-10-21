@@ -132,25 +132,45 @@ export const getProfesionales = (token, params = {}) => {
   return authFetch(token, `/api/profesionales${qs ? '?' + qs : ''}`);
 };
 
-export async function postLogin(email, password) {
-  const res = await fetch(`${baseUrl}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const datos = await res.json();
-  if (!res.ok) throw new Error(datos.message || 'No se pudo iniciar sesión');
+// Petición con errores tipados: error.red = true si no hubo conexión; error.status = código HTTP.
+async function peticion(ruta, opciones = {}, mensajePorDefecto = 'No se pudo completar la solicitud') {
+  let res;
+  try {
+    res = await fetch(`${baseUrl}${ruta}`, opciones);
+  } catch {
+    const e = new Error('No se pudo conectar con el servidor. Revisa tu conexión.');
+    e.red = true;
+    throw e;
+  }
+  let datos = {};
+  try { datos = await res.json(); } catch { /* respuesta sin cuerpo */ }
+  if (!res.ok) {
+    const e = new Error(datos.message || mensajePorDefecto);
+    e.status = res.status;
+    throw e;
+  }
   return datos;
 }
 
-export async function getMe(token) {
-  const res = await fetch(`${baseUrl}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const datos = await res.json();
-  if (!res.ok) throw new Error(datos.message || 'Sesión inválida');
-  return datos;
-}
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const conToken = (token) => ({ ...JSON_HEADERS, Authorization: `Bearer ${token}` });
+
+export const postLogin = (email, password) =>
+  peticion('/api/auth/login', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ email, password }) }, 'No se pudo iniciar sesión');
+
+// Registro público de clientes: { nombre, email, password, foto? }
+export const postRegistro = (datos) =>
+  peticion('/api/auth/register', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(datos) }, 'No se pudo crear la cuenta');
+
+export const getMe = (token) =>
+  peticion('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }, 'Sesión inválida');
+
+// Cambio parcial del propio perfil: { nombre?, foto?, perfil?: {...} }
+export const patchPerfil = (token, cambios) =>
+  peticion('/api/auth/perfil', { method: 'PATCH', headers: conToken(token), body: JSON.stringify(cambios) }, 'No se pudo guardar el perfil');
+
+export const patchPassword = (token, actual, nueva) =>
+  peticion('/api/auth/password', { method: 'PATCH', headers: conToken(token), body: JSON.stringify({ actual, nueva }) }, 'No se pudo cambiar la contraseña');
 
 async function conAuth(token, ruta, opciones = {}) {
   const res = await fetch(`${baseUrl}${ruta}`, {

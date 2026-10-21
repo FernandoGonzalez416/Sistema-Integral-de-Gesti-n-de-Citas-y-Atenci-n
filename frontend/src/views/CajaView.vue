@@ -24,7 +24,7 @@
         <h3>Cerrar caja</h3>
         <form @submit.prevent="cerrar">
           <div class="fila">
-            <FormField etiqueta="Total real contado" type="number" v-model="formCierre.totalReal" placeholder="0.00" />
+            <FormField etiqueta="Total real contado (Q)" type="number" v-model="formCierre.totalReal" placeholder="0.00" />
           </div>
           <FormField etiqueta="Observaciones (opcional)" v-model="formCierre.observaciones" />
           <button type="submit">Cerrar caja</button>
@@ -34,7 +34,7 @@
         <p>No hay caja abierta.</p>
         <form @submit.prevent="abrir">
           <div class="fila">
-            <FormField etiqueta="Monto inicial" type="number" v-model="formApertura.montoInicial" placeholder="0.00" />
+            <FormField etiqueta="Monto inicial (Q)" type="number" v-model="formApertura.montoInicial" placeholder="0.00" />
           </div>
           <FormField etiqueta="Observaciones (opcional)" v-model="formApertura.observaciones" />
           <button type="submit">Abrir caja</button>
@@ -94,7 +94,9 @@ const formCierre = reactive({ totalReal: '', observaciones: '' });
 const preview = reactive({ EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0, total: 0 });
 
 function formatearMonto(centavos) {
-  return (Number(centavos || 0) / 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Quetzales (GTQ): Q1,250.00
+  const monto = (Number(centavos || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Q${monto}`;
 }
 
 function formatearFecha(fecha) {

@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="#2e8b57"/><text x="400" y="210" font-family="sans-serif" font-size="42" fill="#ffffff" text-anchor="middle">Profesionales calificados</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fondo2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07514f"/>
+      <stop offset="1" stop-color="#1f9a96"/>
+    </linearGradient>
+    <pattern id="cruces2" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M60 46v28M46 60h28" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0.09"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#fondo2)"/>
+  <rect width="1600" height="900" fill="url(#cruces2)"/>
+  <circle cx="1060" cy="440" r="380" fill="#fff" opacity="0.07"/>
+  <circle cx="1060" cy="440" r="290" fill="#fff" opacity="0.07"/>
+  <circle cx="1480" cy="90" r="190" fill="#fff" opacity="0.05"/>
+  <circle cx="140" cy="820" r="230" fill="#fff" opacity="0.05"/>
+  <g>
+    <circle cx="1060" cy="330" r="92" fill="#fff" fill-opacity="0.95"/>
+    <path d="M830 650C830 520 930 470 1060 470C1190 470 1290 520 1290 650Z" fill="#fff" fill-opacity="0.92"/>
+    <path d="M1010 474L1060 566L1110 474" fill="none" stroke="#1f9a96" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+    <rect x="1148" y="540" width="70" height="20" rx="8" fill="#1f9a96"/>
+    <rect x="1173" y="515" width="20" height="70" rx="8" fill="#1f9a96"/>
+    <path d="M985 250C985 205 1135 205 1135 250" fill="none" stroke="#8ff0e6" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -59,7 +59,7 @@
       <Card titulo="Registrar pago">
         <form @submit.prevent="registrarPago">
           <div class="fila">
-            <FormField etiqueta="Monto" type="number" v-model="form.monto" placeholder="0.00" />
+            <FormField etiqueta="Monto (Q)" type="number" v-model="form.monto" placeholder="0.00" />
             <label class="campo">
               <span>Método</span>
               <select v-model="form.metodo">
@@ -132,7 +132,9 @@ const form = reactive({ monto: '', metodo: 'EFECTIVO', notas: '' });
 const puedePagar = computed(() => saldo.value && saldo.value.estadoSaldo !== 'PAGADO' && Number(form.monto) > 0);
 
 function formatearMonto(centavos) {
-  return (Number(centavos || 0) / 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Quetzales (GTQ): Q1,250.00
+  const monto = (Number(centavos || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Q${monto}`;
 }
 
 function formatearFecha(fecha) {

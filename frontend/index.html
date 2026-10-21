@@ -3,7 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SIGCA — Gestión de Citas y Atención</title>
+    <meta name="theme-color" content="#1a5c8a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <title>SIGSA — Gestión de Citas y Atención</title>
+    <style>
+      body { margin: 0; }
+
+      /* Scroll funcional pero sin barra visible (no ocupa espacio ni mueve el contenido). */
+      html,
+      body,
+      * {
+        scrollbar-width: none;            /* Firefox */
+        -ms-overflow-style: none;         /* Edge/IE antiguos */
+      }
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {              /* Chrome, Edge, Safari, Opera */
+        display: none;
+        width: 0;
+        height: 0;
+        background: transparent;
+      }
+      html { scrollbar-gutter: auto; }
+    </style>
   </head>
   <body>
     <div id="app"></div>

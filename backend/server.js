@@ -4,6 +4,7 @@ import { connectDB } from './src/config/db.js';
 import { seedAdmin } from './src/utils/seedAdmin.js';
 import { seedContenidos } from './src/utils/seedContent.js';
 import { seedHorarios } from './src/utils/seedSchedules.js';
+import { seedServicios } from './src/utils/seedServices.js';
 
 try {
   await connectDB(env.mongoUri);
@@ -11,6 +12,7 @@ try {
   await seedAdmin();
   await seedContenidos();
   await seedHorarios();
+  await seedServicios();
 } catch (error) {
   console.error('Error al conectar a MongoDB:', error.message);
   process.exit(1);

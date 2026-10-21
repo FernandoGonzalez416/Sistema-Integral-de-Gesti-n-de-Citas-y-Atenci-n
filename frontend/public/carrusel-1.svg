@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="#1a5c8a"/><text x="400" y="210" font-family="sans-serif" font-size="42" fill="#ffffff" text-anchor="middle">Atención integral</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fondo1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b3a5c"/>
+      <stop offset="1" stop-color="#1f6fa5"/>
+    </linearGradient>
+    <pattern id="cruces1" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M60 46v28M46 60h28" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity="0.09"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#fondo1)"/>
+  <rect width="1600" height="900" fill="url(#cruces1)"/>
+  <circle cx="1060" cy="440" r="380" fill="#fff" opacity="0.07"/>
+  <circle cx="1060" cy="440" r="290" fill="#fff" opacity="0.07"/>
+  <circle cx="1480" cy="90" r="190" fill="#fff" opacity="0.05"/>
+  <circle cx="140" cy="820" r="230" fill="#fff" opacity="0.05"/>
+  <g transform="translate(60 -10)">
+    <path d="M1000 600C760 450 800 280 920 280C970 280 1000 310 1000 335C1000 310 1030 280 1080 280C1200 280 1240 450 1000 600Z" fill="#fff" fill-opacity="0.18" stroke="#fff" stroke-width="10" stroke-linejoin="round"/>
+    <polyline points="560,450 790,450 850,450 895,360 945,540 995,400 1035,480 1075,450 1440,450" fill="none" stroke="#8ff0e6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
