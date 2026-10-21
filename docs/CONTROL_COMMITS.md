@@ -14,7 +14,10 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B2 | feat/b2-caja-pagos | 910d756 | feat(ui): caja propia y movimientos en pagos (B2) | FernandoGonzalez416 | creado |
 | B2 | feat/b2-caja-pagos | 0be4f27 | test(postman): verificar caja por usuario y arqueo (B2) | FernandoGonzalez416 | creado |
 | B2 | feat/b2-caja-pagos | este commit | docs(b2): registrar caja por usuario y migracion | FernandoGonzalez416 | creado |
-| B3 | feat/b3-modelos-relaciones | — | — | — | pendiente |
+| B3 | feat/b3-modelos-relaciones | 8dc8fa2 | feat(api): completar modelos, relaciones y validaciones (B3) | FernandoGonzalez416 | creado |
+| B3 | feat/b3-modelos-relaciones | 506ab43 | feat(ui): completar campos de modelos en los formularios (B3) | FernandoGonzalez416 | creado |
+| B3 | feat/b3-modelos-relaciones | 7b01f40 | test(postman): verificar campos y vínculos de modelos (B3) | FernandoGonzalez416 | creado |
+| B3 | feat/b3-modelos-relaciones | este commit | docs(b3): registrar modelos, relaciones y migración | FernandoGonzalez416 | creado |
 | B4 | feat/b4-citas-solicitudes | — | — | — | pendiente |
 | B5 | feat/b5-seed | — | — | — | pendiente |
 | B6 | feat/b6-portal-contenido | — | — | — | pendiente |

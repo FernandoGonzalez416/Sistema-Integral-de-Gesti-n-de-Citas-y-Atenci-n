@@ -270,3 +270,38 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - Migración: `--dry-run` con 4 pagos planificados → aplicación 4/4 → segundo `--dry-run` con **0 pendientes**; BD desechable eliminada.
 - **UI no verificada en navegador** (sin navegador); solo build.
 
+## 2026-10-21 — B3: campos faltantes, vínculos y validaciones de modelos
+
+- **Contexto:** la revisión de `REQUISITOS.md` y `PENDIENTES.md` (§16) mostró campos exigidos por RF-03, RF-04, RF-05, RF-06 y RF-10 que no existían en los modelos, y relaciones que solo se inferían (profesional↔usuario, solicitud↔cita, material↔usuario que lo asigna). B3 completa esos datos sin romper registros históricos.
+- **Decisión:** agregar los campos y vínculos que exige el RF, con validación en el modelo **y** en el controlador, y una migración idempotente que solo rellena datos faltantes.
+
+### Modelos y API
+
+- `Patient` gana `fechaInicioProceso` y `observacionesAdministrativas` (máx. 2000). La API acepta ambos; la fecha no puede ser futura y `''` se normaliza a `null` para poder limpiarla. La foto (`fotoUrl`) ya existía.
+- `Responsible` exige `email` (formato válido) y `direccion`; agrega `fotoUrl` (RF-04). El alta y la actualización rechazan email vacío o inválido y dirección menor a 5 caracteres.
+- `Professional.usuario` (`ref: User`) vincula al profesional con su usuario del sistema. Índice único parcial sobre `usuario` objectId: un usuario no puede representar a dos profesionales. La API de alta exige `usuarioId`, valida que el usuario exista, esté activo y tenga rol `PROFESIONAL`, y devuelve el usuario poblado. La actualización permite cambiar el vínculo pero no dejarlo vacío; un conflicto de índice responde **409**. Los profesionales históricos sin vínculo se regularizan con la migración.
+- `Service.imagenUrl` se persiste y se expone en el catálogo público (RF-05).
+- `ContactMessage` exige `telefono` y `asunto` (RF-01). El formulario público los envía; el backend valida formato de teléfono, longitud de asunto y de mensaje.
+- `AppointmentRequest` gana `citaGenerada` (`ref: Appointment`), `atendidaPor`, `fechaAtencion` y `motivoRechazo`. `GET /api/solicitudes-cita` devuelve la cita y el usuario que atendió (RF-06). El flujo transaccional de atención/rechazo queda para B4.
+- `Payment.numeroComprobante` se copia desde el `Receipt` al emitirlo; `Receipt` sigue siendo la fuente de verdad. Índice único parcial por número. Así el propio pago cumple RF-10, sin depender de consultar el comprobante.
+- `PatientMaterial.asignadoPor` registra al usuario autenticado que asigna el material (PENDIENTES §13) y se devuelve poblado en las consultas.
+
+### Migración
+
+- `backend/scripts/completarRelaciones.js` (`--dry-run`, idempotente, no destructivo) sincroniza `Payment.numeroComprobante` desde `Receipt`, completa `Patient.fechaInicioProceso` desde `createdAt`, vincula profesionales con usuarios por email exacto (solo `PROFESIONAL` activos y sin vínculo previo) y reconstruye `solicitud↔cita` en ambos sentidos cuando falta una de las dos referencias. Informa —sin modificar— responsables sin email/dirección, mensajes sin teléfono/asunto y asignaciones sin `asignadoPor`. Scripts `npm run migrar:relaciones` y `npm run migrar:relaciones:dry`.
+
+### Seed, frontend y Postman
+
+- El seed crea un segundo usuario `PROFESIONAL` (`pablo.herrera@demo.sigca`) y vincula ambos profesionales; agrega dirección al responsable, fechas/observaciones a los pacientes, imágenes a los servicios, `asignadoPor` a las asignaciones y `citaGenerada`/`atendidaPor` a la solicitud atendida; además emite los comprobantes de sus pagos. Todo sigue siendo idempotente y no sobrescribe.
+- Frontend: `PacientesView` muestra/edita fecha de inicio y observaciones; `ResponsablesView` exige email y dirección y agrega foto; `ServicesView` agrega imagen; `ContactoView` agrega teléfono y asunto. La vinculación profesional↔usuario se expone por API/seed/Postman (no existe todavía pantalla de profesionales; queda para un bloque posterior).
+- Postman: 82 peticiones; se agrega «Crear usuario profesional», se envían los nuevos campos y se verifica su persistencia, el vínculo `PROFESIONAL`, el `numeroComprobante` del pago y el mensaje de contacto con teléfono/asunto.
+
+### Verificación
+
+- `backend`: `npm test` → **87/87** contra `sigca_test_rules` (puerto 3992).
+- `frontend`: `npm run build` → **verde**.
+- Postman: **82 peticiones / 113 asserts, 0 fallos** contra `sigca_postman_b3` y el `app.js` real.
+- Seed: `--dry-run` sin escrituras; dos ejecuciones (32 creados → 32 omitidos); **0** brechas en la migración posterior.
+- Migración: `--dry-run` con cambios planificados → aplicación → segundo `--dry-run` con **0 pendientes**; se probaron ambos sentidos de `solicitud↔cita` y se verificó que el `--dry-run` no escribe.
+- **UI no verificada en navegador** (sin navegador); solo build.
+
