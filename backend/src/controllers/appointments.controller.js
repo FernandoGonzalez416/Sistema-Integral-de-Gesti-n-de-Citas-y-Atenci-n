@@ -167,6 +167,8 @@ export async function listarPagosCita(req, res, next) {
     const [pagos, saldo] = await Promise.all([
       Payment.find({ cita: cita._id })
         .populate('registradoPor', 'nombre email')
+        .populate('anuladoPor', 'nombre email')
+        .populate('caja', 'fechaApertura fechaCierre estado')
         .sort({ fecha: -1 }),
       calcularSaldo(cita._id)
     ]);

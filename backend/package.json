@@ -10,6 +10,8 @@
     "seed:demo:dry": "node seedDemo.js --dry-run",
     "migrar:estados": "node scripts/migrarEstados.js",
     "migrar:estados:dry": "node scripts/migrarEstados.js --dry-run",
+    "migrar:cajas": "node scripts/asignarCajasPagos.js",
+    "migrar:cajas:dry": "node scripts/asignarCajasPagos.js --dry-run",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {
