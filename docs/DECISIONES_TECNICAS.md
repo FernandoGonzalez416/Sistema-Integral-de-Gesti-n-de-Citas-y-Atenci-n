@@ -227,4 +227,46 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 
 - La relación explícita pago/caja y la caja por usuario se abordan en B2.
 - La atención de solicitudes atómica y el flujo de rechazo se abordan en B4.
-- La deduplicación de helpers HTTP y de formato monetario del frontend se aborda en B2.
+- La deduplicación de helpers HTTP y de formato monetario del frontend queda pendiente para un bloque posterior (no bloquea el contrato).
+
+## 2026-10-21 — B2: caja por usuario y relación explícita pago↔caja
+
+- **Contexto:** B1 mantuvo la caja global y el bloqueo por ventana de fechas. RF-11 y RN-19…RN-27 exigen que **cada pago pertenezca a una caja**, que **cada usuario tenga como máximo una caja abierta** y que los totales se calculen desde los pagos de esa caja, no desde un rango temporal. Además, el cierre de B1 calculaba el **efectivo esperado** como `monto inicial + todos los ingresos`, cuando el RF lo define como `monto inicial + EFECTIVO`.
+- **Decisión:** reemplazar la inferencia por fecha por una **referencia explícita** `Payment.caja`, y hacer la caja **por usuario**.
+
+### Modelo y persistencia
+
+- `Payment.caja` (`ref: CashSession`) se escribe siempre en los pagos nuevos; queda `null` solo en registros históricos (se regularizan con un script). Se añade `Payment.anuladoPor` (RN-29) y el índice `{ caja, estado }`.
+- `CashSession` gana `totalIngresosCentavos` (suma de pagos `REGISTRADO` de todos los métodos) y un **índice único parcial** `{ abiertaPor: 1 }` con `estado: 'ABIERTA'`, que hace cumplir RN-22 también ante aperturas simultáneas (`E11000` → 409).
+- `totalEsperadoCentavos` pasa a ser `montoInicialCentavos + totalesPorMetodo.EFECTIVO` (RF-11). `totalRealCentavos` es el **efectivo contado** y `diferenciaCentavos = contado − esperado`.
+
+### API
+
+- `GET /api/cajas/actual` devuelve la caja ABIERTA **del usuario autenticado** (o `null`) y un `resumen` con totales por método y total de ingresos.
+- `GET /api/cajas`: ADMINISTRADOR ve todas (filtro opcional `?usuario=`); RECEPCIONISTA solo las propias.
+- `GET /api/cajas/:id` y `GET /api/cajas/:id/movimientos`: ADMINISTRADOR cualquiera; RECEPCIONISTA solo las suyas (**403** en las ajenas). `movimientos` incluye pagos (con paciente, cita, usuario que registró/anuló) y `resumen` calculado solo con `REGISTRADO`.
+- `POST /api/cajas/abrir` abre la caja del usuario; si ya tiene una ABIERTA → **409** (RN-22).
+- `POST /api/cajas/:id/cerrar`: ADMINISTRADOR puede cerrar cualquiera; RECEPCIONISTA solo la propia (**403**). Calcula los totales desde `Payment.find({ caja })` y guarda el snapshot.
+- `POST /api/pagos` exige la caja ABIERTA **del usuario que registra** (409 si no la tiene), asocia `caja` y valida que la fecha no sea anterior a la apertura ni futura. Se elimina la comprobación por ventana de cajas cerradas: la pertenencia explícita la sustituye.
+- `PATCH /api/pagos/:id/anular`: solo si la caja del pago está **ABIERTA** (409 si está cerrada), RECEPCIONISTA solo sobre su propia caja (403) y registra `anuladoPor` + `anuladoEn`.
+- `GET /api/pagos` admite el filtro `caja` y devuelve la caja y el usuario que anuló.
+
+### Migración
+
+- `backend/scripts/asignarCajasPagos.js` (idempotente, `--dry-run`, no destructivo) asigna `caja` a los pagos históricos cuya fecha cae en la ventana `[fechaApertura, fechaCierre]` de una caja; prioriza la caja del usuario que registró el pago y la ventana más corta. Los pagos sin caja compatible se informan y quedan intactos. Scripts `npm run migrar:cajas` y `npm run migrar:cajas:dry`.
+
+### Seed, frontend y Postman
+
+- El seed crea las cajas **antes** de los pagos, asocia cada pago a su caja (incluido el anulado) y recalcula los totales de la caja cerrada desde sus pagos `REGISTRADO` solo si lleva el marcador del seed.
+- `CajaView` consume `GET /cajas/actual` + `/movimientos` (sin inferir por fechas), muestra total de ingresos y efectivo esperado. `PagosView` muestra la caja propia, bloquea el alta si no existe y muestra la caja de cada pago.
+- Postman: 81 peticiones; «Caja actual», «Abrir caja», «Registrar pago», «Movimientos de la caja» y «Cerrar caja» verifican la caja por usuario, la asociación del pago y las fórmulas del arqueo.
+
+### Verificación
+
+- `backend`: `npm test` → **75/75** contra `sigca_test_rules` (puerto 3992).
+- `frontend`: `npm run build` → **verde**.
+- Postman: **81 peticiones / 102 asserts, 0 fallos** contra `sigca_postman_b2` y el `app.js` real.
+- Seed: `--dry-run` sin escrituras; dos ejecuciones (31 creados → 31 omitidos); **0 pagos sin caja**.
+- Migración: `--dry-run` con 4 pagos planificados → aplicación 4/4 → segundo `--dry-run` con **0 pendientes**; BD desechable eliminada.
+- **UI no verificada en navegador** (sin navegador); solo build.
+

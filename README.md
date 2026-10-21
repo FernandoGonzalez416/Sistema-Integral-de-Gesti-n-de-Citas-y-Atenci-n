@@ -58,8 +58,21 @@ npm run seed:demo       # crea solo lo que falta
 Carga: usuarios de los 3 roles, servicios, profesionales, pacientes (incluye un
 menor con responsable), materiales educativos y sus asignaciones, solicitudes,
 citas (pagada, parcial, pendiente y con pago anulado) y cajas (una cerrada con
-diferencia de arqueo y una abierta), manteniendo la coherencia financiera
-(los pagos activos nunca superan el costo de la cita y caen dentro de su caja).
+diferencia de arqueo y una abierta), manteniendo la coherencia financiera: cada
+pago queda asociado a la caja en que se registró, los pagos anulados no suman y
+ningún pago supera el costo de la cita.
+
+Si la base ya tenía datos de versiones anteriores, ejecuta las migraciones
+idempotentes (siempre primero en simulación):
+
+```
+cd backend
+npm run migrar:estados:dry && npm run migrar:estados   # estados y métodos antiguos
+npm run migrar:cajas:dry && npm run migrar:cajas       # pagos históricos sin caja
+```
+
+Ninguna migración elimina documentos; `migrar:cajas` solo escribe en pagos con
+`caja` vacía y avisa de los que no encajan en ninguna caja.
 
 ## Credenciales de demostración
 
@@ -83,10 +96,10 @@ No incluir credenciales reales en el repositorio.
 
 En `postman/` hay una colección lista para importar en Postman:
 
-- `postman/SIGCA.postman_collection.json` — 79 peticiones que cubren toda la API (health, auth, usuarios, servicios, contenidos, horarios, publicaciones, contacto, solicitudes, pacientes, responsables, relaciones, profesionales, citas, materiales, materiales por paciente, pagos y comprobantes, caja y bajas lógicas).
+- `postman/SIGCA.postman_collection.json` — 81 peticiones que cubren toda la API (health, auth, usuarios, servicios, contenidos, horarios, publicaciones, contacto, solicitudes, pacientes, responsables, relaciones, profesionales, citas, materiales, materiales por paciente, pagos y comprobantes, caja con movimientos y bajas lógicas).
 - `postman/SIGCA.postman_environment.json` — entorno «SIGCA — Entorno local» con `baseUrl`, credenciales demo, tokens y `_id`.
 
-Importa ambos archivos, selecciona el entorno y ejecuta «Login administrador» primero (guarda el token). Los POST de creación guardan sus `_id` en el entorno. Antes de crear citas, ajusta `inicioCita`, `inicioCita2` e `inicioCita3` a días laborables futuros; registrar pagos requiere una caja abierta (la colección la abre antes). Ver `docs/PRUEBAS.md` (sección Entregables).
+Importa ambos archivos, selecciona el entorno y ejecuta «Login administrador» primero (guarda el token). Los POST de creación guardan sus `_id` en el entorno. Antes de crear citas, ajusta `inicioCita`, `inicioCita2` e `inicioCita3` a días laborables futuros; cada usuario abre su propia caja antes de registrar pagos y los pagos quedan asociados a esa caja (la colección abre la del administrador). Ver `docs/PRUEBAS.md` (sección Entregables).
 
 ## Pruebas
 
@@ -97,4 +110,4 @@ cd backend
 npm test        # node --test "tests/**/*.test.js"
 ```
 
-Corre contra una base de datos **desechable** (`sigca_test_rules`, puerto 3992) que se elimina al terminar, y **no toca** la base de desarrollo `sigca`. Son **43 pruebas** en 9 grupos: roles/seguridad, citas (fechas, traslapes, transiciones), menor de edad con responsable, saldo de pagos, comprobante (F09), anulación y cancelación con pagos (F20), caja (unidad, post‑cierre y arqueo), atender solicitud (C09) y materiales por rol (D16). Detalle en `docs/PRUEBAS.md` (FASE 12, paso 2).
+Corre contra una base de datos **desechable** (`sigca_test_rules`, puerto 3992) que se elimina al terminar, y **no toca** la base de desarrollo `sigca`. Son **75 pruebas** en 11 grupos: roles/seguridad, citas (fechas, traslapes, transiciones), menor de edad con responsable, saldo de pagos, comprobante (F09), anulación y cancelación con pagos (F20), caja por usuario con movimientos y arqueo (efectivo esperado = monto inicial + EFECTIVO), atender solicitud (C09), materiales por rol (D16), contrato de rutas y edición/reprogramación de citas. Detalle en `docs/PRUEBAS.md` (FASE 12, paso 2).
