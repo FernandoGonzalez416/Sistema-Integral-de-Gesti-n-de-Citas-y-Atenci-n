@@ -1437,3 +1437,47 @@ app.use('/api/pacientes', patientsRoutes);
 - BD temporal eliminada; `sigca` intacta.
 
 **Limpieza:** BDs `sigca_test_rules`, `sigca_test_postman` y `sigca_test_dup` eliminadas; scripts temporales de verificación borrados; sin cambios en `sigca`.
+
+## 2026-10-21 - B5: seed definitivo y verificación de invariantes
+
+**Alcance:** completar `backend/src/utils/seedDemo.js` con el conjunto de demostración B5 y agregar `backend/tests/seedDemo.test.js`. No se modificaron modelos, controladores, rutas, frontend ni la base de desarrollo `sigca`.
+
+**Preflight de solo lectura sobre `sigca`:** `npm run verificar:solicitudes -- --dry-run` no encontró solicitudes duplicadas. Las migraciones se ejecutaron únicamente con `--dry-run` (9 documentos legados, 9 pagos sin caja, 3 cajas disponibles, 6 pacientes sin fecha de inicio y 0 profesionales vinculables); **no se aplicó ninguna migración** ni se escribió en `sigca`.
+
+**Conjunto creado (primera ejecución, BD desechable):**
+
+| Entidad | Total | Detalle |
+|---|---:|---|
+| Usuarios | 6 | 1 ADMINISTRADOR, 2 RECEPCIONISTA, 3 PROFESIONAL |
+| Profesionales | 3 | Cada uno con un usuario PROFESIONAL distinto |
+| Pacientes | 10 | 4 menores con responsable activo |
+| Responsables | 5 | Todos con al menos un vínculo activo |
+| Servicios | 5 | 1 inactivo (`Evaluación inicial`) |
+| Citas | 15 | PENDIENTE, CONFIRMADA, COMPLETADA y CANCELADA |
+| Materiales / asignaciones | 5 / 5 | Todos con `asignadoPor` |
+| Solicitudes | 5 | 2 PENDIENTE, 2 ATENDIDA, 1 RECHAZADA |
+| Pagos | 10 | EFECTIVO, TARJETA y TRANSFERENCIA; 1 ANULADO |
+| Comprobantes | 10 | `REC-AAAA-NNNNNN`, 1:1 y únicos |
+| Cajas | 3 | 2 CERRADA y 1 ABIERTA |
+
+La primera ejecución creó **77 registros** (los 10 comprobantes se emiten aparte) y la segunda **0**. El `--dry-run` no escribió nada.
+
+**Invariantes comprobadas:**
+
+- Los estados de cita y pago y los métodos de pago pertenecen a los enums permitidos.
+- `PENDIENTE`/`CONFIRMADA` tienen fecha futura; `precioCentavos`, `duracionMinutos` y `fin` coinciden con el servicio.
+- No hay intervalos solapados para un mismo profesional.
+- Cada `solicitudOrigen` es único y el enlace solicitud↔cita es bidireccional; las dos solicitudes `ATENDIDA` tienen cita.
+- Todo pago tiene `caja` y `registradoPor`; los comprobantes están sincronizados con `numeroComprobante`.
+- La suma de pagos `REGISTRADO` no supera el precio de la cita; existen casos completo, parcial y pendiente.
+- Existe una cita `CANCELADA` sin pagos válidos y una cita activa con pagos válidos; `PATCH /api/citas/:id/estado` a `CANCELADA` responde **409** en esta última.
+- Caja 1: `EFECTIVO 25000`, `TARJETA 10000`, total `35000`, esperado `45000`, real `44500`, diferencia **-500**.
+- Caja 2: abierta, total `20000`, esperado `15000`, sin fecha de cierre.
+- Caja 3: `EFECTIVO 40000`, `TARJETA 8000`, `TRANSFERENCIA 18000`, total `66000`, esperado/real `55000`, diferencia **0**.
+- Solo existe una diferencia negativa (caja 1).
+
+**Excepción documentada:** `pago-04` nace `ANULADO` dentro de `caja-01` cerrada. No representa una anulación ejecutada por la API después del cierre: es un dato histórico ficticio, no suma al arqueo y su comprobante nace `ANULADO`. La regla que bloquea anulaciones en cajas cerradas permanece intacta.
+
+**Pruebas:** `backend/tests/seedDemo.test.js` usa `sigca_test_seed` (puerto 3993) y el `app.js` real; se ejecutó **`npm test` 130/130 en dos corridas consecutivas** (119 de reglas + 11 de seed). Las bases `sigca_test_rules`, `sigca_test_seed` y cualquier base temporal se eliminaron al terminar; `sigca` quedó intacta.
+
+**Fuera de alcance:** portal/logo/carrusel/bandeja de contacto, subida de fotos, pantalla de historial, comprobante imprimible y cambios de API.

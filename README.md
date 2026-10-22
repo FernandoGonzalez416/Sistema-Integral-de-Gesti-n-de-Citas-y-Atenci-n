@@ -55,12 +55,20 @@ npm run seed:demo:dry   # muestra la base y el plan, sin escribir
 npm run seed:demo       # crea solo lo que falta
 ```
 
-Carga: usuarios de los 3 roles, servicios, profesionales, pacientes (incluye un
-menor con responsable), materiales educativos y sus asignaciones, solicitudes,
-citas (pagada, parcial, pendiente y con pago anulado) y cajas (una cerrada con
-diferencia de arqueo y una abierta), manteniendo la coherencia financiera: cada
-pago queda asociado a la caja en que se registró, los pagos anulados no suman y
-ningún pago supera el costo de la cita.
+Carga el conjunto B5: **6 usuarios** (1 administrador, 2 recepcionistas y 3
+profesionales, cada uno vinculado a un usuario `PROFESIONAL` distinto), **10
+pacientes** (4 menores, todos con responsable activo), **5 responsables**, **5
+servicios** (1 inactivo), **15 citas** (pendientes, confirmadas, completadas y
+canceladas, sin solapamientos por profesional), **5 materiales** y **5
+asignaciones**, **5 solicitudes** (2 pendientes, 2 atendidas y 1 rechazada), **10
+pagos** con comprobante real y **3 cajas** (2 cerradas y 1 abierta).
+
+La coherencia financiera se mantiene: cada pago está asociado a su caja y a
+quien lo registró, los pagos `ANULADO` no suman, ningún pago supera el costo de
+la cita y los totales de cada caja se recalculan desde sus pagos `REGISTRADO`.
+La caja 1 cierra con una diferencia de **-500**; la caja 3 cierra sin diferencia.
+El pago anulado `pago-04` es un dato histórico ficticio dentro de una caja
+cerrada: no altera el arqueo y su comprobante nace `ANULADO`.
 
 Si la base ya tenía datos de versiones anteriores, ejecuta las migraciones
 idempotentes (siempre primero en simulación):
@@ -94,8 +102,10 @@ credenciales definidas en `backend/.env` (por defecto `admin@sigca.local` /
 `Admin123`; cámbialas en un entorno real). El seed crea además:
 
 - Recepcionista: `recepcion.demo@demo.sigca` / `Demo1234`
+- Recepcionista: `recepcion2.demo@demo.sigca` / `Demo1234`
 - Profesional: `profesional.demo@demo.sigca` / `Demo1234`
 - Profesional: `pablo.herrera@demo.sigca` / `Demo1234`
+- Profesional: `valentina.ortiz@demo.sigca` / `Demo1234`
 
 No incluir credenciales reales en el repositorio.
 
@@ -133,4 +143,11 @@ cd backend
 npm test        # node --test "tests/**/*.test.js"
 ```
 
-Corre contra una base de datos **desechable** (`sigca_test_rules`, puerto 3992) que se elimina al terminar, y **no toca** la base de desarrollo `sigca`. Son **119 pruebas** en 16 grupos: roles/seguridad, citas (fechas, traslapes, transiciones), menor de edad con responsable, saldo de pagos, comprobante (F09), anulación y cancelación con pagos (F20), caja por usuario con movimientos y arqueo, atender solicitud (C09), materiales por rol (D16), contrato de rutas, edición/reprogramación de citas, modelos y relaciones (B3) y las reglas B4 (restricciones PROFESIONAL, solicitudes atómicas, reset de contraseña, índices y filtros). Detalle en `docs/PRUEBAS.md`.
+Corre contra bases **desechables** (`sigca_test_rules` en el puerto 3992 y
+`sigca_test_seed` en el 3993) que se eliminan al terminar, y **no toca** la base
+de desarrollo `sigca`. Son **130 pruebas**: **119 de reglas** en 16 grupos
+(roles/seguridad, citas, menor de edad con responsable, pagos, comprobante,
+caja, solicitudes, materiales, contrato de rutas, B3 y B4) y **11 del seed B5**
+(conteos, estados/métodos permitidos, vínculos solicitud↔cita, precio/duración,
+solapamientos, finanzas, cajas, comprobantes, dry-run, idempotencia y bloqueo de
+cancelación con pagos válidos). Detalle en `docs/PRUEBAS.md`.

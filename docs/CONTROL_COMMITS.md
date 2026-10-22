@@ -22,7 +22,9 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B4 | feat/b4-citas-solicitudes | aa3f9f8 | feat(ui): agregar citas, solicitudes y roles de acceso (B4) | FernandoGonzalez416 | creado |
 | B4 | feat/b4-citas-solicitudes | 4327baf | test(postman): cubrir solicitudes, roles y reset (B4) | FernandoGonzalez416 | creado |
 | B4 | feat/b4-citas-solicitudes | este commit | docs(b4): registrar reglas, permisos y verificacion | FernandoGonzalez416 | creado |
-| B5 | feat/b5-seed | — | — | — | pendiente |
+| B5 | feat/b5-seed | cb133bc | feat(seed): completar datos demo para b5 | FernandoGonzalez416 | creado |
+| B5 | feat/b5-seed | 1875f39 | test(seed): verificar invariantes e idempotencia b5 | FernandoGonzalez416 | creado |
+| B5 | feat/b5-seed | este commit | docs(seed): documentar seed b5 y verificacion | FernandoGonzalez416 | creado |
 | B6 | feat/b6-portal-contenido | — | — | — | pendiente |
 | B7 | feat/b7-entrega | — | — | — | pendiente |
 
