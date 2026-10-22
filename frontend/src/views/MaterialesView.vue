@@ -3,8 +3,11 @@
     <h1>Materiales educativos</h1>
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="mensaje" class="ok">{{ mensaje }}</p>
+    <p v-if="auth.esProfesional" class="ayuda">
+      Catálogo de materiales disponible. Para asignar material a un paciente, entra a Pacientes → Materiales.
+    </p>
 
-    <Card :titulo="editando ? 'Editar material' : 'Registrar material'">
+    <Card v-if="!auth.esProfesional" :titulo="editando ? 'Editar material' : 'Registrar material'">
       <form @submit.prevent="guardar">
         <FormField etiqueta="Título" v-model="form.titulo" placeholder="Título del material" />
         <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Descripción" />
@@ -44,7 +47,10 @@
       <div v-if="cargando">Cargando…</div>
       <table v-else>
         <thead>
-          <tr><th>Título</th><th>Tipo</th><th>Descripción</th><th>Activo</th><th></th></tr>
+          <tr>
+            <th>Título</th><th>Tipo</th><th>Descripción</th><th>Activo</th>
+            <th v-if="!auth.esProfesional"></th>
+          </tr>
         </thead>
         <tbody>
           <tr v-for="m in materiales" :key="m._id">
@@ -52,7 +58,7 @@
             <td>{{ m.tipo }}</td>
             <td class="desc">{{ m.descripcion }}</td>
             <td>{{ m.activo ? 'Sí' : 'No' }}</td>
-            <td class="acciones-celda">
+            <td v-if="!auth.esProfesional" class="acciones-celda">
               <button @click="editar(m)">Editar</button>
               <button @click="toggleActivo(m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button>
             </td>
@@ -169,6 +175,7 @@ onMounted(cargar);
 .contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
 .error { color: red; }
 .ok { color: green; }
+.ayuda { color: #555; }
 .fila { display: flex; gap: 1rem; }
 .fila > * { flex: 1; }
 .campo { display: flex; flex-direction: column; gap: 0.25rem; }
