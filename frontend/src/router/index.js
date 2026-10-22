@@ -24,6 +24,7 @@ import { useAuthStore } from '../stores/auth.js';
 import UsersView from '../views/UsersView.vue';
 import ServicesView from '../views/ServicesView.vue';
 import ContentView from '../views/ContentView.vue';
+import MensajesView from '../views/MensajesView.vue';
 import NotFoundView from '../views/NotFoundView.vue';
 
 const router = createRouter({
@@ -66,7 +67,8 @@ const router = createRouter({
         // Rutas antiguas: se conservan como redirecciones para no romper enlaces.
         { path: 'horarios', redirect: { path: '/', hash: '#horarios' } },
         { path: 'educativo', redirect: '/contenido' },
-        { path: 'solicitar-cita', redirect: { path: '/servicios', hash: '#solicitar-cita' } }
+        // Mantiene el query ?servicio=... y abre el modal desde ServiciosView.
+        { path: 'solicitar-cita', name: 'solicitar-cita', component: ServiciosView }
       ]
     },
     {
@@ -79,6 +81,7 @@ const router = createRouter({
         { path: 'usuarios', name: 'usuarios', component: UsersView, meta: { roles: ['ADMINISTRADOR'] } },
         { path: 'servicios', name: 'servicios', component: ServicesView, meta: { roles: ['ADMINISTRADOR'] } },
         { path: 'contenidos', name: 'contenidos', component: ContentView, meta: { roles: ['ADMINISTRADOR'] } },
+        { path: 'mensajes', name: 'mensajes', component: MensajesView, meta: { roles: ['ADMINISTRADOR'] } },
         { path: 'pacientes', name: 'pacientes', component: PacientesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
         { path: 'pacientes/:pacienteId/responsables', name: 'paciente-responsables', component: PacienteResponsablesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
         { path: 'pacientes/:pacienteId/materiales', name: 'paciente-materiales', component: PacienteMaterialesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },

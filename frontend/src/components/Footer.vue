@@ -14,8 +14,12 @@
         <span v-else class="pie-logo pie-logo-reserva" role="img" aria-label="Logo de la universidad">U</span>
       </div>
 
-      <!-- Centro: tabla de estudiantes (pantallas anchas) / "Grupo 2" (angostas) -->
+      <!-- Centro: identidad del sitio y tabla de estudiantes / "Grupo 2" -->
       <div class="pie-centro">
+        <p class="pie-sitio">
+          <img :src="sitio.logoUrl || '/logo-sigsa.svg'" alt="" width="22" height="22" loading="lazy" @error="$event.target.style.display = 'none'" />
+          <span>{{ sitio.nombre }}</span>
+        </p>
         <table class="estudiantes">
           <caption class="solo-lectores">Grupo 2 — integrantes</caption>
           <thead class="solo-lectores">
@@ -55,6 +59,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useHealthStore } from '../stores/health.js';
+import { cargarSitio, sitio } from '../composables/sitio.js';
 
 // Logo oficial (Wikimedia). Si no carga, se intenta /logo-universidad.png
 // (colocado en frontend/public/) y, por último, una "U".
@@ -136,6 +141,7 @@ let observaCuerpo = null;
 let temporizador = null;
 
 onMounted(() => {
+  cargarSitio();
   reintentar();
   temporizador = setInterval(reintentar, INTERVALO_SALUD);
 
@@ -225,7 +231,29 @@ onUnmounted(() => {
 }
 
 /* ---- Centro: tabla estudiante / carné ---- */
-.pie-centro { display: flex; justify-content: center; min-width: 0; }
+.pie-centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.pie-sitio {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  max-width: min(420px, 55vw);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pie-sitio img { width: 22px; height: 22px; object-fit: contain; flex: none; }
+.pie-sitio span { overflow: hidden; text-overflow: ellipsis; }
 .pie .estudiantes {
   border-collapse: collapse;
   font-size: 0.8rem;

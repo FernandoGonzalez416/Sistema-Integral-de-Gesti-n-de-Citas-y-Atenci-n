@@ -178,11 +178,40 @@
                     </div>
                   </div>
 
-                  <div class="cm-campo">
-                    <label for="cm-motivo">Motivo de contacto</label>
-                    <select id="cm-motivo" v-model="form.motivo">
-                      <option v-for="m in MOTIVOS" :key="m" :value="m">{{ m }}</option>
-                    </select>
+                  <div class="cm-fila">
+                    <div class="cm-campo" :class="{ invalido: ver('telefono') }">
+                      <label for="cm-telefono">Teléfono <span class="cm-req">*</span></label>
+                      <input
+                        id="cm-telefono"
+                        :value="form.telefono"
+                        type="tel"
+                        inputmode="tel"
+                        autocomplete="tel"
+                        maxlength="30"
+                        placeholder="Ej. 5555-0101"
+                        :aria-invalid="ver('telefono')"
+                        aria-describedby="cm-ayuda-telefono"
+                        @input="alTelefono"
+                        @blur="tocar('telefono')"
+                      />
+                      <small id="cm-ayuda-telefono" :class="{ error: ver('telefono') }">{{ ver('telefono') ? errores.telefono : 'Para llamarte si necesitamos más detalles.' }}</small>
+                    </div>
+
+                    <div class="cm-campo" :class="{ invalido: ver('asunto') }">
+                      <label for="cm-asunto">Asunto <span class="cm-req">*</span></label>
+                      <input
+                        id="cm-asunto"
+                        :value="form.asunto"
+                        type="text"
+                        maxlength="120"
+                        placeholder="Motivo de tu consulta"
+                        :aria-invalid="ver('asunto')"
+                        aria-describedby="cm-ayuda-asunto"
+                        @input="form.asunto = $event.target.value"
+                        @blur="tocar('asunto')"
+                      />
+                      <small id="cm-ayuda-asunto" :class="{ error: ver('asunto') }">{{ ver('asunto') ? errores.asunto : 'Resume tu consulta en una frase.' }}</small>
+                    </div>
                   </div>
 
                   <div class="cm-campo" :class="{ invalido: ver('mensaje') }">
@@ -202,6 +231,8 @@
                       <small class="cm-contador" :class="{ listo: form.mensaje.trim().length >= MIN_MENSAJE }">{{ form.mensaje.length }}/{{ MAX_MENSAJE }}</small>
                     </div>
                   </div>
+
+                  <p v-if="errorEnvio" class="cm-error" role="alert">{{ errorEnvio }}</p>
 
                   <div class="cm-acciones">
                     <button type="submit" class="cm-boton" :disabled="enviando">
@@ -302,15 +333,15 @@ async function copiar(d) {
 }
 
 /* ---------- Formulario y validaciones ---------- */
-const MOTIVOS = ['Consulta general', 'Solicitud de citas', 'Información de servicios', 'Sugerencia o comentario', 'Queja o reclamo', 'Otro'];
 const MIN_MENSAJE = 30;
 const MAX_MENSAJE = 1000;
 const EMAIL_RE = /^[A-Za-z0-9](?:[A-Za-z0-9._%+-]{0,62}[A-Za-z0-9])?@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}$/;
 
-const form = reactive({ nombre: '', email: '', motivo: MOTIVOS[0], mensaje: '' });
-const tocados = reactive({ nombre: false, email: false, mensaje: false });
+const form = reactive({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
+const tocados = reactive({ nombre: false, email: false, telefono: false, asunto: false, mensaje: false });
 const enviando = ref(false);
 const enviado = ref(false);
+const errorEnvio = ref('');
 const nombreEnviado = ref('');
 const correoEnviado = ref('');
 
@@ -332,6 +363,22 @@ function validarCorreo(v) {
   if (t.includes('..') || !EMAIL_RE.test(t)) return 'Escribe un correo válido, por ejemplo: nombre@dominio.com';
   return '';
 }
+function validarTelefono(v) {
+  const t = v.trim();
+  if (!t) return 'Escribe tu teléfono.';
+  const digitos = t.replace(/\D/g, '');
+  if (!/^[\d\s+()-]+$/.test(t) || digitos.length < 7 || digitos.length > 15) {
+    return 'Escribe un teléfono válido de 7 a 15 dígitos.';
+  }
+  return '';
+}
+function validarAsunto(v) {
+  const t = v.trim();
+  if (!t) return 'Escribe el asunto.';
+  if (t.length < 3) return 'El asunto es demasiado corto.';
+  if (t.length > 120) return 'El asunto admite máximo 120 caracteres.';
+  return '';
+}
 function validarMensaje(v) {
   const t = v.trim();
   if (!t) return 'Escribe tu mensaje.';
@@ -343,6 +390,8 @@ function validarMensaje(v) {
 const errores = computed(() => ({
   nombre: validarNombre(form.nombre),
   email: validarCorreo(form.email),
+  telefono: validarTelefono(form.telefono),
+  asunto: validarAsunto(form.asunto),
   mensaje: validarMensaje(form.mensaje)
 }));
 const ver = (campo) => tocados[campo] && !!errores.value[campo];
@@ -359,10 +408,16 @@ function alCorreo(e) {
   form.email = limpio;
   e.target.value = limpio;
 }
+function alTelefono(e) {
+  const limpio = e.target.value.replace(/[^\d\s+()-]/g, '');
+  form.telefono = limpio;
+  e.target.value = limpio;
+}
 
 async function enviar() {
+  errorEnvio.value = '';
   Object.keys(tocados).forEach((k) => (tocados[k] = true));
-  const primero = ['nombre', 'email', 'mensaje'].find((k) => errores.value[k]);
+  const primero = ['nombre', 'email', 'telefono', 'asunto', 'mensaje'].find((k) => errores.value[k]);
   if (primero) {
     document.getElementById(`cm-${primero}`)?.focus();
     return;
@@ -371,19 +426,23 @@ async function enviar() {
   const carga = {
     nombre: form.nombre.trim(),
     email: form.email.trim().toLowerCase(),
-    mensaje: `[${form.motivo}] ${form.mensaje.trim()}`
+    telefono: form.telefono.trim(),
+    asunto: form.asunto.trim(),
+    mensaje: form.mensaje.trim()
   };
   try {
     await postContacto(carga);
-  } catch {
-    // Entorno local/simulado: si el servidor no responde, el envío se da por exitoso.
+  } catch (e) {
+    errorEnvio.value = e.message || 'No se pudo enviar el mensaje. Intenta de nuevo.';
+    enviando.value = false;
+    return;
   }
   await new Promise((r) => setTimeout(r, 700)); // breve pausa para que se perciba el envío
   nombreEnviado.value = carga.nombre.split(' ')[0];
   correoEnviado.value = carga.email;
   enviando.value = false;
   enviado.value = true;
-  Object.assign(form, { nombre: '', email: '', motivo: MOTIVOS[0], mensaje: '' });
+  Object.assign(form, { nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
   Object.keys(tocados).forEach((k) => (tocados[k] = false));
 }
 
@@ -434,6 +493,7 @@ watch(contactoAbierto, async (abierta) => {
   if (abierta) {
     elementoPrevio = document.activeElement;
     document.documentElement.style.overflow = 'hidden'; // el fondo no se desplaza
+    errorEnvio.value = '';
     cargarDatos();
     await nextTick();
     botonCerrar.value?.focus();
@@ -667,6 +727,17 @@ a.cm-dato-valor:hover { color: var(--azul, #1a5c8a); text-decoration: underline;
 .cm-pie-campo { display: flex; justify-content: space-between; gap: 1rem; }
 .cm-contador { flex: none; font-variant-numeric: tabular-nums; }
 .cm-campo small.cm-contador.listo { color: #2a9d6a; }
+
+.cm-error {
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #eab6b8;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #a72f34;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
 
 .cm-acciones { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
 .cm-boton,
