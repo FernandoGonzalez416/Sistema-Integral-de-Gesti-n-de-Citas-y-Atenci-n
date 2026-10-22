@@ -38,7 +38,7 @@
 import { onMounted, ref, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
-import { getPacientes, getResponsables, getRelaciones, asociarResponsable, desasociarResponsable } from '../api/client.js';
+import { getPaciente, getResponsables, getRelaciones, asociarResponsable, desasociarResponsable } from '../api/client.js';
 import Card from '../components/Card.vue';
 
 const route = useRoute();
@@ -58,7 +58,7 @@ async function cargar() {
     error.value = '';
     cargando.value = true;
     const [pac, rels, todosResp] = await Promise.all([
-      getPacientes(auth.token, { q: pacienteId, limit: 1 }).then(d => d.pacientes[0]),
+      getPaciente(auth.token, pacienteId).then(d => d.paciente),
       getRelaciones(auth.token, pacienteId),
       getResponsables(auth.token, { activo: 'true' })
     ]);

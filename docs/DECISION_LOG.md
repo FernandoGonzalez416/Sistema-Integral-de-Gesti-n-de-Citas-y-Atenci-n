@@ -190,3 +190,21 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Impacto:** sin cambios de código; no hubo conflictos. 35 archivos, +3200/−337.
 - **Integración:** `git merge --no-ff feat/b6-portal-contenido` → **`145babb`**, publicado en `origin/integracion` (`82a389d..145babb`). `origin/feat/b6-portal-contenido` conserva los 5 commits de B6.
 - **Siguiente:** B7 con la pasada completa de la sección 16 y la auditoría de pantallas históricas (pacientes, responsables, materiales, pagos y caja).
+
+## 2026-10-21 - test(api): sección 16 e integridad de datos B7
+
+- **Cambio:** nueva suite `backend/tests/b7.test.js` (16 pruebas) que recorre los **22 pasos de la sección 16** por HTTP real y audita modelos, relaciones, validaciones e integridad.
+- **Motivo:** cerrar la validación funcional del enunciado con evidencia reproducible y sin tocar `sigca`.
+- **Aislamiento:** base desechable `sigca_test_b7`, puerto 3991; horarios 07:00–20:00 los 7 días para no depender del día de ejecución; la base se elimina al terminar.
+- **Cobertura:** login, paciente, responsable, servicio, cita, traslape, confirmación, calendario, caja, abonos, saldo PENDIENTE/PARCIAL/PAGADO, comprobante, métodos de pago, ingresos del día, arqueo/cierre, bloqueo post-cierre, historial, integridad de referencias y permisos por rol.
+- **Integridad adicional:** snapshots de precio/duración, `pago.paciente` = `cita.paciente`, comprobante 1:1, `solicitudOrigen` único, totales de caja recalculados y vínculo `Professional.usuario` único con rol PROFESIONAL.
+- **Verificación:** **16/16** pruebas de B7 en verde; regresión **152/152** (19 suites).
+- **Commit relacionado:** `2762377`.
+
+## 2026-10-21 - fix(ui): paciente y edad en sus responsables B7
+
+- **Síntoma:** `/admin/pacientes/:id/responsables` mostraba "Responsables de ( años)" y no el aviso de menor de edad.
+- **Causa raíz:** la vista cargaba el paciente con `getPacientes({ q: pacienteId })`, buscando el ObjectId como texto en nombre/apellido/teléfono/email; nunca había coincidencia y quedaba el objeto por defecto (`nombre: ''`, `edad: null`).
+- **Corrección:** usar `getPaciente(auth.token, pacienteId)` (`GET /api/pacientes/:id`) para cargar el paciente. Solo cambia el import y la llamada.
+- **Verificación:** en Edge headless la cabecera muestra nombre y edad reales, aparece el aviso de menor y la asociación de responsables funciona. **0 errores de consola** y **0 respuestas 5xx** en el recorrido.
+- **Commit relacionado:** `0df5711`.
