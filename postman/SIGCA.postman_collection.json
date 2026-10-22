@@ -1070,6 +1070,196 @@
           ]
         },
         {
+          "name": "Obtener configuración del sitio (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/sitio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "sitio"
+              ]
+            },
+            "description": "GET /api/contenido/sitio — configuración pública del portal."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('configuración completa', () => { pm.expect(j.sitio.nombre).to.be.a('string'); pm.expect(j.sitio.logoUrl).to.be.a('string'); pm.expect(j.sitio.mision).to.be.a('string'); pm.expect(j.sitio.vision).to.be.a('string'); pm.expect(j.sitio.informacionPrincipal).to.be.a('string'); pm.expect(j.sitio.contacto.email).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar configuración del sitio (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/sitio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "sitio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Centro de Salud SIGSA B6\",\n  \"logoUrl\": \"/logo-sigsa.svg\",\n  \"mision\": \"Misión actualizada desde la colección Postman B6.\",\n  \"vision\": \"Visión actualizada desde la colección Postman B6.\",\n  \"informacionPrincipal\": \"Información principal editable desde el panel administrativo.\",\n  \"email\": \"contacto.b6@sigsa.test\",\n  \"telefono\": \"+502 5555-0101\",\n  \"direccion\": \"Calle B6 123, Chimaltenango\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "PUT /api/contenido/sitio — reutiliza los bloques de InstitutionalContent."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('nombre, logo y contacto actualizados', () => { pm.expect(j.sitio.nombre).to.eql('Centro de Salud SIGSA B6'); pm.expect(j.sitio.logoUrl).to.eql('/logo-sigsa.svg'); pm.expect(j.sitio.contacto.email).to.eql('contacto.b6@sigsa.test'); pm.expect(j.sitio.informacionPrincipal).to.include('panel administrativo'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración del sitio: recepción recibe 403",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRecep}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/sitio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "sitio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No permitido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "La configuración institucional solo la modifica ADMINISTRADOR."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración del sitio: correo inválido 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/sitio",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "sitio"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"no-es-correo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Validación de correo en el servidor; nunca responde 5xx."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const j = pm.response.json();",
+                  "pm.test('error claro', () => { pm.expect(j.ok).to.eql(false); pm.expect(j.message).to.include('Correo'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Crear contenido",
           "request": {
             "method": "POST",
@@ -1166,6 +1356,366 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar carrusel público (solo activas y ordenadas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel"
+              ]
+            },
+            "description": "GET /api/contenido/carrusel — el portal solo recibe diapositivas activas."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('diapositivas activas', () => { pm.expect(Array.isArray(j.diapositivas)).to.eql(true); pm.expect(j.diapositivas.length).to.be.at.least(5); pm.expect(j.diapositivas.every((d) => d.activo === true)).to.eql(true); });",
+                  "pm.test('orden ascendente', () => { const ordenes = j.diapositivas.map((d) => d.orden); const copia = [...ordenes].sort((a, b) => a - b); pm.expect(ordenes).to.eql(copia); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar carrusel completo (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel/admin/todos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel",
+                "admin",
+                "todos"
+              ]
+            },
+            "description": "GET /api/contenido/carrusel/admin/todos — solo ADMINISTRADOR."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('admin ve activas e inactivas', () => pm.expect(Array.isArray(j.diapositivas)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear diapositiva del carrusel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imagenUrl\": \"/carrusel-1.svg\",\n  \"titulo\": \"Diapositiva Postman B6\",\n  \"orden\": 0,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "POST /api/contenido/carrusel — guarda el _id en diapositivaId."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('diapositiva creada', () => { pm.expect(j.diapositiva.titulo).to.eql('Diapositiva Postman B6'); pm.expect(j.diapositiva.orden).to.eql(0); pm.expect(j.diapositiva.activo).to.eql(true); });",
+                  "if (j.diapositiva && j.diapositiva._id) pm.environment.set('diapositivaId', j.diapositiva._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar diapositiva del carrusel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel/{{diapositivaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel",
+                "{{diapositivaId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imagenUrl\": \"/carrusel-2.svg\",\n  \"titulo\": \"Diapositiva Postman B6 editada\",\n  \"orden\": 99,\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "PUT /api/contenido/carrusel/:id — actualización parcial usada por el panel."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('edición completa y desactivación', () => { pm.expect(j.diapositiva.titulo).to.include('editada'); pm.expect(j.diapositiva.orden).to.eql(99); pm.expect(j.diapositiva.activo).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar que la diapositiva inactiva no se publica",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel"
+              ]
+            },
+            "description": "El portal público excluye las diapositivas inactivas."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('inactiva fuera del público', () => { const id = pm.environment.get('diapositivaId'); pm.expect(j.diapositivas.some((d) => String(d._id) === String(id))).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear diapositiva inválida 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imagenUrl\": \"no-es-url\",\n  \"titulo\": \"x\",\n  \"orden\": \"primero\",\n  \"activo\": \"si\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "URL, título, orden y activo se validan en el controlador."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const j = pm.response.json();",
+                  "pm.test('error claro', () => { pm.expect(j.ok).to.eql(false); pm.expect(j.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Carrusel: recepción recibe 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRecep}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imagenUrl\": \"/carrusel-1.svg\",\n  \"titulo\": \"No permitida\",\n  \"orden\": 1,\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Solo ADMINISTRADOR puede escribir en el carrusel."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar diapositiva del carrusel",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contenido/carrusel/{{diapositivaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contenido",
+                "carrusel",
+                "{{diapositivaId}}"
+              ]
+            },
+            "description": "DELETE /api/contenido/carrusel/:id — limpieza de la diapositiva creada."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('confirmación', () => pm.expect(j.ok).to.eql(true));"
                 ]
               }
             }
@@ -1537,6 +2087,164 @@
           ]
         },
         {
+          "name": "Actualizar publicación completa (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Publicación Postman B6 completa\",\n  \"descripcion\": \"Descripción completa enviada con PUT desde la colección B6.\",\n  \"tipo\": \"CORPORATIVO\",\n  \"fecha\": \"2026-10-21T12:00:00.000Z\",\n  \"imagenUrl\": \"https://example.com/publicacion-b6.jpg\",\n  \"enlace\": \"https://example.com/publicacion-b6\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "PUT /api/publicaciones/:id — edición completa; se conserva PATCH por compatibilidad."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('todos los campos editados', () => { pm.expect(j.publicacion.titulo).to.include('Postman B6'); pm.expect(j.publicacion.tipo).to.eql('CORPORATIVO'); pm.expect(j.publicacion.imagenUrl).to.include('publicacion-b6'); pm.expect(j.publicacion.enlace).to.include('publicacion-b6'); pm.expect(j.publicacion.activo).to.eql(true); });",
+                  "pm.test('fecha guardada', () => pm.expect(new Date(j.publicacion.fecha).toISOString()).to.eql('2026-10-21T12:00:00.000Z'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicación con fecha inválida 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"no-es-fecha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Entrada inválida del cliente no produce 5xx."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const j = pm.response.json();",
+                  "pm.test('error claro', () => { pm.expect(j.ok).to.eql(false); pm.expect(j.message).to.include('Fecha'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicación: recepción recibe 403",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRecep}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"No permitida\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Las escrituras de publicaciones son solo para ADMINISTRADOR."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Actualizar publicación",
           "request": {
             "method": "PATCH",
@@ -1683,6 +2391,214 @@
           ]
         },
         {
+          "name": "Listar mensajes no leídos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto?leido=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ],
+              "query": [
+                {
+                  "key": "leido",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "GET /api/contacto?leido=false — filtro de la bandeja."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('solo no leídos', () => { pm.expect(Array.isArray(j.mensajes)).to.eql(true); pm.expect(j.mensajes.every((m) => m.leido === false)).to.eql(true); pm.expect(j.noLeidos).to.be.at.least(1); });",
+                  "pm.environment.set('noLeidosAntes', j.noLeidos);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar mensajes leídos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto?leido=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ],
+              "query": [
+                {
+                  "key": "leido",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "GET /api/contacto?leido=true — filtro de la bandeja."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('solo leídos', () => { pm.expect(Array.isArray(j.mensajes)).to.eql(true); pm.expect(j.mensajes.every((m) => m.leido === true)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contador de mensajes sin leer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto/contador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto",
+                "contador"
+              ]
+            },
+            "description": "GET /api/contacto/contador — usado por el badge del menú."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('contador numérico', () => { pm.expect(j.noLeidos).to.be.a('number'); pm.expect(j.noLeidos).to.be.at.least(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtro de mensajes inválido 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto?leido=quizas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ],
+              "query": [
+                {
+                  "key": "leido",
+                  "value": "quizas"
+                }
+              ]
+            },
+            "description": "El filtro leido solo acepta true o false."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const j = pm.response.json();",
+                  "pm.test('error claro', () => { pm.expect(j.ok).to.eql(false); pm.expect(j.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contacto: recepción recibe 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenRecep}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ]
+            },
+            "description": "La bandeja de contacto es solo para ADMINISTRADOR."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Marcar mensaje leído",
           "request": {
             "method": "PATCH",
@@ -1727,6 +2643,45 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contador después de marcar leído",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/contacto/contador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contacto",
+                "contador"
+              ]
+            },
+            "description": "El badge se actualiza al marcar un mensaje como leído."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('el contador bajó', () => { const antes = Number(pm.environment.get('noLeidosAntes')); pm.expect(j.noLeidos).to.eql(Math.max(0, antes - 1)); });"
                 ]
               }
             }

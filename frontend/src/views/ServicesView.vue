@@ -42,18 +42,13 @@ import { useAuthStore } from '../stores/auth.js';
 import { getServiciosTodos, createServicio, updateServicio } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import { formatoMoneda } from '../composables/catalogo.js';
 
 const auth = useAuthStore();
 const servicios = ref([]);
 const error = ref('');
 const editando = ref(null);
 const form = reactive({ nombre: '', descripcion: '', imagenUrl: '', precio: '', duracion: '' });
-
-function formatoMoneda(centavos) {
-  // Quetzales (GTQ): Q1,250.00
-  const monto = (Number(centavos || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `Q${monto}`;
-}
 
 function aCentavos(precio) {
   return Math.round(Number(precio) * 100);

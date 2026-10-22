@@ -85,7 +85,10 @@
                 <li v-for="s in g.items" :key="s._id" class="srv-fila" :class="{ abierta: abierto === s._id }">
                   <h4 class="srv-fila-cab">
                     <button type="button" class="srv-fila-btn" :aria-expanded="abierto === s._id" :aria-controls="`srv-det-${s._id}`" @click="alternar(s._id)">
-                      <span class="srv-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="iconoDe(s.icono)"></svg></span>
+                      <span class="srv-ico" :class="{ 'srv-ico-foto': tieneImagen(s) }" aria-hidden="true">
+                        <img v-if="tieneImagen(s)" :src="s.imagenUrl" alt="" loading="lazy" @error="fallarImagen(s._id)" />
+                        <svg v-else viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="iconoDe(s.icono)"></svg>
+                      </span>
                       <span class="srv-fila-titulo">
                         <strong>{{ s.nombre }}</strong>
                         <small>{{ resumenCorto(s.descripcion) }}</small>
@@ -112,6 +115,9 @@
                           <p v-if="!s.incluye || !s.incluye.length" class="srv-det-vacio">El equipo médico te explicará el detalle durante la atención.</p>
                         </div>
                         <aside class="srv-lateral">
+                          <figure v-if="tieneImagen(s)" class="srv-foto">
+                            <img :src="s.imagenUrl" :alt="`Imagen de ${s.nombre}`" loading="lazy" @error="fallarImagen(s._id)" />
+                          </figure>
                           <div v-if="s.preparacion" class="srv-prepara">
                             <h5>
                               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
@@ -123,10 +129,10 @@
                             <div><dt>Duración</dt><dd>{{ formatoDuracion(s.duracionMinutos) }}</dd></div>
                             <div><dt>Precio referencial</dt><dd>{{ formatoMoneda(s.precioCentavos) }}</dd></div>
                           </dl>
-                          <button type="button" class="srv-boton srv-boton-bloque" @click="abrirCita(s._id)">
+                          <RouterLink :to="{ name: 'solicitar-cita', query: { servicio: s._id } }" class="srv-boton srv-boton-bloque">
                             Solicitar cita para este servicio
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                          </button>
+                          </RouterLink>
                         </aside>
                       </div>
                     </div>
@@ -213,6 +219,14 @@ const route = useRoute();
 const busqueda = ref('');
 const area = ref('');
 const abierto = ref('');
+const imagenesFallidas = ref(new Set());
+
+function fallarImagen(id) {
+  const siguientes = new Set(imagenesFallidas.value);
+  siguientes.add(id);
+  imagenesFallidas.value = siguientes;
+}
+const tieneImagen = (servicio) => Boolean(servicio.imagenUrl) && !imagenesFallidas.value.has(servicio._id);
 
 const PROCESO = [
   { titulo: 'Elige tu servicio', texto: 'Explora el catálogo y selecciona la atención que necesitas.' },
@@ -276,9 +290,20 @@ watch(
   }
 );
 
+// Al navegar dentro de la misma vista (de /servicios a /solicitar-cita) el
+// componente se reutiliza; el watch mantiene el modal sincronizado con la URL.
+watch(
+  () => [route.name, route.query.servicio],
+  ([nombre, servicio]) => {
+    if (nombre !== 'solicitar-cita') return;
+    abrirCita(typeof servicio === 'string' ? servicio : undefined);
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   cargarCatalogo();
-  // Enlace antiguo /solicitar-cita → abre la ventana directamente.
+  // Enlace antiguo /servicios#solicitar-cita → abre la ventana directamente.
   if (route.hash === '#solicitar-cita') abrirCita();
 });
 </script>
@@ -396,7 +421,9 @@ onMounted(() => {
 .srv-fila.abierta .srv-fila-btn { background: #eaf6f7; }
 .srv-fila.abierta .srv-fila-btn::before { transform: scaleY(1); }
 .srv-fila-btn:focus-visible { outline: 3px solid var(--srv-turq); outline-offset: -3px; }
-.srv-ico { flex: none; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 15px; color: var(--srv-azul); background: #e3f0f4; transition: all 0.3s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.srv-ico { flex: none; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 15px; color: var(--srv-azul); background: #e3f0f4; overflow: hidden; transition: all 0.3s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.srv-ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.srv-ico-foto { background: #d9edf1; }
 .srv-fila-btn:hover .srv-ico { transform: rotate(-6deg) scale(1.06); }
 .srv-fila.abierta .srv-ico { color: #fff; background: linear-gradient(135deg, #35c4bf, #1a5c8a); }
 .srv-fila-titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -421,6 +448,8 @@ onMounted(() => {
 .srv-incluye svg { flex: none; margin-top: 2px; padding: 3px; box-sizing: content-box; width: 14px; height: 14px; color: #fff; background: var(--srv-turq); border-radius: 50%; }
 .srv-det-vacio { margin: 0; font-size: 0.9rem; color: var(--srv-suave); }
 .srv-lateral { display: flex; flex-direction: column; gap: 0.9rem; }
+.srv-foto { margin: 0; overflow: hidden; border-radius: 14px; border: 1px solid var(--srv-borde); background: #e3f0f4; }
+.srv-foto img { display: block; width: 100%; height: 150px; object-fit: cover; }
 .srv-prepara { padding: 0.85rem 1rem; background: #fff8e6; border: 1px solid #f3dfa2; border-radius: 13px; }
 .srv-prepara h5 { display: flex; align-items: center; gap: 0.4rem; color: #8a6200; }
 .srv-prepara p { margin: 0; font-size: 0.9rem; line-height: 1.45; color: #5c4400; }

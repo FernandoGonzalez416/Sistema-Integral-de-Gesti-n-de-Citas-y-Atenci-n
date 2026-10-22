@@ -1,6 +1,6 @@
 # Estado del Proyecto — SIGCA
 
-Actualizado: 2026-10-21 (B5.1: calendario y filtros Activos corregidos y verificados en Edge headless; B5 seed 130/130).
+Actualizado: 2026-10-21 (B6: portal editable, carrusel, publicaciones, servicios, horarios y bandeja verificados; 136/136 y build 135 módulos).
 
 ## Avance real
 
@@ -8,7 +8,7 @@ Actualizado: 2026-10-21 (B5.1: calendario y filtros Activos corregidos y verific
 - FASE 1 tarea 1 completada (2026-10-15): `backend/` Express ESM arranca, `GET /api/health` responde, 404 JSON verificado, conexión a MongoDB local verificada.
 - FASE 1 completada (2026-10-15): backend + frontend arrancan, `/api/health` OK, MongoDB local OK, README con comandos creado.
 - FASE 2 completada (2026-10-15): layouts, rutas separadas, 404, componentes en uso; verificación conjunta OK.
-- FASE 3 cerrada con limitación (2026-10-15): backend auth verificado de extremo a extremo contra Mongo (login, me, 401/403, inactivo, seed). Frontend login + guard COMPILAN pero SIN prueba manual en navegador (ver advertencia abajo).
+- FASE 3 cerrada con limitación (2026-10-15): backend auth verificado de extremo a extremo contra Mongo (login, me, 401/403, inactivo, seed). Frontend login + guard COMPILAN; la verificación en navegador se completó en B6 (ver sección de login abajo).
 - FASE 4 completada (2026-10-15): usuarios, servicios y contenido institucional con backend verificado y pantallas compiladas.
 - FASE 5 completada (2026-10-15): portal público funcional con todas las rutas, APIs y formularios verificados contra MongoDB.
 - FASE 6 en curso (2026-10-15): modelos + CRUD backend + pantallas frontend pacientes/responsables/relaciones compiladas (72 módulos).
@@ -38,21 +38,23 @@ Actualizado: 2026-10-21 (B5.1: calendario y filtros Activos corregidos y verific
 - **B4 completado (2026-10-21, rama `feat/b4-citas-solicitudes`):** solicitudes/citas atómicas **sin replica set ni transacciones**, permisos por rol `PROFESIONAL`, filtros validados, rechazo formal con motivo, reset de contraseña por ADMINISTRADOR y pantallas de citas, solicitudes y profesionales con menús por rol. Backend: índice único parcial `Appointment.solicitudOrigen`, `atender` idempotente con reparación de enlaces/compensación/re-chequeo y mutex en proceso, scoping por `Professional.usuario`, pacientes básicos y materiales propios, `PATCH /api/usuarios/:id/restablecer-password`. Frontend: `CitasView`, `SolicitudesView`, `ProfesionalesView`, reset en `UsersView`, guard `meta.roles` y menús por rol; `CitaModal` y el portal exigen email/servicio. Pruebas: **119/119** en 16 grupos (dos corridas), build **verde** y Postman **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx** en `sigca_test_postman` (eliminada). **UI no verificada en navegador** (solo build).
 - **B5 completado (2026-10-21, rama `feat/b5-seed`):** seed definitivo en `backend/src/utils/seedDemo.js`: **77 registros** (6 usuarios, 10 pacientes con 4 menores y responsables activos, 5 responsables, 5 servicios con 1 inactivo, 15 citas sin solapamientos, 5 materiales y 5 asignaciones, 5 solicitudes mixtas, 10 pagos, 10 comprobantes y 3 cajas). Conserva claves estables, marcadores, `--dry-run` y la garantía no destructiva; reinicia su estado por llamada y repara solo campos nulos de registros propios. Caja 1 cierra con diferencia **-500**, caja 3 con **0** y caja 2 queda abierta. `pago-04` es un `ANULADO` histórico ficticio en caja cerrada, documentado y excluido del arqueo. Pruebas: **130/130 en dos corridas** (119 de reglas + 11 de seed) contra `sigca_test_rules` y `sigca_test_seed`; `sigca` intacta. UI no verificada en navegador.
 - **B5.1 completado (2026-10-21, rama `fix/calendario-checkbox`):** calendario reparado pasando plugins, vista, eventos, click, locale y toolbar por el prop `options` de `@fullcalendar/vue3`, y alineando el conector a `^6.1.21` (antes 7.1.2 con core 7 anidado frente a core/daygrid/interaction 6.x). `FormField` ahora emite booleanos y marca correctamente los checkboxes "Activos" de pacientes, responsables y materiales. Verificación real en Edge headless con `sigca_ui_calendar`: **15 eventos** en octubre 2026, vistas Mes/Semana/Día, modal de detalle, **0 errores de consola** y `activo=true` enviado/omitido según el checkbox; build **verde** (131 módulos) y `npm test` **130/130**. Base desechable eliminada; `sigca` intacta.
+- **B6 completado (2026-10-21, rama `feat/b6-portal-contenido`):** contenido institucional administrable (nombre, logo por URL, misión, visión, información principal y contacto) reutilizando `InstitutionalContent`; carrusel `CarouselSlide` con CRUD ADMIN y listado público activo/ordenado con fallback a los SVG; `PUT /api/publicaciones/:id` para edición completa; bandeja de contacto con filtros, contador, marcado de leído y badge; servicios con imagen/placeholder, precio en quetzales y cita preseleccionada por `?servicio=`; horarios editables reflejados en el portal. Pruebas **136/136 en dos corridas**, build **135 módulos** y Postman **131 peticiones / 196 pruebas / 0 fallos**. UI verificada en Edge headless sobre `sigca_ui_b6`; se corrigió la ruta directa de cita (`watch` con `immediate`). Detalle en `docs/PRUEBAS.md`.
 - Repo `ProyectoFinalDesarrolloWeb`: historia en la rama de integración; contiene `COMMIT_CONVENTION.md`, `.gitmessage`, `.gitignore`, `postman/`, `backend/tests/`, `docs/DECISION_LOG.md` + plan.
 - Remoto configurado: `https://github.com/FernandoGonzalez416/Sistema-Integral-de-Gesti-n-de-Citas-y-Atenci-n.git`; `origin/integracion` actualizado con B5 y B5.1 (`d1b1ad4`). B6 sale de `integracion`.
 - Referencias reutilizables fuera del repo: `Tarea 2 API REST/api-tareas` (Express+Mongoose CommonJS) y `Tarea 3 vueApiRest` (Vue 3+Vite+Pinia+Router). No copiados al proyecto final.
 
-## Advertencia vigente — login frontend (NO verificado de extremo a extremo)
+## Login frontend (verificado en B6)
 
-- El login de frontend (`LoginView.vue`, store `auth`, guard de `/admin`) COMPILA correctamente (`npm run build` OK, 48 módulos).
-- La prueba manual en navegador (escribir credenciales en `http://localhost:5173/login`, redirección a `/admin`, guard sin token) SIGUE PENDIENTE.
-- NO se afirma que el login funciona de extremo a extremo hasta comprobarlo en navegador.
+- El login de frontend (`LoginView.vue`, store `auth`, guard de `/admin`) se verificó en Edge headless durante B6: ADMINISTRADOR entra al panel y RECEPCIONISTA queda fuera de `/admin/mensajes` y del enlace de la bandeja.
+- El guard sin token y la redirección a `/login` también se ejercitaron al cerrar sesión.
+- No se probaron todas las combinaciones de roles en todas las pantallas; el backend sigue siendo la autoridad final.
 
 ## Qué falta (resumen)
 
-- B1/B2/B3/B4/B5/B5.1 **completados**. B5 cierra el seed definitivo y B5.1 repara el calendario y los filtros Activos.
-- B6 (portal/logo/carrusel/bandeja) y B7 (entrega final) **pendientes**.
-- Prueba manual del login en navegador sigue pendiente; B5.1 verificó calendario, modal y filtros Activos. El resto de pantallas no se ha probado visualmente.
+- B1/B2/B3/B4/B5/B5.1/B6 **completados**. B6 cierra portal editable, carrusel, publicaciones, servicios, horarios y bandeja de contacto.
+- B7 (entrega final) **pendiente**.
+- El login y los flujos B6 se verificaron en Edge headless; las pantallas históricas no incluidas en B6 no se recorrieron todas visualmente.
+- La rama `feat/b6-portal-contenido` aún no se ha publicado ni integrado en `origin/integracion`.
 
 ## Errores conocidos
 
@@ -72,7 +74,7 @@ Actualizado: 2026-10-21 (B5.1: calendario y filtros Activos corregidos y verific
 - **Cierre de la coerción de tipos a texto (2026-10-21):** se cerró la observación pendiente del 2026-10-16 sobre `String(valor)` en **contact, requests, publications (alta), payments (`motivoAnulacion`) y auth (login/perfil)**, y también en `services` (`incluye`) y en la validación de `telefono` de pacientes/profesionales/responsables. Reproducción en BD desechable: 6 endpoints guardaban `"[object Object]"` (201/200) y `telefono` numérico se coercionaba. Después: tipos inválidos → **400** (en `incluye` se descarta el elemento), **0 documentos** con `"[object Object]"`, **0 respuestas 5xx** y los 9 flujos válidos intactos. Regresión `npm test` **43/43**. Rama `fix/validaciones-tipos`. Detalle en `docs/PRUEBAS.md`.
 - (Observación, 2026-10-16, no defecto) `GET /api/pacientes/:id/materiales` con `pacienteId` válido **inexistente** responde **200** con lista vacía (no 404).
 - Limitación: 2 vulnerabilidades npm heredadas en frontend (1 moderada + 1 alta, documentadas en PRUEBAS.md).
-- Limitación: pruebas de interfaz (Etapa H) parcialmente ejecutadas: B5.1 verificó calendario, modal y filtros Activos en Edge headless; el resto sigue pendiente de verificación manual.
+- Limitación: pruebas de interfaz (Etapa H) parcialmente ejecutadas: B5.1 verificó calendario, modal y filtros Activos; B6 verificó portal, configuración, carrusel, publicaciones, horarios, servicios, contacto, bandeja, guardia de roles, ruta directa de cita y menú móvil en Edge headless. Las demás pantallas históricas siguen pendientes de verificación manual.
 
 ## Herramientas verificadas
 

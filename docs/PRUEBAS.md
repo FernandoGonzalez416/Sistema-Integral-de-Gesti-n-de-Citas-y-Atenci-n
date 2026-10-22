@@ -1501,3 +1501,59 @@ La primera ejecución creó **77 registros** (los 10 comprobantes se emiten apar
 - `MaterialesView`: inicia desmarcado; al marcar y buscar envía `/api/materiales?...&activo=true`; al desmarcar lo omite.
 
 **Build y pruebas:** `npm run build` **verde** (131 módulos) y `npm test` **130/130**. Sin cambios de API ni de seed.
+
+## 2026-10-21 - B6: portal institucional, carrusel, publicaciones y bandeja de contacto
+
+**Alcance:** RF-01, RF-12 y sección 10 de `docs/REQUISITOS.md`; pendientes 11, 12 y 15. Sin dependencias nuevas, sin TypeScript, Tailwind, Docker ni replica set.
+
+### Backend y validaciones
+
+- `GET/PUT /api/contenido/sitio`: configuración pública y actualización solo ADMINISTRADOR. Reutiliza `InstitutionalContent` (`contacto-nombre`, `sitio-logo`, `mision`, `vision`, `nosotros`, `contacto-*`) para no duplicar contenido.
+- `CarouselSlide` + `/api/contenido/carrusel`: CRUD solo ADMINISTRADOR; el listado público devuelve únicamente activas y ordenadas por `orden`. El seed crea cinco diapositivas solo si la colección está vacía.
+- `PUT /api/publicaciones/:id`: edición completa (título, descripción, tipo, fecha, imagen, enlace y activo), conservando `PATCH` por compatibilidad. Las URLs aceptan rutas locales, `http(s)`, y en enlaces también `mailto`/`tel`. Escrituras solo ADMINISTRADOR.
+- Contacto: nombre, email, teléfono, asunto y mensaje validados en el controlador; errores 400 con `{ ok:false, message }`. La bandeja admite `?leido=true|false`, devuelve `noLeidos`, expone `/api/contacto/contador` y permite marcar leído/no leído con `PATCH`.
+- No se agregó `required` a campos existentes ni se modificaron los esquemas de citas/calendario. Las entradas inválidas de B6 no producen 5xx.
+
+### Pruebas automatizadas
+
+- `backend/tests/b6.test.js`: **6 pruebas** (configuración y seed idempotente, roles/validaciones de sitio, CRUD de carrusel, publicaciones, bandeja de contacto e inválidos sin 5xx).
+- `npm test`: **136/136 en dos corridas consecutivas** (130 previas + 6 de B6), **18 suites**, 0 fallos. Bases `sigca_test_rules` (3992), `sigca_test_seed` (3993) y `sigca_test_b6` (3994); `sigca` intacta.
+- `npm run build`: **verde**, **135 módulos**.
+
+### Frontend
+
+- `HomeView`, `Navbar` y `Footer` consumen nombre, logo, misión, visión, información principal y contacto desde la API; si el carrusel no devuelve elementos se conservan los cinco SVG locales.
+- `ContentView` administra configuración, carrusel (alta, edición, activar/desactivar y eliminar), horarios y publicaciones completas; `MensajesView` muestra la bandeja descendente, filtros, marcado de leído, estado vacío y contador; `AdminLayout` oculta la bandeja y el badge a roles distintos de ADMINISTRADOR.
+- Servicios públicos muestran imagen real o placeholder, nombre, descripción, duración y precio en quetzales con el util compartido; el botón lleva a `/solicitar-cita?servicio=...` y abre el modal con el servicio preseleccionado.
+- Contacto público valida nombre, email, teléfono, asunto y mensaje; muestra errores reales del backend y un estado de éxito.
+
+### Postman
+
+- `postman/SIGCA.postman_collection.json` y `SIGCA.postman_environment.json` actualizados con sitio GET/PUT, carrusel CRUD/público/admin/400/403, publicación PUT/400/403, filtros/contador/403 de contacto y `diapositivaId`.
+- Ejecución completa por emulación contra `app.js` real en la BD desechable `sigca_postman_b6` (puerto 3010): **131 peticiones, 196 pruebas, 0 fallidas, 0 respuestas 5xx**.
+- La colección requiere una BD limpia por ejecución: una segunda corrida sobre la misma BD falla por el horario del sábado ya existente, no por un defecto de la aplicación. La emulación no sustituye una ejecución desde la aplicación Postman.
+
+### Verificación UI (Edge headless/CDP)
+
+Entorno: backend con `MONGO_URI=mongodb://localhost:27017/sigca_ui_b6`, frontend Vite en `http://localhost:5173` y Edge headless controlado por CDP. Base desechable; `sigca` intacta.
+
+- Home/Navbar/Footer con nombre y logo editables; carrusel con cinco diapositivas; misión, visión, información principal, publicaciones y tabla de horarios.
+- Contacto: validación de campos obligatorios, envío exitoso, mensaje visible en la bandeja, badge y contador; filtro de no leídos, marcado como leído, retiro del badge y estado vacío.
+- Configuración guardada desde admin y reflejada en el portal; carrusel agregado, editado, desactivado y eliminado desde la UI; publicación creada y editada (título, descripción, tipo, imagen, enlace y activo) y visible en corporativo con su imagen.
+- Horario del lunes modificado de `08:00–17:00` a `09:30–16:30` y verificado en el portal público.
+- Servicios: un servicio con imagen real y los demás con placeholder; detalle con foto; precio en `Q`; enlace con `?servicio=` y modal con servicio, duración y precio preseleccionados. También se verificó la ruta directa `/solicitar-cita?servicio=...` tras recargar.
+- Menú móvil a 390×844: botón hamburguesa visible, menú colapsado/desplegable y “Contacto” disponible.
+- Guardia de roles: RECEPCIONISTA no ve la bandeja ni el enlace, y `/admin/mensajes` redirige a `/admin`.
+
+### Defecto encontrado y corregido durante la verificación
+
+- **Síntoma:** al abrir directamente `/solicitar-cita?servicio=<id>`, el modal se mostraba pero el resumen decía “Elige un servicio…”.
+- **Causa raíz:** `ServiciosView` llamaba `abrirCita(id)` durante su setup, antes de que `CitaModal` se montara. `citaAbierta` ya valía `true` cuando el componente montó, y el `watch` sin `immediate` no ejecutaba `reiniciar(citaServicioInicial)`.
+- **Corrección:** `watch(citaAbierta, ..., { immediate: true })` en `frontend/src/components/CitaModal.vue`. Se buscaron todas las llamadas a `abrirCita`/`citaAbierta`; el watch es el único punto de inicialización del modal.
+- **Verificación posterior:** la ruta directa conserva el `servicio`, muestra nombre/duración/precio y abre en el paso “Tus datos”; el flujo desde el catálogo sigue funcionando. Build **135 módulos** verde.
+
+### Límites
+
+- La validación de UI cubrió los flujos B6 descritos; no se recorrieron todas las pantallas históricas del sistema.
+- La emulación de Postman no es una corrida desde la aplicación Postman.
+- No se implementó subida de archivos: logo e imágenes se editan por URL.

@@ -227,5 +227,31 @@ export const patchSchedule = (token, id, datos) =>
 export const getPublicationsTodas = (token) => conAuth(token, '/api/publicaciones/admin/todas');
 export const createPublication = (token, datos) =>
   conAuth(token, '/api/publicaciones', { method: 'POST', body: JSON.stringify(datos) });
+export const updatePublication = (token, id, datos) =>
+  conAuth(token, `/api/publicaciones/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
 export const patchPublication = (token, id, datos) =>
   conAuth(token, `/api/publicaciones/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
+
+// Configuración pública del sitio y carrusel (B6).
+export const getSitioConfig = () =>
+  peticion('/api/contenido/sitio', {}, 'No se pudo cargar la configuración del sitio').then((r) => r.sitio);
+export const getCarrusel = () =>
+  peticion('/api/contenido/carrusel', {}, 'No se pudo cargar el carrusel').then((r) => r.diapositivas);
+export const updateSitioConfig = (token, datos) =>
+  conAuth(token, '/api/contenido/sitio', { method: 'PUT', body: JSON.stringify(datos) });
+export const getCarruselTodos = (token) => conAuth(token, '/api/contenido/carrusel/admin/todos');
+export const createCarrusel = (token, datos) =>
+  conAuth(token, '/api/contenido/carrusel', { method: 'POST', body: JSON.stringify(datos) });
+export const updateCarrusel = (token, id, datos) =>
+  conAuth(token, `/api/contenido/carrusel/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const deleteCarrusel = (token, id) =>
+  conAuth(token, `/api/contenido/carrusel/${id}`, { method: 'DELETE' });
+
+// Bandeja de contacto (solo ADMINISTRADOR).
+export const getMensajes = (token, params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return conAuth(token, `/api/contacto${qs ? '?' + qs : ''}`);
+};
+export const getMensajesNoLeidos = (token) => conAuth(token, '/api/contacto/contador');
+export const patchMensaje = (token, id, leido) =>
+  conAuth(token, `/api/contacto/${id}`, { method: 'PATCH', body: JSON.stringify({ leido }) });

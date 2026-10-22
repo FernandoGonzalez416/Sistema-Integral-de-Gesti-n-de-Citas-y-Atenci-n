@@ -3,7 +3,8 @@
     <section class="portada">
       <header class="cabecera">
         <div class="identidad">
-          <h1>Sistema Integral de Gestión de Citas y Atención</h1>
+          <h1>{{ sitio.nombre }}</h1>
+          <p class="sistema">Sistema Integral de Gestión de Citas y Atención</p>
         </div>
 
         <ul class="redes" aria-label="Redes sociales">
@@ -58,6 +59,17 @@
         </article>
       </div>
     </section>
+
+    <!-- Información principal editable desde el panel -->
+    <section v-if="infoPrincipal" id="nosotros" class="bloque bloque-info" aria-labelledby="t-info">
+      <div class="bloque-interno">
+        <h2 id="t-info" class="bloque-titulo">Información principal</h2>
+        <div class="panel">
+          <p class="info-texto">{{ infoPrincipal }}</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Horarios de atención -->
     <section id="horarios" class="bloque bloque-horarios" aria-labelledby="t-horarios">
       <div class="bloque-interno">
@@ -118,10 +130,11 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
-import { getContenido, getHorarios, getPublicaciones } from '../api/client.js';
+import { computed, onMounted, ref } from 'vue';
+import { getCarrusel, getHorarios, getPublicaciones } from '../api/client.js';
 import Carousel from '../components/Carousel.vue';
 import CintaPublicaciones from '../components/CintaPublicaciones.vue';
+import { cargarSitio, sitio } from '../composables/sitio.js';
 
 // ⚠️ REEMPLAZAR con los enlaces reales de SIGCA.
 const REDES = [
@@ -130,7 +143,7 @@ const REDES = [
   { id: 'facebook', nombre: 'Facebook', url: 'https://www.facebook.com/' }
 ];
 
-const diapositivas = [
+const DIAPOSITIVAS_BASE = [
   { imagen: '/carrusel-1.svg', titulo: 'Atención integral' },
   { imagen: '/carrusel-2.svg', titulo: 'Profesionales calificados' },
   { imagen: '/carrusel-3.svg', titulo: 'Servicios para tu familia' },
@@ -141,6 +154,25 @@ const diapositivas = [
     enlace: { to: '/servicios#solicitar-cita', texto: 'Solicitar cita' }
   }
 ];
+const diapositivas = ref(DIAPOSITIVAS_BASE.map((d) => ({ ...d })));
+
+// Solo si la API devuelve elementos se reemplazan los SVG locales.
+async function cargarCarrusel() {
+  try {
+    const lista = await getCarrusel();
+    if (Array.isArray(lista) && lista.length) {
+      diapositivas.value = lista.map((d, i) => ({
+        imagen: d.imagenUrl,
+        titulo: d.titulo,
+        ...(i === lista.length - 1
+          ? { enlace: { to: '/servicios#solicitar-cita', texto: 'Solicitar cita' } }
+          : {})
+      }));
+    }
+  } catch {
+    // Se conservan los SVG locales.
+  }
+}
 
 // Textos por defecto: se usan mientras la base de datos tenga el marcador
 // "Contenido pendiente de edición." o si el contenido no está disponible.
@@ -150,20 +182,22 @@ const VISION_BASE =
   'Ser el centro de referencia en atención integral y educación en salud de nuestra comunidad, reconocido por la calidad humana y profesional de nuestro equipo, la innovación en nuestros servicios y el compromiso permanente con el bienestar de las familias.';
 
 const PENDIENTE = /pendiente de edici[oó]n/i;
+const texto = (valor, base) => (!valor || PENDIENTE.test(valor) ? base : valor);
 
-const mision = reactive({ titulo: 'Misión', cuerpo: '', listo: false });
-const vision = reactive({ titulo: 'Visión', cuerpo: '', listo: false });
-
-async function cargar(clave, destino, textoBase) {
-  try {
-    const c = await getContenido(clave);
-    if (c?.titulo) destino.titulo = c.titulo;
-    destino.cuerpo = !c?.cuerpo || PENDIENTE.test(c.cuerpo) ? textoBase : c.cuerpo;
-  } catch {
-    destino.cuerpo = textoBase;
-  }
-  destino.listo = true;
-}
+const mision = computed(() => ({
+  titulo: 'Misión',
+  cuerpo: texto(sitio.mision, MISION_BASE),
+  listo: sitio.listo
+}));
+const vision = computed(() => ({
+  titulo: 'Visión',
+  cuerpo: texto(sitio.vision, VISION_BASE),
+  listo: sitio.listo
+}));
+const infoPrincipal = computed(() => {
+  const valor = sitio.informacionPrincipal || '';
+  return PENDIENTE.test(valor) ? '' : valor;
+});
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const horarios = ref([]);
@@ -189,8 +223,8 @@ async function cargarPublicaciones(tipo, destino) {
 }
 
 onMounted(() => {
-  cargar('mision', mision, MISION_BASE);
-  cargar('vision', vision, VISION_BASE);
+  cargarSitio();
+  cargarCarrusel();
   cargarHorarios();
   cargarPublicaciones('EDUCATIVO', educativas);
   cargarPublicaciones('CORPORATIVO', corporativas);
@@ -226,6 +260,11 @@ onMounted(() => {
   font-weight: 700;
   line-height: 1.25;
   color: var(--azul-oscuro, #0f3d5e);
+}
+.identidad .sistema {
+  margin: 0.2rem 0 0;
+  font-size: clamp(0.72rem, 1.2vw, 0.9rem);
+  color: #5a7a8c;
 }
 
 .redes { display: flex; gap: 0.6rem; list-style: none; margin: 0; padding: 0; }
@@ -334,8 +373,10 @@ onMounted(() => {
 
 /* ---- Horarios y contenido educativo/corporativo ---- */
 .bloque { padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 5vw, 3rem); scroll-margin-top: 1rem; }
+.bloque-info { background: #fff; }
 .bloque-horarios { background: #fff; }
 .bloque-educativo { background: linear-gradient(180deg, #e5f1f5 0%, #f2f8fb 100%); }
+.info-texto { margin: 0; line-height: 1.7; color: #34576b; }
 .bloque-interno { max-width: 1000px; margin: 0 auto; }
 .bloque-titulo {
   margin: 0 0 1.5rem;

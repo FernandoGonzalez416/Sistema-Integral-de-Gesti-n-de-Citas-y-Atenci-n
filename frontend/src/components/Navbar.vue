@@ -1,25 +1,13 @@
 <template>
   <header class="navbar" :class="{ oculta: !visible, elevada: !enTope }">
     <div class="navbar-interno">
-      <RouterLink to="/" class="marca" aria-label="SIGSA — Inicio" @click="abierto = false">
+      <RouterLink to="/" class="marca" :aria-label="`${sitio.nombre} — Inicio`" :title="sitio.nombre" @click="abierto = false">
         <span class="marca-logo" aria-hidden="true">
-          <svg viewBox="0 0 40 40" width="40" height="40">
-            <defs>
-              <linearGradient id="sigsa-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#35c4bf" />
-                <stop offset="1" stop-color="#1a5c8a" />
-              </linearGradient>
-            </defs>
-            <rect x="1.5" y="1.5" width="37" height="37" rx="11" fill="url(#sigsa-grad)" />
-            <rect x="1.5" y="1.5" width="37" height="37" rx="11" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" />
-            <!-- Cruz médica -->
-            <path d="M17 9h6v8h8v6h-8v8h-6v-8H9v-6h8z" fill="#fff" />
-            <!-- Línea de pulso -->
-            <path d="M7 24h7l2.5-5 4 10 2.5-5H33" fill="none" stroke="#0f3d5e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+          <img v-if="!logoFalla" :src="sitio.logoUrl || '/logo-sigsa.svg'" alt="" @error="logoFalla = true" />
+          <span v-else class="marca-logo-reserva">S</span>
           <span class="marca-brillo"></span>
         </span>
-        <span class="marca-texto">SIGSA</span>
+        <span class="marca-texto">{{ sitio.nombre }}</span>
       </RouterLink>
 
       <nav id="menu-principal" :class="{ abierto }" aria-label="Menú principal">
@@ -121,6 +109,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { abrirContacto, contactoAbierto } from '../composables/contactoModal.js';
+import { cargarSitio, sitio } from '../composables/sitio.js';
 import { useAuthStore } from '../stores/auth.js';
 import Avatar from './Avatar.vue';
 import Icono from './Icono.vue';
@@ -128,6 +117,8 @@ import Icono from './Icono.vue';
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const logoFalla = ref(false);
+watch(() => sitio.logoUrl, () => { logoFalla.value = false; });
 
 // Menú desplegable de la cuenta (foto del usuario)
 const menuPerfil = ref(false);
@@ -218,6 +209,7 @@ watch(abierto, (v) => {
 });
 
 onMounted(() => {
+  cargarSitio();
   ultimoY = window.scrollY;
   actualizar();
   window.addEventListener('scroll', alScroll, { passive: true });
@@ -293,6 +285,16 @@ onUnmounted(() => {
   transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1), box-shadow 0.3s;
 }
 .marca-logo svg { display: block; }
+.marca-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.marca-logo-reserva {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #35c4bf, #1a5c8a);
+}
 .marca-brillo {
   position: absolute;
   inset: 0;
@@ -306,10 +308,14 @@ onUnmounted(() => {
 .navbar .marca:hover .marca-brillo { animation: navbar-brillo 0.9s ease; }
 
 .marca-texto {
-  font-size: 1.45rem;
+  max-width: min(280px, 46vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.02rem;
   font-weight: 800;
-  letter-spacing: 0.2em;
-  line-height: 1;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
   background: linear-gradient(180deg, #fff 30%, #bfeeee 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -317,7 +323,7 @@ onUnmounted(() => {
   transition: letter-spacing 0.3s ease, text-shadow 0.3s;
 }
 .navbar .marca:hover .marca-texto {
-  letter-spacing: 0.26em;
+  letter-spacing: 0.04em;
   filter: drop-shadow(0 0 8px rgba(120, 240, 235, 0.55));
 }
 

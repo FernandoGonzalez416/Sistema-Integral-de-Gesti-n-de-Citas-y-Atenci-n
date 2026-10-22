@@ -20,7 +20,7 @@
       :aria-label="`${i + 1} de ${diapositivas.length}`"
       :inert="i !== indice"
     >
-      <img :src="d.imagen" alt="" draggable="false" />
+      <img :src="d.imagen" alt="" draggable="false" @error="$event.target.onerror = null; $event.target.src = '/carrusel-1.svg'" />
       <div class="velo"></div>
       <div class="texto">
         <h2>{{ d.titulo }}</h2>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
   // [{ imagen, titulo, subtitulo?, enlace?: { to, texto } }]
@@ -64,9 +64,11 @@ let temporizador = null;
 let enPausa = false;
 
 function siguiente() {
+  if (!props.diapositivas.length) return;
   indice.value = (indice.value + 1) % props.diapositivas.length;
 }
 function anterior() {
+  if (!props.diapositivas.length) return;
   indice.value = (indice.value - 1 + props.diapositivas.length) % props.diapositivas.length;
 }
 function ir(i) {
@@ -105,7 +107,22 @@ function tocarFin(e) {
   reiniciar();
 }
 
-onMounted(iniciar);
+watch(
+  () => props.diapositivas.length,
+  (total) => {
+    if (!total) {
+      indice.value = 0;
+      detener();
+      return;
+    }
+    if (indice.value >= total) indice.value = 0;
+    if (temporizador) iniciar();
+  }
+);
+
+onMounted(() => {
+  if (props.diapositivas.length) iniciar();
+});
 onUnmounted(detener);
 </script>
 
