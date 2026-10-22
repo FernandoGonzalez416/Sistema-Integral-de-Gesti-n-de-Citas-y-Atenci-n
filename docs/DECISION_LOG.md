@@ -99,3 +99,29 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Impacto:** backend (modelo `Appointment`, controladores de citas/solicitudes/pacientes/materiales/usuarios, rutas, helper `utils/profesional.js`, `server.js`, script y tests), frontend (cliente API, router, layout, `CitasView`, `SolicitudesView`, `ProfesionalesView`, `UsersView`, `AdminView`, `PacientesView`, `MaterialesView`, `CitaModal`, `SolicitarCitaView`, store), colección/entorno Postman y documentación. Sin dependencias nuevas, sin TypeScript, sin Tailwind/Docker y sin tocar la base `sigca`. La atomicidad depende del índice único + actualización condicional; el mutex solo reduce colisiones dentro de un proceso y no se presenta como garantía distribuida.
 - **Verificación:** `npm test` **119/119 en dos corridas** (16 grupos; A-P) contra `sigca_test_rules`, incluidos M/N/O/P de B4; `npm run build` **verde** (165 módulos); Postman **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx** ejecutado por emulación contra `app.js` y `sigca_test_postman` (eliminada); script de duplicados probado en base vacía y con duplicados (sale con código 1). **UI no verificada en navegador** (sin navegador; solo build). Detalle en `docs/PRUEBAS.md`.
 - **Commit relacionado:** `788677b` (backend), `aa3f9f8` (frontend), `4327baf` (Postman), este commit (docs); hashes también en `docs/CONTROL_COMMITS.md`.
+
+## 2026-10-21 - feat(seed): completar datos demo para b5
+
+- **Cambio:** se amplió `backend/src/utils/seedDemo.js` para dejar 6 usuarios (1 administrador, 2 recepcionistas y 3 profesionales), 10 pacientes (4 menores con responsable), 5 responsables, 5 servicios (1 inactivo), 15 citas, 5 materiales con 5 asignaciones, 5 solicitudes (2 pendientes, 2 atendidas y 1 rechazada), 10 pagos con comprobante, 10 comprobantes y 3 cajas. Se conservaron las claves estables, los marcadores `[seedDemo:clave]`, el `--dry-run` y la regla de no borrar ni sobrescribir datos ajenos.
+- **Motivo:** el seed anterior no alcanzaba para demostrar los flujos de B4/B5 (solicitudes atendidas, pagos completos/parciales/anulados, cierre con diferencia y varias cajas) y sus contadores de módulo se acumulaban entre llamadas.
+- **Alternativas descartadas:** reemplazar el seed por una carga destructiva (riesgo para datos reales); usar `deleteMany` para limpiar la demostración (viola la garantía no destructiva); crear una segunda base de seed separada (duplica el mantenimiento).
+- **Impacto:** solo backend (`seedDemo.js`). Sin dependencias nuevas, sin cambios de API/modelos/frontend y sin tocar la base `sigca`. La segunda ejecución crea 0 registros y no reemite comprobantes.
+- **Verificación:** primera ejecución **77 creados**; segunda **0 creados / 77 omitidos**. `npm test` **130/130** (119 existentes + 11 de seed). Detalle en `docs/PRUEBAS.md`.
+- **Commit relacionado:** `cb133bc`.
+
+## 2026-10-21 - test(seed): verificar invariantes e idempotencia b5
+
+- **Cambio:** se agregó `backend/tests/seedDemo.test.js` (11 pruebas) contra `sigca_test_seed` (puerto 3993) y el `app.js` real. Comprueba conteos, roles, edades y responsables, estados/métodos permitidos, fechas futuras, precio/duración, solapamientos, enlaces solicitud↔cita, comprobantes 1:1, finanzas por cita, totales de caja, `--dry-run`, idempotencia y el **409** al cancelar una cita con pagos válidos.
+- **Motivo:** B5 exige que el seed no solo exista, sino que mantenga invariantes verificables y que una segunda ejecución no altere datos ni numeración.
+- **Alternativas descartadas:** validar solo con inspección manual (no repetible); usar la base de desarrollo `sigca` (prohibido); depender de una librería de test nueva (el runner integrado de Node es suficiente).
+- **Impacto:** solo backend (`tests/seedDemo.test.js`). La base de pruebas y el servidor auxiliar se eliminan/detienen al terminar.
+- **Verificación:** `npm test` **130/130 en dos corridas consecutivas**; `sigca` intacta.
+- **Commit relacionado:** `1875f39`.
+
+## 2026-10-21 - docs(seed): documentar seed b5 y verificacion
+
+- **Cambio:** se actualizaron `README.md`, `docs/CONTROL_COMMITS.md`, `docs/DECISION_LOG.md`, `docs/DECISIONES_TECNICAS.md`, `docs/PRUEBAS.md` y `docs/ESTADO_PROYECTO.md` con el conjunto B5, los conteos, los totales de caja, la excepción documentada de `pago-04`, la verificación 130/130 y los hashes de los commits.
+- **Motivo:** dejar trazabilidad reproducible del seed definitivo y de sus límites, sin presentar la UI como verificada en navegador.
+- **Alternativas descartadas:** documentar solo en el README (los documentos de pruebas/decisiones quedarían desactualizados); incluir hashes inventados (se completan después de crear los commits de seed y tests).
+- **Impacto:** solo documentación. Sin cambios funcionales.
+- **Commit relacionado:** este commit (docs); hashes de seed/tests en `docs/CONTROL_COMMITS.md`.
