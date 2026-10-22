@@ -32,6 +32,6 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 
 ## Notas
 
-- Los `push` se hacen solo con instrucción explícita del usuario. B5 se publicó con los comandos entregados; B5.1 se integra localmente en `integracion` y queda pendiente de push hasta confirmación.
+- Los `push` se hacen solo con instrucción explícita del usuario. B5 y B5.1 se publicaron en `origin/integracion`; el merge de B5.1 es `d1b1ad4`.
 - Cada fila se completa después del commit correspondiente (el hash no puede incluirse en el mismo commit que lo crea).
 - Los hashes de la fila de documentación de B1 se refieren a los commits de código y Postman; el commit de docs se identifica por su mensaje porque su propio hash no puede estar dentro de sí mismo.
