@@ -372,3 +372,43 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - **Verificación:** `npm run build` → **verde** (131 módulos). UI en Edge headless contra BD desechable `sigca_ui_calendar` con el seed B5: calendario renderizado en octubre 2026 con **15 eventos**, vistas Mes/Semana/Día operativas, modal de detalle abierto al hacer clic y **0 errores de consola**; checkboxes alternan y los tres filtros envían/omiten `activo=true` correctamente. `npm test` → **130/130**. Base, servidores y script temporal eliminados; `sigca` intacta.
 - **Commit relacionado:** `a6cd08f`.
 
+
+## 2026-10-21 - B6: contenido institucional, carrusel, publicaciones y contacto
+
+### Fuente de verdad del contenido
+
+- No se creó un modelo duplicado para el sitio. `GET/PUT /api/contenido/sitio` reutiliza `InstitutionalContent` con este mapeo: `contacto-nombre` = nombre del centro, `sitio-logo` = logo, `mision`, `vision`, `nosotros` = información principal y `contacto-email`, `contacto-telefono`, `contacto-direccion`.
+- La escritura es solo ADMINISTRADOR y parcial: solo se actualizan las claves enviadas. Cada valor se valida por tipo, longitud, URL de logo, email y teléfono antes del `findOneAndUpdate` con `upsert`.
+- El logo es una URL (ruta local o `http(s)`); no se implementó subida de archivos.
+
+### Carrusel
+
+- `CarouselSlide` guarda `{ imagenUrl, titulo, orden, activo }`. El listado público devuelve solo `activo:true`, ordenado por `orden` y luego por creación. El listado ADMIN incluye inactivas.
+- Las rutas de escritura y el listado completo usan `auth + permitir('ADMINISTRADOR')`. Los errores de id inválido responden 404; los tipos, URLs y rangos inválidos responden 400 con `{ ok:false, message }`.
+- El seed crea cinco diapositivas solo si la colección está vacía. En el frontend, si la API no devuelve elementos, `HomeView` conserva los cinco SVG locales; si devuelve, se reemplazan.
+
+### Publicaciones
+
+- `PUT /api/publicaciones/:id` acepta cambios parciales pero valida el estado final completo: título/descripción no vacíos, tipo `EDUCATIVO|CORPORATIVO`, fecha parseable, imagen/enlace como URL permitida y `activo` booleano. `PATCH` se conserva por compatibilidad.
+- La fecha vacía o nula se normaliza a la fecha actual; una fecha inválida responde 400. Las escrituras son solo ADMINISTRADOR.
+- El portal público lista únicamente activas; corporativo muestra las capacitaciones/escuela para padres con descripción e imagen cuando existe.
+
+### Contacto y bandeja
+
+- El alta pública valida nombre (2–100), email (formato y longitud), teléfono (7–15 dígitos con caracteres permitidos), asunto y mensaje; el modelo conserva sus límites. Cualquier error de validación del modelo se traduce a 400.
+- `GET /api/contacto?leido=true|false` devuelve mensajes descendentes y `noLeidos`; `GET /api/contacto/contador` alimenta el badge. `PATCH /api/contacto/:id` exige `leido` booleano y actualiza de forma atómica.
+- La bandeja es solo ADMINISTRADOR. El frontend usa un store compartido para el badge y `meta.roles` en la ruta; la guardia del backend sigue siendo la autoridad final.
+
+### Servicios, horarios y cita
+
+- El catálogo público usa `formatoMoneda` de `composables/catalogo.js` para mostrar quetzales (`Q`), imagen real o placeholder cuando `imagenUrl` falta/falla, y duración formateada.
+- El enlace del servicio es `/solicitar-cita?servicio=<id>`; `ServiciosView` reutiliza el modal existente y el query se traduce en el servicio preseleccionado.
+- Los horarios siguen usando el CRUD existente; la edición ADMIN se refleja en la tabla pública sin duplicar la fuente.
+- **Corrección de la ruta directa:** el modal se abre antes de que `CitaModal` se monte. El `watch` de `citaAbierta` ahora es `immediate`, por lo que ejecuta `reiniciar(citaServicioInicial)` también cuando el valor inicial ya es `true`. Sin este cambio, la ruta directa mostraba el modal sin servicio.
+
+### Verificación
+
+- `npm test`: **136/136 en dos corridas** (18 suites), incluida `b6.test.js` con 6 pruebas. `npm run build`: **verde (135 módulos)**.
+- Postman: **131 peticiones / 196 pruebas / 0 fallos / 0 respuestas 5xx**, por emulación contra `app.js` real y `sigca_postman_b6`. Requiere BD limpia por ejecución por el horario del sábado ya existente.
+- UI en Edge headless sobre `sigca_ui_b6`: portal, configuración, carrusel (alta/edición/estado/baja), publicaciones, horarios, servicios, contacto, bandeja, badge, filtros, estado vacío, guardia de recepción, ruta directa y menú móvil a 390×844.
+- Sin dependencias nuevas y sin tocar la BD `sigca` ni la corrección de calendario/checkboxes.

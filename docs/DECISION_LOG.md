@@ -141,3 +141,43 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Motivo:** la defensa no debe presentar el mutex como una garantía distribuida; además, B4/B5 habían quedado documentados como "UI no verificada".
 - **Impacto:** solo documentación.
 - **Commit relacionado:** este commit (docs).
+
+## 2026-10-21 - feat(api): configuración, carrusel, publicaciones y bandeja B6
+
+- **Cambio:** se agregó `GET/PUT /api/contenido/sitio` reutilizando `InstitutionalContent` para nombre, logo, misión, visión, información principal y contacto; el modelo `CarouselSlide` y su CRUD ADMIN con listado público ordenado; `PUT /api/publicaciones/:id` para edición completa; filtros `?leido=`, contador y marcado de leídos en contacto; y el seed de logo/carrusel.
+- **Motivo:** B6 exige contenido institucional administrable sin duplicar fuentes, carrusel con al menos cinco elementos, publicaciones editables, horarios/servicios reflejados en el portal y una bandeja ADMIN con contador.
+- **Alternativas descartadas:** duplicar el contenido en un modelo nuevo (rompía la fuente única existente); guardar imágenes como archivos (fuera de alcance); exigir replica set o dependencias nuevas (restricción del proyecto).
+- **Impacto:** backend y pruebas. Sin cambios al calendario ni a los checkboxes de B5.1. Validaciones en controladores; no se agregó `required` a campos existentes.
+- **Verificación:** `npm test` **136/136 en dos corridas** (18 suites); B6 cubre sitio, carrusel, publicaciones, contacto y errores 4xx sin 5xx. Detalle en `docs/PRUEBAS.md`.
+- **Commit relacionado:** `a671ec3`.
+
+## 2026-10-21 - feat(ui): portal editable y bandeja B6
+
+- **Cambio:** Home, Navbar y Footer consumen la configuración y el carrusel de la API (con fallback a los SVG locales); `ContentView` administra configuración, carrusel, horarios y publicaciones; `MensajesView` muestra bandeja, filtros, marcado y estado vacío; `AdminLayout` agrega badge y guardia de menú; Servicios muestra imagen/placeholder, precio compartido y enlace con `?servicio=`.
+- **Motivo:** conectar la API B6 con las pantallas reales y mantener la experiencia pública cuando la API no devuelve carrusel.
+- **Impacto:** frontend. Sin dependencias nuevas. Se conserva `CalendarioView` y la corrección de filtros de B5.1.
+- **Verificación:** `npm run build` **verde (135 módulos)**; UI en Edge headless sobre `sigca_ui_b6` (portal, admin, bandeja, servicios, horarios, contacto y menú móvil). Detalle en `docs/PRUEBAS.md`.
+- **Commit relacionado:** `98c53ef`.
+
+## 2026-10-21 - test(postman): contenido y contacto B6
+
+- **Cambio:** se amplió la colección con sitio GET/PUT, carrusel CRUD/público/admin/400/403, publicación PUT/400/403, filtros/contador/403 de contacto y `diapositivaId` en el entorno.
+- **Motivo:** verificar el contrato B6 completo por HTTP real, incluyendo permisos, validaciones y errores claros.
+- **Impacto:** solo Postman. Sin cambios de aplicación.
+- **Verificación:** emulación completa contra `app.js` real en `sigca_postman_b6`: **131 peticiones, 196 pruebas, 0 fallidas, 0 respuestas 5xx**. Requiere BD limpia por corrida por el horario del sábado ya existente; no es un defecto de la app.
+- **Commit relacionado:** `ccab98f`.
+
+## 2026-10-21 - fix(ui): cita directa con servicio preseleccionado
+
+- **Síntoma:** `/solicitar-cita?servicio=<id>` abría el modal sin el servicio en el resumen.
+- **Causa raíz:** `ServiciosView` abría el modal antes de que `CitaModal` se montara; como `citaAbierta` ya era `true`, el `watch` sin `immediate` no ejecutaba `reiniciar(citaServicioInicial)`.
+- **Corrección:** `watch(citaAbierta, ..., { immediate: true })` en `CitaModal.vue`. Se revisaron todas las llamadas a `abrirCita`/`citaAbierta`; el watch es el único punto de inicialización.
+- **Verificación:** ruta directa con nombre, duración y precio preseleccionados y apertura en el paso de datos; el flujo desde el catálogo sigue funcionando. Build **135 módulos** verde.
+- **Commit relacionado:** `8c0813e`.
+
+## 2026-10-21 - docs(b6): registrar portal, pruebas y verificación
+
+- **Cambio:** se actualizaron `docs/CONTROL_COMMITS.md`, `docs/DECISION_LOG.md`, `docs/DECISIONES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/ESTADO_PROYECTO.md` y `docs/PRUEBAS.md` con alcance, endpoints, 136/136, build 135 módulos, Postman 131/196/0, evidencia UI, el defecto de la ruta directa y sus hashes.
+- **Motivo:** dejar trazabilidad reproducible de B6 y distinguir lo verificado en navegador de lo no ejercitado.
+- **Impacto:** solo documentación.
+- **Commit relacionado:** este commit (docs).
