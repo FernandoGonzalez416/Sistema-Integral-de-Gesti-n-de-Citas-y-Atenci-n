@@ -85,3 +85,10 @@ vite v5.4.21 building for production...
 - Defecto corregido: la ruta directa `/solicitar-cita?servicio=...` no preseleccionaba el servicio porque `CitaModal` montaba con `citaAbierta=true` y su `watch` no era `immediate`. Verificado después de la corrección.
 
 Capturas temporales de la verificación en `C:\Users\ggonz\AppData\Local\Temp\sigca-ui-b6` (no versionadas).
+
+### Publicación e integración (2026-10-21)
+
+- `git merge-base --is-ancestor d1b1ad4 feat/b6-portal-contenido` → **ok**: la rama B6 incluye el merge de B5.1 y sale de `82a389d`, el commit de docs posterior en `integracion`.
+- `content.routes.js` declara `GET/PUT /sitio` y monta `/carrusel` **antes** de `GET /:clave` y `PUT /:id`; `carousel.routes.js` declara `/admin/todos` antes de `/:id`. En ejecución, `GET /api/contenido/sitio` responde 200 y `PUT` responde 200/400/401/403 (no lo captura `/:clave`).
+- Regresión antes de publicar: `npm test` **136/136** y `npm run build` **135 módulos**.
+- `origin/feat/b6-portal-contenido` publicado; merge `--no-ff` en `integracion` = **`145babb`** (35 archivos, +3200/−337), publicado en `origin/integracion`.

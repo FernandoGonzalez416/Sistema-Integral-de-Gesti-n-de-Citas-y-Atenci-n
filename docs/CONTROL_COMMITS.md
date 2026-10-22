@@ -30,12 +30,14 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B6 | feat/b6-portal-contenido | a671ec3 | feat(api): agregar configuracion, carrusel y bandeja b6 | FernandoGonzalez416 | creado |
 | B6 | feat/b6-portal-contenido | 98c53ef | feat(ui): conectar portal editable y bandeja b6 | FernandoGonzalez416 | creado |
 | B6 | feat/b6-portal-contenido | ccab98f | test(postman): cubrir contenido y contacto b6 | FernandoGonzalez416 | creado |
-| B6 | feat/b6-portal-contenido | 8c0813e | fix(ui): preseleccionar cita en ruta directa b6 | FernandoGonzalez416 | creado |
-| B6 | feat/b6-portal-contenido | este commit | docs(b6): registrar portal, pruebas y verificacion | FernandoGonzalez416 | creado |
+| B6 | feat/b6-portal-contenido | 8c0813e | fix(ui): preseleccionar cita en ruta directa b6 | FernandoGonzalez416 | publicado |
+| B6 | feat/b6-portal-contenido | b6bd61e | docs(b6): registrar portal, pruebas y verificacion | FernandoGonzalez416 | publicado |
+| B6 | integracion | 145babb | merge(b6): portal de contenido, carrusel y bandeja | FernandoGonzalez416 | integrado |
+| B6 | integracion | este commit | docs(b6): registrar publicacion e integracion | FernandoGonzalez416 | integrado |
 | B7 | feat/b7-entrega | — | — | — | pendiente |
 
 ## Notas
 
-- Los `push` se hacen solo con instrucción explícita del usuario. B5 y B5.1 se publicaron en `origin/integracion`; el merge de B5.1 es `d1b1ad4`. B6 está creado en `feat/b6-portal-contenido`; su push y merge siguen pendientes de instrucción.
+- Los `push` se hacen solo con instrucción explícita del usuario. B5 y B5.1 se publicaron en `origin/integracion`; el merge de B5.1 es `d1b1ad4`. B6 se publicó en `origin/feat/b6-portal-contenido` y se integró con `--no-ff` en `145babb`; `origin/integracion` quedó en ese commit. Antes de integrar se verificó que `d1b1ad4` es ancestro de la rama (`git merge-base --is-ancestor`) y que `/sitio` y `/carrusel` se declaran antes de `/:clave` y `/:id` en `content.routes.js`.
 - Cada fila se completa después del commit correspondiente (el hash no puede incluirse en el mismo commit que lo crea).
 - Los hashes de la fila de documentación de B1 se refieren a los commits de código y Postman; el commit de docs se identifica por su mensaje porque su propio hash no puede estar dentro de sí mismo.

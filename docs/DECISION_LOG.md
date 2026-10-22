@@ -181,3 +181,12 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Motivo:** dejar trazabilidad reproducible de B6 y distinguir lo verificado en navegador de lo no ejercitado.
 - **Impacto:** solo documentación.
 - **Commit relacionado:** este commit (docs).
+
+## 2026-10-21 - merge(b6): publicación e integración en `integracion`
+
+- **Cambio:** se publicó `feat/b6-portal-contenido` y se integró con `--no-ff` en `integracion`.
+- **Verificación previa:** `git merge-base --is-ancestor d1b1ad4 feat/b6-portal-contenido` → ok (B6 sale de `82a389d`, docs posterior al merge de B5.1). En `content.routes.js`, `/sitio` y `/carrusel` se declaran antes de `/:clave` y `/:id`; en `carousel.routes.js`, `/admin/todos` antes de `/:id`. `GET /api/contenido/sitio` y su `PUT` responden por sus propias rutas (200/200/400/401/403), sin caer en `/:clave`.
+- **Regresión:** `npm test` **136/136** y `npm run build` **135 módulos**, verdes antes del push.
+- **Impacto:** sin cambios de código; no hubo conflictos. 35 archivos, +3200/−337.
+- **Integración:** `git merge --no-ff feat/b6-portal-contenido` → **`145babb`**, publicado en `origin/integracion` (`82a389d..145babb`). `origin/feat/b6-portal-contenido` conserva los 5 commits de B6.
+- **Siguiente:** B7 con la pasada completa de la sección 16 y la auditoría de pantallas históricas (pacientes, responsables, materiales, pagos y caja).

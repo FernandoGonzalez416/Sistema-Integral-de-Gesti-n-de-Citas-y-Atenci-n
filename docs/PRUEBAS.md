@@ -1557,3 +1557,33 @@ Entorno: backend con `MONGO_URI=mongodb://localhost:27017/sigca_ui_b6`, frontend
 - La validación de UI cubrió los flujos B6 descritos; no se recorrieron todas las pantallas históricas del sistema.
 - La emulación de Postman no es una corrida desde la aplicación Postman.
 - No se implementó subida de archivos: logo e imágenes se editan por URL.
+
+## 2026-10-21 — Publicación e integración de B6
+
+Comprobaciones previas al `push` (rama `feat/b6-portal-contenido`, HEAD `b6bd61e`):
+
+| Comprobación | Comando / revisión | Resultado |
+|---|---|---|
+| Base de la rama | `git merge-base --is-ancestor d1b1ad4 feat/b6-portal-contenido` | **ok** (exit 0); `82a389d` es el commit de docs posterior al merge de B5.1 |
+| `integracion` local y remota | `git log -1 origin/integracion` | `82a389d`, mismo punto de partida |
+| Orden de rutas fijas | `backend/src/routes/content.routes.js` | `GET /`, `GET /admin/todos`, `GET/PUT /sitio`, `use /carrusel`, y **después** `GET /:clave` y `PUT /:id` |
+| Rutas anidadas del carrusel | `backend/src/routes/carousel.routes.js` + `app.js` | `GET/POST /`, `GET /admin/todos`, `PUT/DELETE /:id` bajo `/api/contenido/carrusel`; `/admin/todos` declarado antes de `/:id` |
+| `GET/PUT /api/contenido/sitio` en ejecución | pruebas 1 y 2 de `backend/tests/b6.test.js` | **200** público y **200/400/401/403** en la edición; ninguna petición cae en `/:clave` |
+
+Regresión previa a publicar:
+
+- `npm test` (backend): **136/136**, 0 fallos.
+- `npm run build` (frontend): **135 módulos**, verde (aviso de chunk > 500 kB ya conocido).
+
+Publicación e integración:
+
+```
+git push -u origin feat/b6-portal-contenido     # nueva rama remota
+git switch integracion && git pull --ff-only origin integracion   # ya al día en 82a389d
+git merge --no-ff feat/b6-portal-contenido -m "merge(b6): portal de contenido, carrusel y bandeja"
+git push origin integracion                     # 82a389d..145babb
+```
+
+- Merge de integración: **`145babb`** (`merge(b6): portal de contenido, carrusel y bandeja`), 35 archivos, +3200/−337.
+- `origin/integracion` quedó en `145babb`; `origin/feat/b6-portal-contenido` conserva los 5 commits de B6.
+- Sin conflictos y sin cambios de código adicionales: la revisión no encontró defectos que corregir.
