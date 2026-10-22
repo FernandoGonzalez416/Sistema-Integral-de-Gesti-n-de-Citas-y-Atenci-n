@@ -1587,3 +1587,86 @@ git push origin integracion                     # 82a389d..145babb
 - Merge de integración: **`145babb`** (`merge(b6): portal de contenido, carrusel y bandeja`), 35 archivos, +3200/−337.
 - `origin/integracion` quedó en `145babb`; `origin/feat/b6-portal-contenido` conserva los 5 commits de B6.
 - Sin conflictos y sin cambios de código adicionales: la revisión no encontró defectos que corregir.
+
+## 2026-10-21 — B7: sección 16 e integridad de datos
+
+Pasada completa del **procedimiento de evaluación funcional (sección 16)** y auditoría de **modelos, relaciones, validaciones e integridad** entre usuarios, profesionales, pacientes, responsables, servicios, citas, solicitudes, pagos y cajas.
+
+### Entorno
+
+- Prueba automatizada: `backend/tests/b7.test.js`, base **desechable** `sigca_test_b7`, puerto **3991**. `sigca` intacta.
+- UI: base **desechable** `sigca_ui_b7` sembrada con `seedDemo` (76 registros), backend en `:3000`, Vite en `:5173`, Edge headless por CDP.
+- Horarios de prueba: 07:00–20:00 los 7 días, para que la corrida no dependa del día de la semana.
+
+### Sección 16 — los 22 pasos ejecutados por HTTP real
+
+| Paso | Escenario | Endpoint / verificación | Resultado |
+|---|---|---|---|
+| 1 | Iniciar sesión como administrador | `POST /api/auth/login`, `GET /api/auth/me` | **200**, rol ADMINISTRADOR, sin `password` |
+| 2 | Registrar un paciente | `POST /api/pacientes` | **201**, edad virtual, nace activo |
+| 3 | Asociar un responsable | `POST /api/responsables` + `POST /api/pacientes/:id/responsables` | **201/201**; duplicado **409** |
+| 4 | Crear un servicio con precio | `POST /api/servicios` | **201**, precio 25000, duración 30; precio no entero **400** |
+| 5 | Programar una cita | `POST /api/citas` | **201**, fin = inicio + 30 min, precio copiado |
+| 6 | Intentar un horario ocupado | `POST /api/citas` mismo profesional/hora | **400** "ya tiene una cita"; otro profesional **201**; fecha pasada **400** |
+| 7 | Confirmar la cita | `PATCH /api/citas/:id/estado` | **200** CONFIRMADA; CONFIRMADA→PENDIENTE **400** |
+| 8 | Consultarla en el calendario | `GET /api/citas?desde&hasta` | **200**, cita con paciente/profesional/servicio poblados |
+| 9 | Abrir una caja | `POST /api/cajas/abrir` | **201** ABIERTA; segunda **409**; monto negativo **400** |
+| 10 | Registrar un abono parcial | `POST /api/pagos` 10000 EFECTIVO | **201**; pago ligado a la caja; comprobante `REC-…` |
+| 11 | Consultar el saldo | `GET /api/citas/:id/saldo` | **200** PARCIAL, saldo 15000 |
+| 12 | Registrar un segundo pago | `POST /api/pagos` 15000 TARJETA | **201**, saldo 0 |
+| 13 | Verificar estado PAGADO | `GET /api/citas/:id/saldo` | **200** PAGADO; pago extra **400**; monto 0 **400**; método inválido **400** |
+| 14 | Consultar el comprobante | `GET /api/pagos/:id/comprobante` | **200**, número único, monto/método/cita/paciente coherentes, idempotente |
+| 15 | Pagar con distintos métodos | `POST /api/pagos` TRANSFERENCIA + EFECTIVO | **201/201**, cita 2 PAGADA |
+| 16 | Consultar los ingresos del día | `GET /api/cajas/:id/movimientos` | **200**, EFECTIVO 23000 · TARJETA 15000 · TRANSFERENCIA 12000 · total 50000 |
+| 17 | Registrar el efectivo contado | `POST /api/cajas/:id/cerrar` | **200**, esperado 73000, contado 72500 |
+| 18 | Cerrar la caja | `POST /api/cajas/:id/cerrar` | **200** CERRADA, diferencia −500, snapshot por método |
+| 19 | Bloquear pagos en caja cerrada | `POST /api/pagos` sin caja abierta | **409**; con caja nueva **201**; anular pago de caja cerrada **409** |
+| 20 | Historial de pagos del paciente | `GET /api/pagos?paciente=…`, `/api/citas/:id/pagos` | **200**, 5 pagos, cita/caja/estado en cada uno, suma 25000 en la cita 1 |
+| 21 | Verificar registros en MongoDB | consultas Mongoose directas | referencias válidas, snapshots coherentes, sin huérfanos |
+| 22 | Acceder con otro rol | PROFESIONAL y RECEPCIONISTA | **403/404** donde corresponde; PROFESIONAL solo ve sus pacientes y datos básicos |
+
+Cobertura adicional de la pasada:
+
+- Solicitud pública **201** → bandeja de recepción **200** → `POST /api/citas/solicitudes/:id/atender` **201**; la solicitud queda ATENDIDA con `citaGenerada` y `atendidaPor`; reatender **409**; índice único parcial impide dos citas por solicitud.
+- Validaciones: responsable sin email **400**; servicio con precio decimal **400**; paciente sin pacienteId/profesional/servicio **400**; sin token **401**.
+
+### Integridad de modelos y relaciones (paso 21)
+
+- `Appointment` → paciente/profesional/servicio existentes; `fin > inicio`; precio y duración históricos se conservan aunque el servicio cambie después (25000/30 → servicio 30000/45).
+- `Payment` → cita existente y `pago.paciente` coincide con `cita.paciente`; `caja` existente; los pagos anulados no suman.
+- `Receipt` → un comprobante por pago, monto y método copiados del pago.
+- `PatientResponsible` → paciente y responsable existentes; relación única.
+- `Professional.usuario` → usuario existente con rol PROFESIONAL y vínculo único.
+- `CashSession` → totales guardados iguales a la suma de pagos REGISTRADO; esperado = inicial + EFECTIVO; diferencia = contado − esperado.
+- Citas derivadas de solicitudes conservan `solicitudOrigen` único.
+
+### UI histórica verificada en Edge headless
+
+Capturas en `C:\Users\ggonz\AppData\Local\Temp\sigca-ui-b7` (no versionadas).
+
+- **Pacientes:** lista (10 registros del seed), alta con fecha de inicio y observaciones, desactivación (sale del filtro Activos), visualización como inactivo y reactivación.
+- **Responsables:** alta con email/dirección obligatorios, asociación desde la ficha del paciente y listado de responsables actuales.
+- **Materiales:** alta de material DOCUMENTO y asignación desde la ficha del paciente.
+- **Caja:** apertura con monto inicial, ingresos por método, efectivo esperado, movimientos y cierre con efectivo contado (diferencia Q0.00).
+- **Pagos:** selección de cita PENDIENTE, saldo, abono parcial (PENDIENTE→PARCIAL), pago REGISTRADO en el historial y bloqueo del formulario tras cerrar la caja.
+- **Smoke histórico:** Citas (15 filas), Solicitudes (2), Profesionales (3), Calendario (15 eventos) y panel administrativo.
+- **Consola y red:** 0 errores de consola y 0 respuestas 5xx en todo el recorrido.
+
+### Defecto encontrado y corregido
+
+- **Síntoma:** en `/admin/pacientes/:id/responsables` la cabecera mostraba "Responsables de ( años)" y no aparecía el aviso de menor de edad.
+- **Causa raíz:** `PacienteResponsablesView.vue` cargaba el paciente con `getPacientes({ q: pacienteId })` buscando el ObjectId como texto en nombre/apellido/teléfono/email; nunca coincidía. Quedaba el objeto por defecto con `nombre: ''` y `edad: null`.
+- **Corrección:** usar `GET /api/pacientes/:id` (`getPaciente`) para cargar el paciente. Dos líneas en el mismo archivo.
+- **Verificación:** la cabecera muestra "Responsables de Lucía Morales (14 años)", el aviso de menor aparece y la asociación de responsables funciona.
+
+### Resultados
+
+- `npm test`: **152/152** (136 previas + 16 de B7), 19 suites, 0 fallos.
+- `npm run build`: **verde**, 135 módulos (aviso de chunk > 500 kB ya conocido).
+- UI: recorrido completo sin errores de consola ni 5xx.
+
+### Límites
+
+- La corrida de Postman no se repitió porque B7 no cambia contratos de API (solo añade pruebas y corrige una vista).
+- La verificación visual cubre los flujos de la sección 16 y las pantallas históricas nombradas; no sustituye una revisión manual exhaustiva de todos los estilos.
+- Los datos de la UI son ficticios y viven en `sigca_ui_b7`, eliminada al terminar.

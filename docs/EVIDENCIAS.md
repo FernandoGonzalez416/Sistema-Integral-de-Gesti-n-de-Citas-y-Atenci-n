@@ -92,3 +92,67 @@ Capturas temporales de la verificación en `C:\Users\ggonz\AppData\Local\Temp\si
 - `content.routes.js` declara `GET/PUT /sitio` y monta `/carrusel` **antes** de `GET /:clave` y `PUT /:id`; `carousel.routes.js` declara `/admin/todos` antes de `/:id`. En ejecución, `GET /api/contenido/sitio` responde 200 y `PUT` responde 200/400/401/403 (no lo captura `/:clave`).
 - Regresión antes de publicar: `npm test` **136/136** y `npm run build` **135 módulos**.
 - `origin/feat/b6-portal-contenido` publicado; merge `--no-ff` en `integracion` = **`145babb`** (35 archivos, +3200/−337), publicado en `origin/integracion`.
+
+## B7 — sección 16 e integridad (2026-10-21)
+
+### Prueba automatizada
+
+```
+$ node --test tests/b7.test.js
+▶ B7 — sección 16 e integridad de datos
+  ✔ 1. inicio de sesión como administrador (paso 1)
+  ✔ 2. registrar paciente y asociar responsable (pasos 2-3)
+  ✔ 3. crear servicio con precio (paso 4)
+  ✔ 4. programar cita y rechazar horario ocupado (pasos 5-6)
+  ✔ 5. confirmar la cita y consultarla en el calendario (pasos 7-8)
+  ✔ 6. abrir caja con monto inicial (paso 9)
+  ✔ 7. abono parcial y consulta de saldo (pasos 10-11)
+  ✔ 8. segundo pago y estado financiero PAGADO (pasos 12-13)
+  ✔ 9. consultar el comprobante interno (paso 14)
+  ✔ 10. pagos con distintos métodos e ingresos del día (pasos 15-16)
+  ✔ 11. efectivo contado, cierre y bloqueo de la caja cerrada (pasos 17-19)
+  ✔ 12. historial de pagos del paciente (paso 20)
+  ✔ 13. solicitud del portal convertida en cita (integridad solicitud→cita)
+  ✔ 14. integridad de modelos, relaciones e históricos (paso 21)
+  ✔ 15. permisos por rol (paso 22)
+  ✔ 16. ninguna petición de la pasada devuelve 5xx
+ℹ tests 16
+ℹ pass 16
+ℹ fail 0
+```
+
+Base desechable `sigca_test_b7` (puerto 3991), eliminada al terminar; `sigca` intacta.
+
+Datos verificados directamente en MongoDB:
+
+- Citas → paciente/profesional/servicio existentes y `fin > inicio`.
+- Pagos → cita y caja existentes; `pago.paciente` coincide con la cita.
+- Comprobantes → un comprobante por pago, con monto y método copiados.
+- Relaciones paciente–responsable y vínculo profesional–usuario con rol PROFESIONAL.
+- Snapshot de caja: ingresos guardados = suma de pagos REGISTRADO; esperado = inicial + EFECTIVO; diferencia = contado − esperado.
+- Precio y duración de una cita no cambian al actualizar el servicio (25000/30 frente a 30000/45).
+
+### UI en Edge headless/CDP
+
+Base `sigca_ui_b7` (seed de 76 registros), backend `:3000` y Vite `:5173`.
+
+- Pacientes: 10 filas del seed; alta de "Lucía Morales" con fecha de inicio y observaciones; desactivación (sale del filtro Activos), visualización como inactiva y reactivación.
+- Responsables: alta de "Carlos Morales" con email y dirección; asociación desde la ficha del paciente y listado de responsables actuales.
+- Materiales: alta de "Guía B7 de hábitos" (DOCUMENTO) y asignación desde la ficha del paciente.
+- Caja: apertura con Q100.00, ingreso de Q25.00, efectivo esperado Q125.00, cierre con efectivo contado Q125.00 y diferencia **Q0.00**.
+- Pagos: cita PENDIENTE seleccionada, abono de Q25.00 con cambio a PARCIAL, pago REGISTRADO en el historial y formulario deshabilitado tras cerrar la caja.
+- Smoke: Citas (15 filas), Solicitudes (2), Profesionales (3), Calendario (15 eventos) y panel administrativo.
+- **0 errores de consola y 0 respuestas 5xx** durante todo el recorrido.
+
+Capturas temporales en `C:\Users\ggonz\AppData\Local\Temp\sigca-ui-b7` (no versionadas): `01-panel` a `08-pago-bloqueado`.
+
+### Defecto corregido
+
+La cabecera de `/admin/pacientes/:id/responsables` quedaba vacía ("Responsables de ( años)") y no mostraba el aviso de menor porque la vista buscaba el ObjectId como texto con `getPacientes({ q })`. Ahora usa `getPaciente(id)`; verificado con "Responsables de Lucía Morales (14 años)" y el aviso visible.
+
+### Regresión final
+
+```
+npm test        → tests 152 / pass 152 / fail 0 (19 suites)
+npm run build   → 135 modules transformed · built
+```
