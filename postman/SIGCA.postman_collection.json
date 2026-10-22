@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
     "name": "SIGCA — API REST",
-    "description": "Colección de la API REST de SIGCA (Sistema Integral de Gestión de Citas y Atención).\n\nRequisitos: backend en marcha (por defecto http://localhost:3000), MongoDB y —recomendado— el seed demo activo (`npm run seed:demo`), que crea usuarios demo, servicios, horarios y contenido institucional.\n\nUso: selecciona el entorno «SIGCA — Entorno local», ejecuta «Login administrador» (guarda `token`) y luego las carpetas en orden. Los POST de creación guardan los `_id` en variables del entorno para encadenar el resto.\n\nAntes de crear citas, define `inicioCita`, `inicioCita2` e `inicioCita3` como fechas/horas futuras en días laborables dentro de un horario activo y sin traslapes. Cada usuario tiene su propia caja: abra su caja (carpeta 17) antes de registrar pagos (carpeta 18); los pagos quedan asociados a esa caja y solo pueden anularse mientras siga ABIERTA. Las peticiones (público) no requieren token; las de PROFESIONAL usan `tokenProf`.",
+    "description": "Colección de la API REST de SIGCA (Sistema Integral de Gestión de Citas y Atención).\n\nRequisitos: backend en marcha (por defecto http://localhost:3000), MongoDB y —recomendado— el seed demo activo (`npm run seed:demo`), que crea usuarios demo, servicios, horarios y contenido institucional.\n\nUso: selecciona el entorno «SIGCA — Entorno local», ejecuta «Login administrador» (guarda `token`) y luego las carpetas en orden. Los POST de creación guardan los `_id` en variables del entorno para encadenar el resto. B4 añade solicitudes con email/servicio obligatorios, rechazo con motivo, atender idempotente, reset de contraseña, permisos PROFESIONAL y filtros validados.\n\nAntes de crear citas, define `inicioCita`, `inicioCita2` e `inicioCita3` como fechas/horas futuras en días laborables dentro de un horario activo y sin traslapes. Cada usuario tiene su propia caja: abra su caja (carpeta 17) antes de registrar pagos (carpeta 18); los pagos quedan asociados a esa caja y solo pueden anularse mientras siga ABIERTA. Las peticiones (público) no requieren token; las de PROFESIONAL usan `tokenProf`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -308,7 +308,8 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
-                  "if (j.usuario && j.usuario.id) pm.environment.set('usuarioId', j.usuario.id);"
+                  "if (j.usuario && j.usuario.id) pm.environment.set('usuarioId', j.usuario.id);",
+                  "if (j.usuario && j.usuario.email) pm.environment.set('usuarioEmail', j.usuario.email);"
                 ]
               }
             }
@@ -448,6 +449,208 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restablecer contraseña (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/restablecer-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}",
+                "restablecer-password"
+              ]
+            },
+            "description": "PATCH /api/usuarios/:id/restablecer-password — solo ADMINISTRADOR. El hook pre-save hashea la nueva contraseña; la API nunca devuelve la contraseña ni el hash.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"passwordNueva\": \"Nueva1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('sin contraseña en la respuesta', () => { pm.expect(j.usuario.password).to.be.undefined; pm.expect(j.usuario.passwordHash).to.be.undefined; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con contraseña restablecida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "La contraseña anterior deja de funcionar; la nueva permite iniciar sesión inmediatamente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{usuarioEmail}}\",\n  \"password\": \"Nueva1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('token emitido', () => pm.expect(Boolean(j.token)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PROFESIONAL no puede restablecer contraseña (403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/restablecer-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}",
+                "restablecer-password"
+              ]
+            },
+            "description": "El módulo de usuarios exige ADMINISTRADOR; un PROFESIONAL recibe 403 aunque conozca el id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"passwordNueva\": \"Otra1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restablecer sin passwordNueva (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}/restablecer-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}",
+                "restablecer-password"
+              ]
+            },
+            "description": "passwordNueva es obligatoria y debe ser texto de entre 6 y 72 caracteres.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
                 ]
               }
             }
@@ -654,6 +857,109 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear servicio temporal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "servicios"
+              ]
+            },
+            "description": "Servicio auxiliar de la verificación B4; se desactiva en la siguiente petición.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio temporal {{$timestamp}}\",\n  \"descripcion\": \"Servicio para comprobar que una solicitud no acepta servicios inactivos.\",\n  \"precioCentavos\": 10000,\n  \"duracionMinutos\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "if (j.servicio && j.servicio._id) pm.environment.set('servicioTemporalId', j.servicio._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desactivar servicio temporal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/servicios/{{servicioTemporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "servicios",
+                "{{servicioTemporalId}}"
+              ]
+            },
+            "description": "Deja el servicio auxiliar inactivo para probar POST /api/solicitudes-cita.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('servicio inactivo', () => pm.expect(j.servicio.activo).to.eql(false));"
                 ]
               }
             }
@@ -1471,21 +1777,21 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
-                  "pm.test('confirmación', () => pm.expect(j.ok).to.eql(true));"
+                  "pm.test('confirmación', () => pm.expect(j.ok).to.eql(true));",
+                  "pm.test('referencia emitida', () => pm.expect(j.referencia).to.match(/^SOL-/));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Listar solicitudes",
+          "name": "Crear solicitud para rechazo (público)",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
@@ -1498,7 +1804,58 @@
                 "solicitudes-cita"
               ]
             },
-            "description": "GET /api/solicitudes-cita — ADMINISTRADOR o RECEPCIONISTA. Guarda una solicitud PENDIENTE en `solicitudId`."
+            "description": "Segunda solicitud PENDIENTE para probar el rechazo explícito sin consumir la solicitud que se atenderá.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Solicitante rechazo\",\n  \"telefono\": \"5551234568\",\n  \"email\": \"rechazo@ejemplo.com\",\n  \"servicio\": \"{{servicioId}}\",\n  \"mensaje\": \"Solicitud que se rechazará en la verificación B4.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar solicitudes PENDIENTES (filtro)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita?estado=PENDIENTE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "PENDIENTE"
+                }
+              ]
+            },
+            "description": "GET /api/solicitudes-cita?estado=PENDIENTE — el filtro se valida contra los estados del modelo. Guarda los ids de la solicitud principal y de la solicitud para rechazo."
           },
           "response": [],
           "event": [
@@ -1509,8 +1866,344 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const j = pm.response.json();",
-                  "const p = (j.solicitudes || []).find((s) => s.estado === 'PENDIENTE');",
-                  "if (p) pm.environment.set('solicitudId', p._id);"
+                  "const pendientes = j.solicitudes || [];",
+                  "const principal = pendientes.find((s) => s.nombre === 'Solicitante demo');",
+                  "const rechazo = pendientes.find((s) => s.nombre === 'Solicitante rechazo');",
+                  "if (principal) pm.environment.set('solicitudId', principal._id);",
+                  "if (rechazo) pm.environment.set('solicitudRechazoId', rechazo._id);",
+                  "pm.test('filtro solo PENDIENTE', () => pm.expect(pendientes.every((s) => s.estado === 'PENDIENTE')).to.eql(true));",
+                  "pm.test('solicitudes de prueba localizadas', () => { pm.expect(Boolean(principal)).to.eql(true); pm.expect(Boolean(rechazo)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Solicitud sin email → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita"
+              ]
+            },
+            "description": "B4: el correo es obligatorio aunque el formulario del portal lo omita o sea manipulado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sin email\",\n  \"telefono\": \"5551234569\",\n  \"servicio\": \"{{servicioId}}\",\n  \"mensaje\": \"Debe rechazarse en el backend.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Solicitud sin servicio → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita"
+              ]
+            },
+            "description": "B4: el servicio es obligatorio para que recepción pueda convertir la solicitud en cita.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sin servicio\",\n  \"telefono\": \"5551234570\",\n  \"email\": \"sin.servicio@ejemplo.com\",\n  \"mensaje\": \"Debe rechazarse en el backend.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Solicitud con servicio inactivo → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita"
+              ]
+            },
+            "description": "El servicio debe existir y estar activo; uno inactivo no puede recibir solicitudes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio inactivo\",\n  \"telefono\": \"5551234571\",\n  \"email\": \"inactivo@ejemplo.com\",\n  \"servicio\": \"{{servicioTemporalId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar solicitudes con estado inválido → 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita?estado=NO_VALIDO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "NO_VALIDO"
+                }
+              ]
+            },
+            "description": "Los filtros de la bandeja no confían en el cliente: un estado fuera del enum devuelve 400, no 500."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar sin motivo → 400",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudId}}/rechazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita",
+                "{{solicitudId}}",
+                "rechazar"
+              ]
+            },
+            "description": "El rechazo formal exige motivoRechazo; la solicitud principal sigue PENDIENTE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar solicitud",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudRechazoId}}/rechazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita",
+                "{{solicitudRechazoId}}",
+                "rechazar"
+              ]
+            },
+            "description": "PATCH /api/solicitudes-cita/:id/rechazar — deja la solicitud RECHAZADA, guarda el motivo y quién la atendió.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivoRechazo\": \"No hay disponibilidad en la fecha solicitada.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('estado RECHAZADA', () => pm.expect(j.solicitud.estado).to.eql('RECHAZADA'));",
+                  "pm.test('motivo guardado', () => pm.expect(j.solicitud.motivoRechazo).to.include('disponibilidad'));",
+                  "pm.test('responsable registrado', () => pm.expect(j.solicitud.atendidaPor).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar solicitud ya rechazada → 409",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudRechazoId}}/rechazar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "solicitudes-cita",
+                "{{solicitudRechazoId}}",
+                "rechazar"
+              ]
+            },
+            "description": "Solo una solicitud PENDIENTE puede rechazarse; el segundo intento devuelve 409 y no duplica efectos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivoRechazo\": \"Segundo intento.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));"
                 ]
               }
             }
@@ -2049,7 +2742,7 @@
       ]
     },
     {
-      "name": "13. Profesionales (ADMINISTRADOR, RECEPCIONISTA)",
+      "name": "13. Profesionales (ADMINISTRADOR, RECEPCIONISTA; lectura PROFESIONAL)",
       "item": [
         {
           "name": "Listar profesionales",
@@ -2096,6 +2789,102 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar profesionales (PROFESIONAL)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profesionales?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profesionales"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "El PROFESIONAL necesita el directorio para mostrar los nombres de sus citas. La lectura se permite; la gestión no."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "const email = pm.environment.get('profEmail');",
+                  "const propio = (j.profesionales || []).find((p) => p.usuario && p.usuario.email === email);",
+                  "if (propio) pm.environment.set('profesionalPropioId', propio._id);",
+                  "pm.test('profesional vinculado localizado', () => pm.expect(Boolean(propio)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PROFESIONAL no puede crear profesional (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profesionales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profesionales"
+              ]
+            },
+            "description": "La gestión de profesionales sigue reservada a ADMINISTRADOR/RECEPCIONISTA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No\",\n  \"apellido\": \"Permitido\",\n  \"especialidad\": \"General\",\n  \"telefono\": \"5550000000\",\n  \"dni\": \"NO-{{$timestamp}}\",\n  \"matricula\": \"NO-{{$timestamp}}\",\n  \"usuarioId\": \"{{usuarioProfesionalId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
                 ]
               }
             }
@@ -2242,11 +3031,49 @@
               }
             }
           ]
+        },
+        {
+          "name": "PROFESIONAL no puede desactivar profesional (403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profesionales/{{profesionalId}}/desactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profesionales",
+                "{{profesionalId}}",
+                "desactivar"
+              ]
+            },
+            "description": "Un PROFESIONAL no puede darse de baja a sí mismo ni a otro profesional."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "14. Citas (ADMINISTRADOR, RECEPCIONISTA)",
+      "name": "14. Citas (ADMINISTRADOR, RECEPCIONISTA; lectura PROFESIONAL)",
       "item": [
         {
           "name": "Listar citas",
@@ -2307,6 +3134,97 @@
           ]
         },
         {
+          "name": "Listar citas con estado inválido → 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas?estado=NO_VALIDO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "NO_VALIDO"
+                }
+              ]
+            },
+            "description": "Los filtros de citas se validan; un estado desconocido devuelve 400."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar citas (PROFESIONAL)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas?page=1&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "El backend limita la lista a las citas del profesional vinculado al usuario autenticado."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "const propio = pm.environment.get('profesionalPropioId');",
+                  "pm.test('solo citas propias', () => { if (propio) pm.expect((j.citas || []).every((c) => String(c.profesional && c.profesional._id ? c.profesional._id : c.profesional) === String(propio))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Crear cita",
           "request": {
             "method": "POST",
@@ -2353,6 +3271,409 @@
                   "const j = pm.response.json();",
                   "if (j.cita && j.cita._id) pm.environment.set('citaId', j.cita._id);",
                   "pm.test('nace PENDIENTE', () => pm.expect(j.cita.estado).to.eql('PENDIENTE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PROFESIONAL no puede crear cita (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "description": "La creación directa de citas es una tarea de recepción/administración.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": \"{{pacienteId}}\",\n  \"profesionalId\": \"{{profesionalPropioId}}\",\n  \"servicioId\": \"{{servicioId}}\",\n  \"inicio\": \"{{inicioCita4}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PROFESIONAL no puede cancelar cita (403)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "estado"
+              ]
+            },
+            "description": "El PROFESIONAL solo puede completar citas propias; cancelar, confirmar o reprogramar queda fuera de su alcance.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CANCELADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cita para profesional demo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "description": "Cita auxiliar para el usuario PROFESIONAL demo; permite verificar que solo ve y completa las suyas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": \"{{pacienteId}}\",\n  \"profesionalId\": \"{{profesionalPropioId}}\",\n  \"servicioId\": \"{{servicioId}}\",\n  \"inicio\": \"{{inicioCita4}}\",\n  \"observaciones\": \"Cita creada para verificar el scoping PROFESIONAL (B4).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "if (j.cita && j.cita._id) pm.environment.set('citaProfesionalId', j.cita._id);",
+                  "pm.test('nace PENDIENTE', () => pm.expect(j.cita.estado).to.eql('PENDIENTE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar pacientes (PROFESIONAL, datos básicos)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pacientes?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "El PROFESIONAL solo ve pacientes con cita propia y solo campos básicos (sin email, dirección ni observaciones)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('sin datos sensibles', () => { const p = (j.pacientes || [])[0]; if (p) { pm.expect(p.email).to.be.undefined; pm.expect(p.direccion).to.be.undefined; pm.expect(p.observacionesAdministrativas).to.be.undefined; } });",
+                  "pm.test('incluye al paciente con cita propia', () => pm.expect((j.pacientes || []).some((p) => String(p._id) === String(pm.environment.get('pacienteId')))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Completar cita PENDIENTE propia → 400",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaProfesionalId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaProfesionalId}}",
+                "estado"
+              ]
+            },
+            "description": "El profesional solo completa citas propias en estado CONFIRMADA; PENDIENTE→COMPLETADA sigue siendo una transición inválida.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"COMPLETADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar cita del profesional demo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaProfesionalId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaProfesionalId}}",
+                "estado"
+              ]
+            },
+            "description": "Recepción confirma la cita auxiliar para habilitar la transición del profesional.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"CONFIRMADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Completar cita propia CONFIRMADA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaProfesionalId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaProfesionalId}}",
+                "estado"
+              ]
+            },
+            "description": "B4: el profesional completa únicamente sus propias citas CONFIRMADAS.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"COMPLETADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('estado COMPLETADA', () => pm.expect(j.cita.estado).to.eql('COMPLETADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Completar cita ajena como PROFESIONAL → 404",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenProf}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/{{citaId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "estado"
+              ]
+            },
+            "description": "El filtro por profesional hace que una cita ajena no se pueda completar; se responde 404 sin revelar datos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"COMPLETADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
                 ]
               }
             }
@@ -2484,6 +3805,58 @@
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
                   "if (j.cita && j.cita._id) pm.environment.set('citaId', j.cita._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atender solicitud duplicada → 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas/solicitudes/{{solicitudId}}/atender",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "solicitudes",
+                "{{solicitudId}}",
+                "atender"
+              ]
+            },
+            "description": "B4: atender es idempotente respecto de la solicitud; una segunda conversión devuelve 409 y no crea otra cita.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": \"{{pacienteId}}\",\n  \"profesionalId\": \"{{profesionalId}}\",\n  \"servicioId\": \"{{servicioId}}\",\n  \"inicio\": \"{{inicioCita3}}\",\n  \"observaciones\": \"Intento duplicado de atención\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));"
                 ]
               }
             }
@@ -3719,18 +5092,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudId}}/estado",
+              "raw": "{{baseUrl}}/api/solicitudes-cita/{{solicitudRechazoId}}/estado",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "solicitudes-cita",
-                "{{solicitudId}}",
+                "{{solicitudRechazoId}}",
                 "estado"
               ]
             },
-            "description": "PATCH /api/solicitudes-cita/:id/estado — ADMINISTRADOR o RECEPCIONISTA. Estados: PENDIENTE, ATENDIDA, RECHAZADA. Al final para no interferir con «Atender solicitud».",
+            "description": "Contrato legado PATCH /api/solicitudes-cita/:id/estado, conservado por compatibilidad. Se usa la solicitud ya rechazada para no alterar la solicitud atendida.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"estado\": \"RECHAZADA\"\n}",
