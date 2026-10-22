@@ -1481,3 +1481,23 @@ La primera ejecución creó **77 registros** (los 10 comprobantes se emiten apar
 **Pruebas:** `backend/tests/seedDemo.test.js` usa `sigca_test_seed` (puerto 3993) y el `app.js` real; se ejecutó **`npm test` 130/130 en dos corridas consecutivas** (119 de reglas + 11 de seed). Las bases `sigca_test_rules`, `sigca_test_seed` y cualquier base temporal se eliminaron al terminar; `sigca` quedó intacta.
 
 **Fuera de alcance:** portal/logo/carrusel/bandeja de contacto, subida de fotos, pantalla de historial, comprobante imprimible y cambios de API.
+
+## 2026-10-21 - B5.1: verificación visual del calendario y filtros
+
+**Entorno:** backend con `MONGO_URI=mongodb://localhost:27017/sigca_ui_calendar`, seed B5 (77 registros), frontend Vite en `http://localhost:5173`, Edge headless controlado por CDP. Base desechable eliminada al terminar; `sigca` intacta.
+
+**Calendario (`/admin/calendario`):**
+
+- Render correcto: `.fc` presente y título `octubre de 2026`.
+- **15 eventos** visibles (los 15 del seed) y **0 errores de consola**.
+- Vistas **Mes**, **Semana** y **Día** conmutan y actualizan el título (`19 – 25 oct 2026`, `21 de octubre de 2026`).
+- Clic en un evento abre el modal **Detalle de la cita** con paciente, profesional, servicio, inicio, fin, estado y observaciones.
+- La causa del fallo anterior era que el conector Vue recibe las opciones en `:options`; las props sueltas se ignoraban. Además, `@fullcalendar/vue3` 7.1.2 traía un core 7 anidado frente a core/daygrid/interaction 6.1.x.
+
+**Filtros "Activos":**
+
+- `PacientesView`: inicia marcado; al desmarcar y pulsar **Buscar** la petición es `/api/pacientes?page=1&limit=20`; al volver a marcar y buscar, `/api/pacientes?page=1&limit=20&activo=true`.
+- `ResponsablesView`: mismo comportamiento con `/api/responsables`.
+- `MaterialesView`: inicia desmarcado; al marcar y buscar envía `/api/materiales?...&activo=true`; al desmarcar lo omite.
+
+**Build y pruebas:** `npm run build` **verde** (131 módulos) y `npm test` **130/130**. Sin cambios de API ni de seed.
