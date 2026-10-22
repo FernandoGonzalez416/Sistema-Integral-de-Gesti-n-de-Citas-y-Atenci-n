@@ -697,6 +697,9 @@ function alTeclado(e) {
   }
 }
 
+// `immediate` cubre la ruta directa /solicitar-cita?servicio=...: la vista
+// abre el modal antes de que este componente se monte, así que el watch
+// también debe ejecutarse con el valor inicial.
 watch(citaAbierta, async (abierta) => {
   if (abierta) {
     elementoPrevio = document.activeElement;
@@ -709,7 +712,7 @@ watch(citaAbierta, async (abierta) => {
     document.documentElement.style.overflow = '';
     elementoPrevio?.focus?.();
   }
-});
+}, { immediate: true });
 
 onUnmounted(() => {
   document.documentElement.style.overflow = '';
