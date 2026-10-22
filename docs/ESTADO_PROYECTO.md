@@ -1,6 +1,6 @@
 # Estado del Proyecto — SIGCA
 
-Actualizado: 2026-10-21 (B5 completado: seed definitivo de 77 registros, reparaciones seguras, 3 cajas y pruebas de invariantes 130/130).
+Actualizado: 2026-10-21 (B5.1: calendario y filtros Activos corregidos y verificados en Edge headless; B5 seed 130/130).
 
 ## Avance real
 
@@ -37,8 +37,9 @@ Actualizado: 2026-10-21 (B5 completado: seed definitivo de 77 registros, reparac
 - **Verificación funcional del módulo Materiales educativos / asignación a pacientes (2026-10-16):** verificación funcional real (**90 comprobaciones** por HTTP real + MongoDB) sobre BD **dedicada y desechable** `sigca_verif_materiales` (puerto 3983, eliminada al terminar; `sigca` intacta). Resultado inicial **85/90** con **5 respuestas 500** → se encontró y corrigió **1 defecto del módulo**: **falta de validación de tipos en la escritura**. Afectaba a `q` con regex inválida (`?q=(` → 500), paginación fuera de rango (`?page=0` → 500), `PATCH` con `_id` o tipos inválidos (`titulo:{}`, `tipo:null`, … → 500), `POST` con tipos inválidos o `titulo` en blanco (500) / `titulo:{}` (201 basura), `activo:null` (corrupción) y `notas` no‑texto en la asignación (500). **Alcanzable desde la UI** (buscador libre). Corrección mínima en `backend/src/controllers/materials.controller.js` (escaper la búsqueda, sanear `page`/`limit`, validar tipos, lista blanca de campos en el `PATCH`) y `backend/src/controllers/patientMaterials.controller.js` (validar `notas`). **Después: 90/90 OK, 0 respuestas 5xx**; regresión `npm test` **43/43**. UI en navegador: **NO EJECUTADA** (sin navegador). Detalle en `docs/PRUEBAS.md`.
 - **B4 completado (2026-10-21, rama `feat/b4-citas-solicitudes`):** solicitudes/citas atómicas **sin replica set ni transacciones**, permisos por rol `PROFESIONAL`, filtros validados, rechazo formal con motivo, reset de contraseña por ADMINISTRADOR y pantallas de citas, solicitudes y profesionales con menús por rol. Backend: índice único parcial `Appointment.solicitudOrigen`, `atender` idempotente con reparación de enlaces/compensación/re-chequeo y mutex en proceso, scoping por `Professional.usuario`, pacientes básicos y materiales propios, `PATCH /api/usuarios/:id/restablecer-password`. Frontend: `CitasView`, `SolicitudesView`, `ProfesionalesView`, reset en `UsersView`, guard `meta.roles` y menús por rol; `CitaModal` y el portal exigen email/servicio. Pruebas: **119/119** en 16 grupos (dos corridas), build **verde** y Postman **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx** en `sigca_test_postman` (eliminada). **UI no verificada en navegador** (solo build).
 - **B5 completado (2026-10-21, rama `feat/b5-seed`):** seed definitivo en `backend/src/utils/seedDemo.js`: **77 registros** (6 usuarios, 10 pacientes con 4 menores y responsables activos, 5 responsables, 5 servicios con 1 inactivo, 15 citas sin solapamientos, 5 materiales y 5 asignaciones, 5 solicitudes mixtas, 10 pagos, 10 comprobantes y 3 cajas). Conserva claves estables, marcadores, `--dry-run` y la garantía no destructiva; reinicia su estado por llamada y repara solo campos nulos de registros propios. Caja 1 cierra con diferencia **-500**, caja 3 con **0** y caja 2 queda abierta. `pago-04` es un `ANULADO` histórico ficticio en caja cerrada, documentado y excluido del arqueo. Pruebas: **130/130 en dos corridas** (119 de reglas + 11 de seed) contra `sigca_test_rules` y `sigca_test_seed`; `sigca` intacta. UI no verificada en navegador.
+- **B5.1 completado (2026-10-21, rama `fix/calendario-checkbox`):** calendario reparado pasando plugins, vista, eventos, click, locale y toolbar por el prop `options` de `@fullcalendar/vue3`, y alineando el conector a `^6.1.21` (antes 7.1.2 con core 7 anidado frente a core/daygrid/interaction 6.x). `FormField` ahora emite booleanos y marca correctamente los checkboxes "Activos" de pacientes, responsables y materiales. Verificación real en Edge headless con `sigca_ui_calendar`: **15 eventos** en octubre 2026, vistas Mes/Semana/Día, modal de detalle, **0 errores de consola** y `activo=true` enviado/omitido según el checkbox; build **verde** (131 módulos) y `npm test` **130/130**. Base desechable eliminada; `sigca` intacta.
 - Repo `ProyectoFinalDesarrolloWeb`: historia en la rama de integración; contiene `COMMIT_CONVENTION.md`, `.gitmessage`, `.gitignore`, `postman/`, `backend/tests/`, `docs/DECISION_LOG.md` + plan.
-- Remoto configurado: `https://github.com/FernandoGonzalez416/Sistema-Integral-de-Gesti-n-de-Citas-y-Atenci-n.git` (sin push aún).
+- Remoto configurado: `https://github.com/FernandoGonzalez416/Sistema-Integral-de-Gesti-n-de-Citas-y-Atenci-n.git`; `origin/integracion` actualizado con B5 (`821e883`). B5.1 se integra localmente en `integracion` antes de B6.
 - Referencias reutilizables fuera del repo: `Tarea 2 API REST/api-tareas` (Express+Mongoose CommonJS) y `Tarea 3 vueApiRest` (Vue 3+Vite+Pinia+Router). No copiados al proyecto final.
 
 ## Advertencia vigente — login frontend (NO verificado de extremo a extremo)
@@ -49,9 +50,9 @@ Actualizado: 2026-10-21 (B5 completado: seed definitivo de 77 registros, reparac
 
 ## Qué falta (resumen)
 
-- B1/B2/B3/B4/B5 **completados**. B5 cierra el seed definitivo y sus pruebas de invariantes.
+- B1/B2/B3/B4/B5/B5.1 **completados**. B5 cierra el seed definitivo y B5.1 repara el calendario y los filtros Activos.
 - B6 (portal/logo/carrusel/bandeja) y B7 (entrega final) **pendientes**.
-- Prueba manual de login e interfaz en navegador (ver advertencia arriba); B4/B5 no incluyen verificación visual en navegador.
+- Prueba manual del login en navegador sigue pendiente; B5.1 verificó calendario, modal y filtros Activos. El resto de pantallas no se ha probado visualmente.
 
 ## Errores conocidos
 
@@ -71,7 +72,7 @@ Actualizado: 2026-10-21 (B5 completado: seed definitivo de 77 registros, reparac
 - **Cierre de la coerción de tipos a texto (2026-10-21):** se cerró la observación pendiente del 2026-10-16 sobre `String(valor)` en **contact, requests, publications (alta), payments (`motivoAnulacion`) y auth (login/perfil)**, y también en `services` (`incluye`) y en la validación de `telefono` de pacientes/profesionales/responsables. Reproducción en BD desechable: 6 endpoints guardaban `"[object Object]"` (201/200) y `telefono` numérico se coercionaba. Después: tipos inválidos → **400** (en `incluye` se descarta el elemento), **0 documentos** con `"[object Object]"`, **0 respuestas 5xx** y los 9 flujos válidos intactos. Regresión `npm test` **43/43**. Rama `fix/validaciones-tipos`. Detalle en `docs/PRUEBAS.md`.
 - (Observación, 2026-10-16, no defecto) `GET /api/pacientes/:id/materiales` con `pacienteId` válido **inexistente** responde **200** con lista vacía (no 404).
 - Limitación: 2 vulnerabilidades npm heredadas en frontend (1 moderada + 1 alta, documentadas en PRUEBAS.md).
-- Limitación: pruebas de interfaz (Etapa H) NO ejecutadas (sin navegador) → pendientes de verificación manual.
+- Limitación: pruebas de interfaz (Etapa H) parcialmente ejecutadas: B5.1 verificó calendario, modal y filtros Activos en Edge headless; el resto sigue pendiente de verificación manual.
 
 ## Herramientas verificadas
 

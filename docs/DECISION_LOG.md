@@ -125,3 +125,19 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Alternativas descartadas:** documentar solo en el README (los documentos de pruebas/decisiones quedarían desactualizados); incluir hashes inventados (se completan después de crear los commits de seed y tests).
 - **Impacto:** solo documentación. Sin cambios funcionales.
 - **Commit relacionado:** este commit (docs); hashes de seed/tests en `docs/CONTROL_COMMITS.md`.
+
+## 2026-10-21 - fix(ui): calendario y filtros activos
+
+- **Cambio:** `CalendarioView.vue` pasa todas las opciones de FullCalendar por `:options` (plugins, vista inicial, eventos, click, locale español, toolbar y altura) y se alinea `@fullcalendar/vue3` de 7.1.2 a `^6.1.21`. `FormField.vue` soporta checkbox con `:checked` y emisión booleana, usado por los filtros "Activos" de pacientes, responsables y materiales.
+- **Motivo:** la UI reportaba `viewType "" is not available`; la causa era doble: faltaba el prop `options` que exige el conector Vue y la versión 7 del conector traía su propio core 7 frente a core/daygrid/interaction 6. El checkbox emitía `$event.target.value` (`"on"`) en lugar de `checked` y no marcaba el filtro.
+- **Alternativas descartadas:** pasar `:plugins` y mantener `@fullcalendar/vue3` 7.x (se probó y el error persistía por el core duplicado); crear checkboxes nativos en cada vista en lugar de corregir el componente compartido (duplicaba lógica y dejaba el mismo defecto latente).
+- **Impacto:** frontend (`package.json`, `package-lock.json`, `CalendarioView.vue`, `FormField.vue`). Sin cambios de API, backend ni seed.
+- **Verificación:** build **verde** (131 módulos); UI en Edge headless sobre `sigca_ui_calendar`: 15 eventos, Mes/Semana/Día, modal de detalle, 0 errores de consola y filtros `activo=true` correctos; `npm test` **130/130**. Base desechable eliminada; `sigca` intacta.
+- **Commit relacionado:** `a6cd08f`.
+
+## 2026-10-21 - docs(ui): registrar verificación visual y límite del mutex
+
+- **Cambio:** se documenta la verificación real en navegador del calendario y los filtros "Activos", y se deja explícita la diferencia entre `conBloqueo` (mutex en memoria de un proceso) y el índice único parcial (garantía real).
+- **Motivo:** la defensa no debe presentar el mutex como una garantía distribuida; además, B4/B5 habían quedado documentados como "UI no verificada".
+- **Impacto:** solo documentación.
+- **Commit relacionado:** este commit (docs).

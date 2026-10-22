@@ -25,11 +25,13 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B5 | feat/b5-seed | cb133bc | feat(seed): completar datos demo para b5 | FernandoGonzalez416 | creado |
 | B5 | feat/b5-seed | 1875f39 | test(seed): verificar invariantes e idempotencia b5 | FernandoGonzalez416 | creado |
 | B5 | feat/b5-seed | este commit | docs(seed): documentar seed b5 y verificacion | FernandoGonzalez416 | creado |
+| B5.1 | fix/calendario-checkbox | a6cd08f | fix(ui): corregir calendario y filtros activos | FernandoGonzalez416 | creado |
+| B5.1 | fix/calendario-checkbox | este commit | docs(ui): registrar verificacion visual y limite del mutex | FernandoGonzalez416 | creado |
 | B6 | feat/b6-portal-contenido | — | — | — | pendiente |
 | B7 | feat/b7-entrega | — | — | — | pendiente |
 
 ## Notas
 
-- No se hace `push` desde el agente; al final de cada bloque se entrega el comando exacto.
+- Los `push` se hacen solo con instrucción explícita del usuario. B5 se publicó con los comandos entregados; B5.1 se integra localmente en `integracion` y queda pendiente de push hasta confirmación.
 - Cada fila se completa después del commit correspondiente (el hash no puede incluirse en el mismo commit que lo crea).
 - Los hashes de la fila de documentación de B1 se refieren a los commits de código y Postman; el commit de docs se identifica por su mensaje porque su propio hash no puede estar dentro de sí mismo.

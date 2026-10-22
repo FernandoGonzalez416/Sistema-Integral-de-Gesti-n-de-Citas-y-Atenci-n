@@ -364,3 +364,11 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - **Fuera de alcance:** portal/logo/carrusel/bandeja, subida de fotos, historial, comprobante imprimible y cambios de API.
 - **Commit relacionado:** `cb133bc` (seed), `1875f39` (tests), este commit (docs); hashes también en `docs/CONTROL_COMMITS.md`.
 
+## 2026-10-21 - B5.1: calendario, checkboxes y nota de concurrencia
+
+- **Calendario:** `@fullcalendar/vue3` recibe todas las opciones en un único prop `options`; las props sueltas (`initialView`, `plugins`, `events`, etc.) se ignoraban y producían `viewType "" is not available`. Se pasó `:options="calendarOptions"` con `plugins`, `initialView`, `events`, `eventClick`, `locale: esLocale`, `headerToolbar` y `dayMaxEventRows`. También se alineó `@fullcalendar/vue3` a `^6.1.21` (antes 7.1.2 convivía con core/daygrid/interaction 6.x).
+- **Checkboxes:** `FormField` ahora distingue checkbox de texto: usa `:checked`, emite Boolean y se alinea en fila. Con eso funcionan los filtros "Activos" de `PacientesView`, `ResponsablesView` y `MaterialesView`; al marcar, "Buscar" envía `activo=true` y al desmarcar lo omite.
+- **Nota para la defensa (B4):** `conBloqueo` es un mutex **en memoria**. Solo serializa operaciones dentro de **un mismo proceso Node**; no coordina dos instancias ni dos procesos. Por tanto, no es la garantía de atomicidad. La garantía real es el **índice único parcial de `Appointment.solicitudOrigen`** junto con el `findOneAndUpdate` condicional de la solicitud y el manejo de `E11000`/compensación. Para un despliegue multi-proceso habría que sustituirlo por un lock compartido en base de datos; el proyecto local no lo requiere.
+- **Verificación:** `npm run build` → **verde** (131 módulos). UI en Edge headless contra BD desechable `sigca_ui_calendar` con el seed B5: calendario renderizado en octubre 2026 con **15 eventos**, vistas Mes/Semana/Día operativas, modal de detalle abierto al hacer clic y **0 errores de consola**; checkboxes alternan y los tres filtros envían/omiten `activo=true` correctamente. `npm test` → **130/130**. Base, servidores y script temporal eliminados; `sigca` intacta.
+- **Commit relacionado:** `a6cd08f`.
+
