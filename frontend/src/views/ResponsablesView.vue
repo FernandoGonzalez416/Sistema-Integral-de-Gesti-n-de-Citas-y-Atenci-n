@@ -11,8 +11,10 @@
         </div>
         <div class="fila">
           <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
-          <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="opcional" />
+          <FormField etiqueta="Email (obligatorio)" type="email" v-model="form.email" placeholder="correo@ejemplo.com" />
         </div>
+        <FormField etiqueta="Dirección (obligatoria)" v-model="form.direccion" placeholder="Calle, número, colonia" />
+        <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
         <FormField etiqueta="Parentesco" v-model="form.parentesco" placeholder="Padre, Madre, Tutor..." />
         <button type="submit">Registrar</button>
       </form>
@@ -30,13 +32,14 @@
       <div v-if="cargando">Cargando…</div>
       <table v-else>
         <thead>
-          <tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Parentesco</th><th>Activo</th><th></th></tr>
+          <tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th>Parentesco</th><th>Activo</th><th></th></tr>
         </thead>
         <tbody>
           <tr v-for="r in responsables" :key="r._id">
             <td>{{ r.nombre }} {{ r.apellido }}</td>
             <td>{{ r.telefono }}</td>
             <td>{{ r.email || '—' }}</td>
+            <td>{{ r.direccion || '—' }}</td>
             <td>{{ r.parentesco }}</td>
             <td>{{ r.activo ? 'Sí' : 'No' }}</td>
             <td>
@@ -76,7 +79,7 @@ const busqueda = ref('');
 const soloActivos = ref(true);
 
 const form = reactive({
-  _id: '', nombre: '', apellido: '', telefono: '', email: '', parentesco: ''
+  _id: '', nombre: '', apellido: '', telefono: '', email: '', direccion: '', fotoUrl: '', parentesco: ''
 });
 
 const editando = ref(false);
@@ -99,7 +102,7 @@ async function cargar() {
 }
 
 function limpiar() {
-  Object.assign(form, { _id: '', nombre: '', apellido: '', telefono: '', email: '', parentesco: '' });
+  Object.assign(form, { _id: '', nombre: '', apellido: '', telefono: '', email: '', direccion: '', fotoUrl: '', parentesco: '' });
   editando.value = false;
 }
 

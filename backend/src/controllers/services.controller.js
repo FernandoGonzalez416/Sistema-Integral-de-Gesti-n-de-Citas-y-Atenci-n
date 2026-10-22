@@ -2,7 +2,7 @@ import Service from '../models/Service.js';
 import mongoose from 'mongoose';
 import { soloCampos } from '../utils/campos.js';
 
-const CAMPOS_CATALOGO = ['categoria', 'icono', 'incluye', 'preparacion'];
+const CAMPOS_CATALOGO = ['categoria', 'icono', 'incluye', 'preparacion', 'imagenUrl'];
 
 // Normaliza los datos opcionales del catálogo (incluye debe ser lista de textos).
 function catalogo(body) {
@@ -29,6 +29,9 @@ function validar(datos) {
   }
   if (!Number.isInteger(duracionMinutos) || duracionMinutos < 1) {
     return 'duracionMinutos debe ser entero mayor o igual a 1';
+  }
+  if (datos.imagenUrl !== undefined && (typeof datos.imagenUrl !== 'string' || datos.imagenUrl.length > 1000)) {
+    return 'imagenUrl debe ser texto de hasta 1000 caracteres';
   }
   return null;
 }
@@ -97,7 +100,8 @@ export async function actualizar(req, res, next) {
     const combinado = {
       nombre: nombre ?? servicio.nombre,
       precioCentavos: precioCentavos ?? servicio.precioCentavos,
-      duracionMinutos: duracionMinutos ?? servicio.duracionMinutos
+      duracionMinutos: duracionMinutos ?? servicio.duracionMinutos,
+      imagenUrl: req.body?.imagenUrl ?? servicio.imagenUrl
     };
     const error = validar(combinado);
     if (error) return res.status(400).json({ ok: false, message: error });

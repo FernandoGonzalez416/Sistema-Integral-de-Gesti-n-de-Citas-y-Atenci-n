@@ -5,14 +5,23 @@ import { soloCampos, aplicarCamposPermitidos } from '../utils/campos.js';
 
 // Campos que un cliente puede actualizar (evita asignación masiva).
 const CAMPOS_PACIENTE = [
-  'nombre', 'apellido', 'fechaNacimiento', 'sexo', 'telefono', 'email', 'direccion', 'fotoUrl', 'activo'
+  'nombre', 'apellido', 'fechaNacimiento', 'sexo', 'telefono', 'email', 'direccion', 'fotoUrl',
+  'fechaInicioProceso', 'observacionesAdministrativas', 'activo'
 ];
 // En el alta NO se acepta `activo`: el registro siempre nace activo (su estado
 // se cambia después con PATCH).
 const CAMPOS_PACIENTE_CREAR = CAMPOS_PACIENTE.filter((campo) => campo !== 'activo');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function idValido(id) {
   return mongoose.isValidObjectId(id);
+}
+
+// Normaliza la fecha vacía a null (permite limpiarla en una actualización).
+function normalizar(datos) {
+  const d = { ...datos };
+  if (d.fechaInicioProceso === '') d.fechaInicioProceso = null;
+  return d;
 }
 
 function validarPaciente(datos, esActualizacion = false) {
@@ -30,6 +39,30 @@ function validarPaciente(datos, esActualizacion = false) {
   }
   if (telefono && (typeof telefono !== 'string' || telefono.trim().length < 6)) {
     return 'Teléfono muy corto';
+  }
+  if (datos.email !== undefined && datos.email !== '' && datos.email !== null) {
+    if (typeof datos.email !== 'string' || !EMAIL_RE.test(datos.email.trim())) {
+      return 'Email inválido';
+    }
+  }
+  if (datos.fechaInicioProceso !== undefined && datos.fechaInicioProceso !== null) {
+    const fecha = new Date(datos.fechaInicioProceso);
+    if (isNaN(fecha.getTime())) return 'fechaInicioProceso inválida';
+    if (fecha.getTime() > Date.now()) return 'fechaInicioProceso no puede estar en el futuro';
+  }
+  if (datos.observacionesAdministrativas !== undefined) {
+    if (typeof datos.observacionesAdministrativas !== 'string') {
+      return 'observacionesAdministrativas debe ser texto';
+    }
+    if (datos.observacionesAdministrativas.length > 2000) {
+      return 'observacionesAdministrativas no puede superar 2000 caracteres';
+    }
+  }
+  if (datos.fotoUrl !== undefined && typeof datos.fotoUrl !== 'string') {
+    return 'fotoUrl debe ser texto';
+  }
+  if (datos.direccion !== undefined && typeof datos.direccion !== 'string') {
+    return 'direccion debe ser texto';
   }
   return null;
 }
@@ -76,9 +109,9 @@ export async function obtenerPaciente(req, res, next) {
 
 export async function crearPaciente(req, res, next) {
   try {
-    const error = validarPaciente(req.body || {});
+    const error = validarPaciente(normalizar(req.body || {}));
     if (error) return res.status(400).json({ ok: false, message: error });
-    const paciente = new Patient(soloCampos(req.body, CAMPOS_PACIENTE_CREAR));
+    const paciente = new Patient(soloCampos(normalizar(req.body), CAMPOS_PACIENTE_CREAR));
     await paciente.save();
     res.status(201).json({ ok: true, paciente });
   } catch (e) {
@@ -95,9 +128,10 @@ export async function actualizarPaciente(req, res, next) {
     if (!paciente) {
       return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
     }
-    const error = validarPaciente(req.body || {}, true);
+    const datos = normalizar(req.body || {});
+    const error = validarPaciente(datos, true);
     if (error) return res.status(400).json({ ok: false, message: error });
-    aplicarCamposPermitidos(paciente, req.body, CAMPOS_PACIENTE);
+    aplicarCamposPermitidos(paciente, datos, CAMPOS_PACIENTE);
     await paciente.save();
     res.json({ ok: true, paciente });
   } catch (e) {

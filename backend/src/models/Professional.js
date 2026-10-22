@@ -10,6 +10,9 @@ const professionalSchema = new mongoose.Schema(
     email: { type: String, default: '', lowercase: true, trim: true },
     dni: { type: String, required: true, unique: true, trim: true },
     matricula: { type: String, required: true, unique: true, trim: true },
+    // RF-02/PENDIENTES 3: vínculo con el usuario del sistema que inicia sesión.
+    // Nulo solo en registros históricos (ver scripts/completarRelaciones.js).
+    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     activo: { type: Boolean, default: true }
   },
   { timestamps: true }
@@ -17,5 +20,10 @@ const professionalSchema = new mongoose.Schema(
 
 professionalSchema.index({ nombre: 1, apellido: 1 });
 professionalSchema.index({ especialidad: 1 });
+// Un usuario del sistema no puede representar a dos profesionales.
+professionalSchema.index(
+  { usuario: 1 },
+  { unique: true, partialFilterExpression: { usuario: { $type: 'objectId' } } }
+);
 
 export default mongoose.model('Professional', professionalSchema);

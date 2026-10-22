@@ -315,6 +315,58 @@
           ]
         },
         {
+          "name": "Crear usuario profesional",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "POST /api/usuarios — solo ADMINISTRADOR. Roles: ADMINISTRADOR, RECEPCIONISTA, PROFESIONAL. Password mínimo 6. (El usuario se expone con `id`, no `_id`.)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Profesional Postman\",\n  \"email\": \"profesional.postman.{{$timestamp}}@sigca.local\",\n  \"password\": \"Demo1234\",\n  \"rol\": \"PROFESIONAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('rol PROFESIONAL', () => pm.expect(j.usuario.rol).to.eql('PROFESIONAL'));",
+                  "if (j.usuario && j.usuario.id) pm.environment.set('usuarioProfesionalId', j.usuario.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
           "name": "Obtener usuario",
           "request": {
             "method": "GET",
@@ -502,7 +554,7 @@
             "description": "POST /api/servicios — solo ADMINISTRADOR. `precioCentavos` entero >= 0; `duracionMinutos` entero >= 1; nombre único.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Servicio demo {{$timestamp}}\",\n  \"descripcion\": \"Servicio de ejemplo\",\n  \"precioCentavos\": 20000,\n  \"duracionMinutos\": 30\n}",
+              "raw": "{\n  \"nombre\": \"Servicio demo {{$timestamp}}\",\n  \"descripcion\": \"Servicio de ejemplo\",\n  \"precioCentavos\": 20000,\n  \"duracionMinutos\": 30,\n  \"imagenUrl\": \"https://ejemplo.sigca/servicios/demo.jpg\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -515,12 +567,13 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
+                  "pm.test('imagenUrl guardada', () => pm.expect(j.servicio.imagenUrl).to.eql('https://ejemplo.sigca/servicios/demo.jpg'));",
                   "if (j.servicio && j.servicio._id) pm.environment.set('servicioId', j.servicio._id);"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ]
@@ -1255,7 +1308,7 @@
             "description": "POST /api/contacto — público. `mensaje` mínimo 10 caracteres.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Visitante demo\",\n  \"email\": \"visitante@ejemplo.com\",\n  \"mensaje\": \"Mensaje de ejemplo para la clínica.\"\n}",
+              "raw": "{\n  \"nombre\": \"Visitante demo\",\n  \"email\": \"visitante@ejemplo.com\",\n  \"mensaje\": \"Mensaje de ejemplo para la clínica.\",\n  \"telefono\": \"5551234567\",\n  \"asunto\": \"Consulta sobre servicios\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1311,7 +1364,13 @@
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const j = pm.response.json();",
                   "const m = (j.mensajes || [])[0];",
-                  "if (m) pm.environment.set('contactoId', m._id);"
+                  "if (m) pm.environment.set('contactoId', m._id);",
+                  "pm.test('mensaje con teléfono y asunto', () => {",
+                  "  pm.expect(typeof m.telefono).to.eql('string');",
+                  "  pm.expect(m.telefono.length > 0).to.eql(true);",
+                  "  pm.expect(typeof m.asunto).to.eql('string');",
+                  "  pm.expect(m.asunto.length > 0).to.eql(true);",
+                  "});"
                 ]
               }
             }
@@ -1544,7 +1603,7 @@
             "description": "POST /api/pacientes — ADMINISTRADOR o RECEPCIONISTA. Requeridos: nombre, apellido, fechaNacimiento, sexo (M/F/Otro), telefono.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Paciente\",\n  \"apellido\": \"Demo\",\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"sexo\": \"F\",\n  \"telefono\": \"5559876543\",\n  \"email\": \"paciente.demo@ejemplo.com\"\n}",
+              "raw": "{\n  \"nombre\": \"Paciente\",\n  \"apellido\": \"Demo\",\n  \"fechaNacimiento\": \"1990-05-20\",\n  \"sexo\": \"F\",\n  \"telefono\": \"5559876543\",\n  \"email\": \"paciente.demo@ejemplo.com\",\n  \"fechaInicioProceso\": \"2026-01-15\",\n  \"observacionesAdministrativas\": \"Paciente de prueba Postman\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1557,12 +1616,14 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
+                  "pm.test('fechaInicioProceso guardada', () => pm.expect(j.paciente.fechaInicioProceso).to.be.a('string'));",
+                  "pm.test('observaciones guardadas', () => pm.expect(j.paciente.observacionesAdministrativas).to.eql('Paciente de prueba Postman'));",
                   "if (j.paciente && j.paciente._id) pm.environment.set('pacienteId', j.paciente._id);"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ]
@@ -1737,7 +1798,7 @@
             "description": "POST /api/responsables — ADMINISTRADOR o RECEPCIONISTA. Requeridos: nombre, apellido, telefono, parentesco.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Responsable\",\n  \"apellido\": \"Demo\",\n  \"telefono\": \"5552223333\",\n  \"parentesco\": \"Madre\",\n  \"email\": \"responsable.demo@ejemplo.com\"\n}",
+              "raw": "{\n  \"nombre\": \"Responsable\",\n  \"apellido\": \"Demo\",\n  \"telefono\": \"5552223333\",\n  \"parentesco\": \"Madre\",\n  \"email\": \"responsable.demo@ejemplo.com\",\n  \"direccion\": \"Calle Demo 123, colonia Centro\",\n  \"fotoUrl\": \"https://ejemplo.sigca/responsables/demo.jpg\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1750,12 +1811,14 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
+                  "pm.test('email guardado', () => pm.expect(j.responsable.email).to.eql('responsable.demo@ejemplo.com'));",
+                  "pm.test('dirección guardada', () => pm.expect(j.responsable.direccion).to.eql('Calle Demo 123, colonia Centro'));",
                   "if (j.responsable && j.responsable._id) pm.environment.set('responsableId', j.responsable._id);"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ]
@@ -2066,7 +2129,7 @@
             "description": "POST /api/profesionales — ADMINISTRADOR o RECEPCIONISTA. Requeridos: nombre, apellido, especialidad, telefono, dni, matricula (únicos).",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Profesional\",\n  \"apellido\": \"Demo\",\n  \"especialidad\": \"General\",\n  \"telefono\": \"5553334444\",\n  \"email\": \"profesional.demo2@ejemplo.com\",\n  \"dni\": \"DNI{{$timestamp}}\",\n  \"matricula\": \"MP-{{$timestamp}}\"\n}",
+              "raw": "{\n  \"nombre\": \"Profesional\",\n  \"apellido\": \"Demo\",\n  \"especialidad\": \"General\",\n  \"telefono\": \"5553334444\",\n  \"email\": \"profesional.demo2@ejemplo.com\",\n  \"dni\": \"DNI{{$timestamp}}\",\n  \"matricula\": \"MP-{{$timestamp}}\",\n  \"usuarioId\": \"{{usuarioProfesionalId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2079,12 +2142,16 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
+                  "pm.test('usuario PROFESIONAL vinculado', () => {",
+                  "  pm.expect(j.profesional.usuario.email).to.include('profesional.postman.');",
+                  "  pm.expect(j.profesional.usuario.rol).to.eql('PROFESIONAL');",
+                  "});",
                   "if (j.profesional && j.profesional._id) pm.environment.set('profesionalId', j.profesional._id);"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ]
@@ -3197,14 +3264,15 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const j = pm.response.json();",
                   "pm.test('pago REGISTRADO', () => pm.expect(j.pago.estado).to.eql('REGISTRADO'));",
                   "pm.test('pago asociado a la caja abierta', () => pm.expect(j.pago.caja._id).to.eql(pm.environment.get('cajaId')));",
+                  "pm.test('número de comprobante en el pago', () => pm.expect(j.pago.numeroComprobante).to.match(/^REC-\\d{4}-\\d{6}$/));",
                   "if (j.pago && j.pago._id) pm.environment.set('pagoId', j.pago._id);"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ]
@@ -3238,10 +3306,12 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
-                ]
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('el pago conserva su número de comprobante', () => pm.expect(j.pago.numeroComprobante).to.match(/^REC-\\d{4}-\\d{6}$/));"
+                ],
+                "type": "text/javascript"
               }
             }
           ]

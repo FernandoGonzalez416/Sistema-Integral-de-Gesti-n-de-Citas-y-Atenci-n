@@ -100,6 +100,8 @@ export async function listar(req, res, next) {
   try {
     const solicitudes = await AppointmentRequest.find()
       .populate('servicio', 'nombre')
+      .populate('citaGenerada', 'inicio fin estado')
+      .populate('atendidaPor', 'nombre email')
       .sort({ createdAt: -1 });
     res.json({ ok: true, solicitudes });
   } catch (e) {

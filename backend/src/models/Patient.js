@@ -11,6 +11,9 @@ const patientSchema = new mongoose.Schema(
     email: { type: String, default: '', lowercase: true, trim: true },
     direccion: { type: String, default: '', trim: true },
     fotoUrl: { type: String, default: '', trim: true },
+    // RF-03: fecha en que inició el proceso terapéutico y observaciones administrativas.
+    fechaInicioProceso: { type: Date, default: null },
+    observacionesAdministrativas: { type: String, default: '', trim: true, maxlength: 2000 },
     activo: { type: Boolean, default: true }
   },
   { timestamps: true }

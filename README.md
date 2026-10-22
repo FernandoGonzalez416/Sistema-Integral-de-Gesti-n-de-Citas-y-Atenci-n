@@ -69,10 +69,14 @@ idempotentes (siempre primero en simulación):
 cd backend
 npm run migrar:estados:dry && npm run migrar:estados   # estados y métodos antiguos
 npm run migrar:cajas:dry && npm run migrar:cajas       # pagos históricos sin caja
+npm run migrar:relaciones:dry && npm run migrar:relaciones  # campos y vínculos de B3
 ```
 
 Ninguna migración elimina documentos; `migrar:cajas` solo escribe en pagos con
-`caja` vacía y avisa de los que no encajan en ninguna caja.
+`caja` vacía y avisa de los que no encajan en ninguna caja. `migrar:relaciones`
+solo completa datos faltantes (número de comprobante, fecha de inicio del
+proceso, vínculo profesional↔usuario y referencias solicitud↔cita) y lista los
+registros que requieren revisión manual.
 
 ## Credenciales de demostración
 
@@ -82,6 +86,7 @@ credenciales definidas en `backend/.env` (por defecto `admin@sigca.local` /
 
 - Recepcionista: `recepcion.demo@demo.sigca` / `Demo1234`
 - Profesional: `profesional.demo@demo.sigca` / `Demo1234`
+- Profesional: `pablo.herrera@demo.sigca` / `Demo1234`
 
 No incluir credenciales reales en el repositorio.
 
@@ -96,7 +101,7 @@ No incluir credenciales reales en el repositorio.
 
 En `postman/` hay una colección lista para importar en Postman:
 
-- `postman/SIGCA.postman_collection.json` — 81 peticiones que cubren toda la API (health, auth, usuarios, servicios, contenidos, horarios, publicaciones, contacto, solicitudes, pacientes, responsables, relaciones, profesionales, citas, materiales, materiales por paciente, pagos y comprobantes, caja con movimientos y bajas lógicas).
+- `postman/SIGCA.postman_collection.json` — 82 peticiones que cubren toda la API (health, auth, usuarios, servicios, contenidos, horarios, publicaciones, contacto, solicitudes, pacientes, responsables, relaciones, profesionales, citas, materiales, materiales por paciente, pagos y comprobantes, caja con movimientos y bajas lógicas).
 - `postman/SIGCA.postman_environment.json` — entorno «SIGCA — Entorno local» con `baseUrl`, credenciales demo, tokens y `_id`.
 
 Importa ambos archivos, selecciona el entorno y ejecuta «Login administrador» primero (guarda el token). Los POST de creación guardan sus `_id` en el entorno. Antes de crear citas, ajusta `inicioCita`, `inicioCita2` e `inicioCita3` a días laborables futuros; cada usuario abre su propia caja antes de registrar pagos y los pagos quedan asociados a esa caja (la colección abre la del administrador). Ver `docs/PRUEBAS.md` (sección Entregables).

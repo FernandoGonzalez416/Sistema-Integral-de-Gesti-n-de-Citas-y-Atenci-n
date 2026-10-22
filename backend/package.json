@@ -12,6 +12,8 @@
     "migrar:estados:dry": "node scripts/migrarEstados.js --dry-run",
     "migrar:cajas": "node scripts/asignarCajasPagos.js",
     "migrar:cajas:dry": "node scripts/asignarCajasPagos.js --dry-run",
+    "migrar:relaciones": "node scripts/completarRelaciones.js",
+    "migrar:relaciones:dry": "node scripts/completarRelaciones.js --dry-run",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {

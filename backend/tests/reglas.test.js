@@ -42,6 +42,7 @@ const PASS = 'Test1234';
 const tok = {};
 let server;
 let servicio, servicioLargo, profesional, paciente, menor, responsable;
+let profUser;
 let lunesBase, martes, miercoles;
 let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, cajaRecep, pagoRecep, cajaG4, solicitudH1;
 
@@ -114,6 +115,7 @@ before(async () => {
   await new User({ nombre: 'Admin', email: 'admin.test@sigca.test', password: PASS, rol: 'ADMINISTRADOR' }).save();
   await new User({ nombre: 'Recep', email: 'recep.test@sigca.test', password: PASS, rol: 'RECEPCIONISTA' }).save();
   await new User({ nombre: 'Prof', email: 'prof.test@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
+  profUser = await new User({ nombre: 'Prof Dos', email: 'prof.dos@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
 
   servicio = await new Service({
     nombre: 'Consulta test', precioCentavos: 10000, duracionMinutos: 30
@@ -134,7 +136,8 @@ before(async () => {
     sexo: 'M', telefono: '5553000'
   }).save();
   responsable = await new Responsible({
-    nombre: 'Resp', apellido: 'Menor', telefono: '5554000', parentesco: 'Madre'
+    nombre: 'Resp', apellido: 'Menor', telefono: '5554000', parentesco: 'Madre',
+    email: 'resp.menor@test.local', direccion: 'Calle de prueba 123'
   }).save();
 
   lunesBase = proximoLunes();
@@ -345,6 +348,13 @@ describe('E. Comprobante de pago (RF-10)', () => {
     const n1 = Number(a.json.comprobante.numero.split('-')[2]);
     const n2 = Number(b.json.comprobante.numero.split('-')[2]);
     assert.equal(n2, n1 + 1);
+  });
+
+  test('E4 el pago expone el mismo numeroComprobante que su recibo', async () => {
+    const recibo = await api('GET', `/api/pagos/${pagoP1._id}/comprobante`, { token: tok.admin });
+    const pago = await api('GET', `/api/pagos/${pagoP1._id}`, { token: tok.admin });
+    assert.equal(pago.status, 200);
+    assert.equal(pago.json.pago.numeroComprobante, recibo.json.comprobante.numero);
   });
 });
 
@@ -686,7 +696,10 @@ describe('J. Contrato B1: rutas y métodos alineados', () => {
   test('J5 PUT /api/responsables/:id actualiza', async () => {
     const alta = await api('POST', '/api/responsables', {
       token: tok.admin,
-      body: { nombre: 'Resp', apellido: 'B1', telefono: '5556666', parentesco: 'Padre' }
+      body: {
+        nombre: 'Resp', apellido: 'B1', telefono: '5556666', parentesco: 'Padre',
+        email: 'resp.b1@test.local', direccion: 'Avenida B1, casa 5'
+      }
     });
     assert.equal(alta.status, 201);
     const r = await api('PUT', `/api/responsables/${alta.json.responsable._id}`, {
@@ -849,5 +862,163 @@ describe('K. Edición de citas, pagos y saldo por cita', () => {
     const r = await cambiarEstado(c.json.cita._id, 'COMPLETADA');
     assert.equal(r.status, 200);
     assert.equal(r.json.cita.estado, 'COMPLETADA');
+  });
+});
+
+describe('L. Modelos y relaciones (B3)', () => {
+  const fechaPasada = () => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const fechaFutura = () => new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+
+  test('L1 paciente guarda fechaInicioProceso y observaciones administrativas', async () => {
+    const r = await api('POST', '/api/pacientes', {
+      token: tok.admin,
+      body: {
+        nombre: 'Paciente', apellido: 'B3', fechaNacimiento: '1998-03-15', sexo: 'F',
+        telefono: '5557001', email: 'paciente.b3@test.local',
+        fechaInicioProceso: fechaPasada(),
+        observacionesAdministrativas: 'Observación administrativa B3'
+      }
+    });
+    assert.equal(r.status, 201);
+    assert.ok(r.json.paciente.fechaInicioProceso);
+    assert.equal(r.json.paciente.observacionesAdministrativas, 'Observación administrativa B3');
+  });
+
+  test('L2 fechaInicioProceso futura → 400', async () => {
+    const r = await api('POST', '/api/pacientes', {
+      token: tok.admin,
+      body: {
+        nombre: 'Paciente', apellido: 'Futuro', fechaNacimiento: '1998-03-15', sexo: 'M',
+        telefono: '5557002', fechaInicioProceso: fechaFutura()
+      }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('L3 responsable exige email y dirección (RF-04)', async () => {
+    const incompleto = await api('POST', '/api/responsables', {
+      token: tok.admin,
+      body: { nombre: 'Resp', apellido: 'B3', telefono: '5557003', parentesco: 'Padre' }
+    });
+    assert.equal(incompleto.status, 400);
+
+    const r = await api('POST', '/api/responsables', {
+      token: tok.admin,
+      body: {
+        nombre: 'Resp', apellido: 'B3', telefono: '5557003', parentesco: 'Padre',
+        email: 'resp.b3@test.local', direccion: 'Calle B3, casa 7',
+        fotoUrl: 'https://ejemplo.test/resp-b3.jpg'
+      }
+    });
+    assert.equal(r.status, 201);
+    assert.equal(r.json.responsable.email, 'resp.b3@test.local');
+    assert.equal(r.json.responsable.direccion, 'Calle B3, casa 7');
+    assert.equal(r.json.responsable.fotoUrl, 'https://ejemplo.test/resp-b3.jpg');
+  });
+
+  test('L4 profesional se vincula a un usuario PROFESIONAL', async () => {
+    const r = await api('POST', '/api/profesionales', {
+      token: tok.admin,
+      body: {
+        nombre: 'Vinculado', apellido: 'B3', especialidad: 'General', telefono: '5557004',
+        email: 'vinculado.b3@test.local', dni: '70000003', matricula: 'MP-70003',
+        usuarioId: String(profUser._id)
+      }
+    });
+    assert.equal(r.status, 201);
+    assert.equal(r.json.profesional.usuario.email, 'prof.dos@sigca.test');
+  });
+
+  test('L5 un usuario no puede vincularse a dos profesionales → 409', async () => {
+    const r = await api('POST', '/api/profesionales', {
+      token: tok.admin,
+      body: {
+        nombre: 'Duplicado', apellido: 'B3', especialidad: 'General', telefono: '5557005',
+        email: 'duplicado.b3@test.local', dni: '70000004', matricula: 'MP-70004',
+        usuarioId: String(profUser._id)
+      }
+    });
+    assert.equal(r.status, 409);
+  });
+
+  test('L6 el usuario vinculado debe tener rol PROFESIONAL → 400', async () => {
+    const admin = await User.findOne({ email: 'admin.test@sigca.test' });
+    const r = await api('POST', '/api/profesionales', {
+      token: tok.admin,
+      body: {
+        nombre: 'Admin', apellido: 'B3', especialidad: 'General', telefono: '5557006',
+        email: 'adminprof.b3@test.local', dni: '70000005', matricula: 'MP-70005',
+        usuarioId: String(admin._id)
+      }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('L7 alta de profesional sin usuarioId → 400', async () => {
+    const r = await api('POST', '/api/profesionales', {
+      token: tok.admin,
+      body: {
+        nombre: 'Sin', apellido: 'Usuario', especialidad: 'General', telefono: '5557007',
+        email: 'sinusuario.b3@test.local', dni: '70000006', matricula: 'MP-70006'
+      }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('L8 servicio guarda y publica imagenUrl (RF-05)', async () => {
+    const alta = await api('POST', '/api/servicios', {
+      token: tok.admin,
+      body: {
+        nombre: 'Servicio B3', precioCentavos: 12000, duracionMinutos: 30,
+        imagenUrl: 'https://ejemplo.test/servicio-b3.jpg'
+      }
+    });
+    assert.equal(alta.status, 201);
+    assert.equal(alta.json.servicio.imagenUrl, 'https://ejemplo.test/servicio-b3.jpg');
+    const publico = await api('GET', '/api/servicios');
+    const encontrado = publico.json.servicios.find((s) => s.nombre === 'Servicio B3');
+    assert.equal(encontrado.imagenUrl, 'https://ejemplo.test/servicio-b3.jpg');
+  });
+
+  test('L9 contacto exige teléfono y asunto', async () => {
+    const incompleto = await api('POST', '/api/contacto', {
+      body: { nombre: 'Contacto B3', email: 'contacto.b3@test.local', mensaje: 'Mensaje de prueba B3' }
+    });
+    assert.equal(incompleto.status, 400);
+    const r = await api('POST', '/api/contacto', {
+      body: {
+        nombre: 'Contacto B3', email: 'contacto.b3@test.local', telefono: '5557008',
+        asunto: 'Consulta B3', mensaje: 'Mensaje de prueba B3'
+      }
+    });
+    assert.equal(r.status, 201);
+  });
+
+  test('L10 la asignación de material registra quién la realizó', async () => {
+    const material = await api('POST', '/api/materiales', {
+      token: tok.admin,
+      body: { titulo: 'Material B3', descripcion: 'Material de prueba B3', tipo: 'DOCUMENTO' }
+    });
+    assert.equal(material.status, 201);
+    const r = await api('POST', `/api/pacientes/${paciente._id}/materiales`, {
+      token: tok.admin,
+      body: { materialId: material.json.material._id, notas: 'Asignación B3' }
+    });
+    assert.equal(r.status, 201);
+    assert.equal(r.json.relacion.asignadoPor.email, 'admin.test@sigca.test');
+  });
+
+  test('L11 la solicitud devuelve la cita generada y quién la atendió', async () => {
+    const admin = await User.findOne({ email: 'admin.test@sigca.test' });
+    const solicitud = await new AppointmentRequest({
+      nombre: 'Solicitud B3', telefono: '5557009', email: 'solicitud.b3@test.local',
+      servicio: servicio._id, estado: 'ATENDIDA',
+      citaGenerada: citaB7._id, atendidaPor: admin._id, fechaAtencion: new Date()
+    }).save();
+    const r = await api('GET', '/api/solicitudes-cita', { token: tok.admin });
+    assert.equal(r.status, 200);
+    const encontrada = r.json.solicitudes.find((s) => String(s._id) === String(solicitud._id));
+    assert.equal(String(encontrada.citaGenerada._id), String(citaB7._id));
+    assert.equal(encontrada.atendidaPor.email, 'admin.test@sigca.test');
   });
 });

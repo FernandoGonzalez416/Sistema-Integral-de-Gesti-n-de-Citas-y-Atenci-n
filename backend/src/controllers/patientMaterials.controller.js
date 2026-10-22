@@ -15,6 +15,7 @@ export async function listarMaterialesPaciente(req, res, next) {
     }
     const relaciones = await PatientMaterial.find({ paciente: req.params.pacienteId, activo: true })
       .populate('material')
+      .populate('asignadoPor', 'nombre email rol')
       .sort({ fechaAsignacion: -1 });
     res.json({ ok: true, relaciones });
   } catch (e) {
@@ -55,15 +56,19 @@ export async function asignarMaterial(req, res, next) {
       existente.activo = true;
       existente.notas = notas || '';
       existente.fechaAsignacion = new Date();
+      existente.asignadoPor = req.usuario?._id || null;
       relacion = await existente.save();
     } else {
       relacion = await new PatientMaterial({
         paciente: req.params.pacienteId,
         material: materialId,
-        notas: notas || ''
+        notas: notas || '',
+        asignadoPor: req.usuario?._id || null
       }).save();
     }
-    const poblada = await PatientMaterial.findById(relacion._id).populate('material');
+    const poblada = await PatientMaterial.findById(relacion._id)
+      .populate('material')
+      .populate('asignadoPor', 'nombre email rol');
     res.status(201).json({ ok: true, relacion: poblada });
   } catch (e) {
     next(e);
@@ -80,7 +85,7 @@ export async function desasignarMaterial(req, res, next) {
       { _id: req.params.relacionId, paciente: req.params.pacienteId, activo: true },
       { activo: false },
       { new: true }
-    ).populate('material');
+    ).populate('material').populate('asignadoPor', 'nombre email rol');
     if (!relacion) {
       return res.status(404).json({ ok: false, message: 'Asignación no encontrada' });
     }

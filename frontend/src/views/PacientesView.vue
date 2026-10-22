@@ -19,6 +19,10 @@
         </div>
         <FormField etiqueta="Dirección" v-model="form.direccion" placeholder="Opcional" />
         <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
+        <div class="fila">
+          <FormField etiqueta="Inicio del proceso" type="date" v-model="form.fechaInicioProceso" />
+          <FormField etiqueta="Observaciones administrativas" v-model="form.observacionesAdministrativas" placeholder="Opcional (máx. 2000)" />
+        </div>
         <button type="submit">Registrar</button>
       </form>
     </Card>
@@ -35,7 +39,7 @@
       <div v-if="cargando">Cargando…</div>
       <table v-else>
         <thead>
-          <tr><th>Nombre</th><th>Edad</th><th>Teléfono</th><th>Email</th><th>Activo</th><th></th></tr>
+          <tr><th>Nombre</th><th>Edad</th><th>Teléfono</th><th>Email</th><th>Inicio proceso</th><th>Activo</th><th></th></tr>
         </thead>
         <tbody>
           <tr v-for="p in pacientes" :key="p._id">
@@ -43,6 +47,7 @@
             <td>{{ p.edad }}</td>
             <td>{{ p.telefono }}</td>
             <td>{{ p.email || '—' }}</td>
+            <td>{{ p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '—' }}</td>
             <td>{{ p.activo ? 'Sí' : 'No' }}</td>
             <td>
               <RouterLink :to="`/admin/pacientes/${p._id}/responsables`">Responsables</RouterLink>
@@ -84,7 +89,8 @@ const soloActivos = ref(true);
 
 const form = reactive({
   _id: '', nombre: '', apellido: '', fechaNacimiento: '', sexo: 'M',
-  telefono: '', email: '', direccion: '', fotoUrl: ''
+  telefono: '', email: '', direccion: '', fotoUrl: '',
+  fechaInicioProceso: '', observacionesAdministrativas: ''
 });
 
 const editando = ref(false);
@@ -109,7 +115,8 @@ async function cargar() {
 function limpiar() {
   Object.assign(form, {
     _id: '', nombre: '', apellido: '', fechaNacimiento: '', sexo: 'M',
-    telefono: '', email: '', direccion: '', fotoUrl: ''
+    telefono: '', email: '', direccion: '', fotoUrl: '',
+    fechaInicioProceso: '', observacionesAdministrativas: ''
   });
   editando.value = false;
 }
@@ -132,6 +139,9 @@ async function crear() {
 function editar(p) {
   editando.value = true;
   Object.assign(form, p);
+  // El input date necesita AAAA-MM-DD; el API devuelve ISO completo.
+  form.fechaNacimiento = p.fechaNacimiento ? p.fechaNacimiento.slice(0, 10) : '';
+  form.fechaInicioProceso = p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '';
 }
 
 async function toggleActivo(p) {

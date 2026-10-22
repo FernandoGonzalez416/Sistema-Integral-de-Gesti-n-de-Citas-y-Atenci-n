@@ -12,6 +12,8 @@
       <form @submit.prevent="enviar">
         <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Tu nombre" />
         <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="tu@correo.com" />
+        <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
+        <FormField etiqueta="Asunto" v-model="form.asunto" placeholder="Motivo de tu consulta" />
         <FormField etiqueta="Mensaje (mín. 10 caracteres)" v-model="form.mensaje" placeholder="¿En qué te ayudamos?" />
         <p v-if="error" class="error">{{ error }}</p>
         <p v-if="enviado" class="ok">Mensaje recibido. Te contactaremos pronto.</p>
@@ -28,7 +30,7 @@ import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
 
 const datos = reactive({ nombre: '…', email: '…', telefono: '…', direccion: '…' });
-const form = reactive({ nombre: '', email: '', mensaje: '' });
+const form = reactive({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
 const error = ref('');
 const enviado = ref(false);
 
@@ -38,7 +40,7 @@ async function enviar() {
     enviado.value = false;
     await postContacto({ ...form });
     enviado.value = true;
-    Object.assign(form, { nombre: '', email: '', mensaje: '' });
+    Object.assign(form, { nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
   } catch (e) {
     error.value = e.message;
   }

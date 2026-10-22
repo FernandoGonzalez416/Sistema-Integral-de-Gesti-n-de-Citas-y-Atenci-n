@@ -4,24 +4,44 @@ import { regexBusqueda, paginacion } from '../utils/consulta.js';
 import { soloCampos, aplicarCamposPermitidos } from '../utils/campos.js';
 
 // Campos que un cliente puede actualizar (evita asignación masiva).
-const CAMPOS_RESPONSABLE = ['nombre', 'apellido', 'telefono', 'email', 'parentesco', 'activo'];
+const CAMPOS_RESPONSABLE = [
+  'nombre', 'apellido', 'telefono', 'email', 'direccion', 'fotoUrl', 'parentesco', 'activo'
+];
 // En el alta NO se acepta `activo`: el registro siempre nace activo (su estado
 // se cambia después con PATCH).
 const CAMPOS_RESPONSABLE_CREAR = CAMPOS_RESPONSABLE.filter((campo) => campo !== 'activo');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function idValido(id) {
   return mongoose.isValidObjectId(id);
 }
 
 function validarResponsable(datos, esActualizacion = false) {
-  const { nombre, apellido, telefono, parentesco } = datos;
+  const { nombre, apellido, telefono, parentesco, email, direccion, fotoUrl } = datos;
   if (!esActualizacion) {
     if (!nombre || !apellido || !telefono || !parentesco) {
       return 'Nombre, apellido, teléfono y parentesco requeridos';
     }
+    // RF-04: correo y dirección son obligatorios.
+    if (!email || !direccion) {
+      return 'Email y dirección requeridos';
+    }
   }
   if (telefono && (typeof telefono !== 'string' || telefono.trim().length < 6)) {
     return 'Teléfono muy corto';
+  }
+  if (email !== undefined) {
+    if (typeof email !== 'string' || !email.trim() || !EMAIL_RE.test(email.trim())) {
+      return 'Email inválido';
+    }
+  }
+  if (direccion !== undefined) {
+    if (typeof direccion !== 'string' || direccion.trim().length < 5) {
+      return 'Dirección requerida (mínimo 5 caracteres)';
+    }
+  }
+  if (fotoUrl !== undefined && typeof fotoUrl !== 'string') {
+    return 'fotoUrl debe ser texto';
   }
   return null;
 }
