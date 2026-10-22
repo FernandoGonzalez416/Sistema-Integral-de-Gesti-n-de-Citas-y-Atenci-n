@@ -1,9 +1,12 @@
 <template>
   <main class="contenedor">
-    <h1>Pacientes</h1>
+    <h1>{{ auth.esProfesional ? 'Mis pacientes' : 'Pacientes' }}</h1>
     <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="auth.esProfesional" class="ayuda">
+      Solo se muestran los datos básicos de los pacientes que tienen cita contigo.
+    </p>
 
-    <Card titulo="Registrar paciente">
+    <Card v-if="!auth.esProfesional" titulo="Registrar paciente">
       <form @submit.prevent="crear">
         <div class="fila">
           <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre" />
@@ -39,21 +42,26 @@
       <div v-if="cargando">Cargando…</div>
       <table v-else>
         <thead>
-          <tr><th>Nombre</th><th>Edad</th><th>Teléfono</th><th>Email</th><th>Inicio proceso</th><th>Activo</th><th></th></tr>
+          <tr>
+            <th>Nombre</th><th>Edad</th><th>Teléfono</th>
+            <th v-if="!auth.esProfesional">Email</th>
+            <th v-if="!auth.esProfesional">Inicio proceso</th>
+            <th>Activo</th><th></th>
+          </tr>
         </thead>
         <tbody>
           <tr v-for="p in pacientes" :key="p._id">
             <td>{{ p.nombre }} {{ p.apellido }}</td>
             <td>{{ p.edad }}</td>
             <td>{{ p.telefono }}</td>
-            <td>{{ p.email || '—' }}</td>
-            <td>{{ p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '—' }}</td>
+            <td v-if="!auth.esProfesional">{{ p.email || '—' }}</td>
+            <td v-if="!auth.esProfesional">{{ p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '—' }}</td>
             <td>{{ p.activo ? 'Sí' : 'No' }}</td>
             <td>
-              <RouterLink :to="`/admin/pacientes/${p._id}/responsables`">Responsables</RouterLink>
+              <RouterLink v-if="!auth.esProfesional" :to="`/admin/pacientes/${p._id}/responsables`">Responsables</RouterLink>
               <RouterLink :to="`/admin/pacientes/${p._id}/materiales`">Materiales</RouterLink>
-              <button @click="editar(p)">Editar</button>
-              <button @click="toggleActivo(p)">{{ p.activo ? 'Desactivar' : 'Activar' }}</button>
+              <button v-if="!auth.esProfesional" @click="editar(p)">Editar</button>
+              <button v-if="!auth.esProfesional" @click="toggleActivo(p)">{{ p.activo ? 'Desactivar' : 'Activar' }}</button>
             </td>
           </tr>
         </tbody>
@@ -164,6 +172,7 @@ onMounted(cargar);
 <style>
 .contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
 .error { color: red; }
+.ayuda { color: #555; }
 .fila { display: flex; gap: 1rem; }
 .fila > * { flex: 1; }
 table { width: 100%; border-collapse: collapse; }

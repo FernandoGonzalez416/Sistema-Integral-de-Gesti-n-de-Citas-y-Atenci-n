@@ -305,3 +305,47 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - Migración: `--dry-run` con cambios planificados → aplicación → segundo `--dry-run` con **0 pendientes**; se probaron ambos sentidos de `solicitud↔cita` y se verificó que el `--dry-run` no escribe.
 - **UI no verificada en navegador** (sin navegador); solo build.
 
+## 2026-10-21 - B4: solicitudes/citas atómicas sin replica set y permisos por rol
+
+### Contexto y restricción
+
+- MongoDB local se mantiene **standalone**. No se convierte a replica set, no se usan transacciones y no se agregan dependencias. La consistencia se apoya en el índice único, operaciones atómicas de un documento y compensación explícita.
+- La autoridad de permisos es el backend. El frontend solo oculta rutas/menús con `meta.roles`; cada endpoint vuelve a validar rol y vínculo.
+
+### Conversión de solicitud en cita
+
+1. Se valida la solicitud, el paciente, el profesional y el servicio; el servicio debe estar activo. El email y el servicio de la solicitud se exigen en el alta (400 si faltan o son inválidos).
+2. `Appointment.solicitudOrigen` tiene un **índice único parcial** (`partialFilterExpression: { solicitudOrigen: { $type: 'objectId' } }`). Las citas directas sin solicitud no quedan afectadas.
+3. El alta de la cita ocurre dentro de un bloqueo en proceso por profesional (`conBloqueo`). Si otro proceso ya creó la cita, `E11000` se interpreta como “solicitud ya atendida”: se repara el enlace de la solicitud y se responde **409**.
+4. Después de insertar, se re-chequea el traslape; si apareció una cita concurrente, se elimina la recién creada y se responde **409**.
+5. La solicitud se marca con un `findOneAndUpdate` condicional `{ _id, estado: 'PENDIENTE' }`. Si otra petición ganó o la rechazó, se elimina la cita y se responde **409**.
+6. `server.js` ejecuta `Appointment.createIndexes()` al arrancar. Si hay duplicados y el índice no puede crearse, aborta con un mensaje que remite a `npm run verificar:solicitudes`. El script es de solo lectura, informa duplicados y sale con código 1; en una base sin colección también responde sin error.
+7. El mutex es una optimización local, no una garantía distribuida. La garantía última es el índice único + el update condicional.
+
+### Rol PROFESIONAL
+
+- Se resuelve con `Professional.findOne({ usuario: req.usuario._id, activo: true })`. Sin vínculo activo, las rutas de citas/pacientes/materiales responden **403**.
+- `GET /api/citas` ignora el filtro `profesional` del cliente y fuerza el profesional autenticado. `GET /api/citas/:id` devuelve **404** para citas ajenas. Solo puede ejecutar `PATCH /:id/estado` con `COMPLETADA` y sobre una cita propia `CONFIRMADA`; otras transiciones dan **400** (propias) o **404** (ajenas).
+- `GET /api/pacientes` devuelve solo pacientes con alguna cita del profesional y los campos `nombre apellido fechaNacimiento telefono activo`; las rutas de detalle ajeno dan **404**.
+- `GET/POST/PATCH` de materiales por paciente validan que el paciente tenga cita con el profesional; un paciente inactivo sigue dando **409** (RN-09). La lectura del catálogo de materiales se mantiene para PROFESIONAL; la gestión sigue en ADMIN/RECEP.
+- Se permite la lectura de profesionales a PROFESIONAL (necesaria para mostrar nombres), pero crear/editar/desactivar sigue restringido.
+
+### Reset de contraseña y contrato legado
+
+- `PATCH /api/usuarios/:id/restablecer-password` es solo ADMINISTRADOR. Valida `passwordNueva` (texto, 6–72), asigna `passwordHash` y deja que el hook `pre('save')` hashee; nunca devuelve contraseña ni hash. RECEPCIONISTA/PROFESIONAL reciben **403**.
+- `PATCH /api/solicitudes-cita/:id/estado` se conserva por compatibilidad. El rechazo nuevo usa `PATCH /api/solicitudes-cita/:id/rechazar`, exige `motivoRechazo`, solo acepta `PENDIENTE` (**409** en otro estado) y registra auditoría.
+
+### Frontend
+
+- `CitasView` permite listar/filtrar, crear, reprogramar, cambiar estado y completar; `SolicitudesView` atiende/rechaza; `ProfesionalesView` gestiona el vínculo con usuarios; `UsersView` incorpora el reset.
+- `AdminLayout` y el router usan `meta.roles` para menús y guardias. `PacientesView` y `MaterialesView` se adaptan a la lectura de PROFESIONAL. `CitaModal` y `SolicitarCitaView` exigen email y servicio.
+- No se verificó la interfaz en navegador; solo build de producción.
+
+### Verificación
+
+- `backend`: `npm test` → **119/119 en dos corridas** contra `sigca_test_rules` (puerto 3992); 16 grupos A-P, incluidos M (roles), N (solicitudes/concurrencia), O (reset) y P (índices/filtros/robustez).
+- `frontend`: `npm run build` → **verde** (165 módulos).
+- Postman: **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx** contra `app.js` real y BD desechable `sigca_test_postman` (eliminada). La ejecución fue por emulación de los scripts de la colección, no desde la app Postman.
+- Script de duplicados: base vacía → “colección aún no existe”; base con dos citas de la misma solicitud → informe y salida 1.
+- **UI no verificada en navegador** (sin navegador); solo build.
+

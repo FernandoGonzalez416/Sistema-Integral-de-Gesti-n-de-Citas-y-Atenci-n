@@ -2,6 +2,12 @@ import Patient from '../models/Patient.js';
 import mongoose from 'mongoose';
 import { regexBusqueda, paginacion } from '../utils/consulta.js';
 import { soloCampos, aplicarCamposPermitidos } from '../utils/campos.js';
+import {
+  CAMPOS_PACIENTE_PROFESIONAL,
+  idsPacientesDelProfesional,
+  pacienteDelProfesional,
+  profesionalDelUsuario
+} from '../utils/profesional.js';
 
 // Campos que un cliente puede actualizar (evita asignación masiva).
 const CAMPOS_PACIENTE = [
@@ -81,9 +87,27 @@ export async function listarPacientes(req, res, next) {
         { email: regex }
       ];
     }
+
+    let esProfesional = false;
+    if (req.usuario?.rol === 'PROFESIONAL') {
+      esProfesional = true;
+      const profesional = await profesionalDelUsuario(req.usuario);
+      if (!profesional) {
+        return res.status(403).json({
+          ok: false,
+          message: 'El usuario PROFESIONAL no tiene un profesional activo vinculado'
+        });
+      }
+      const ids = await idsPacientesDelProfesional(profesional._id);
+      filtro._id = { $in: ids };
+    }
+
     const { page, limit, skip } = paginacion(req.query);
+    let consulta = Patient.find(filtro);
+    // Un PROFESIONAL solo ve los datos básicos de sus propios pacientes (RF-02).
+    if (esProfesional) consulta = consulta.select(CAMPOS_PACIENTE_PROFESIONAL);
     const [pacientes, total] = await Promise.all([
-      Patient.find(filtro).sort({ apellido: 1, nombre: 1 }).skip(skip).limit(limit),
+      consulta.sort({ apellido: 1, nombre: 1 }).skip(skip).limit(limit),
       Patient.countDocuments(filtro)
     ]);
     res.json({ ok: true, pacientes, total, page, limit });
@@ -97,7 +121,23 @@ export async function obtenerPaciente(req, res, next) {
     if (!idValido(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
     }
-    const paciente = await Patient.findById(req.params.id);
+    let paciente;
+    if (req.usuario?.rol === 'PROFESIONAL') {
+      const profesional = await profesionalDelUsuario(req.usuario);
+      if (!profesional) {
+        return res.status(403).json({
+          ok: false,
+          message: 'El usuario PROFESIONAL no tiene un profesional activo vinculado'
+        });
+      }
+      const tieneCita = await pacienteDelProfesional(profesional._id, req.params.id);
+      if (!tieneCita) {
+        return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
+      }
+      paciente = await Patient.findById(req.params.id).select(CAMPOS_PACIENTE_PROFESIONAL);
+    } else {
+      paciente = await Patient.findById(req.params.id);
+    }
     if (!paciente) {
       return res.status(404).json({ ok: false, message: 'Paciente no encontrado' });
     }

@@ -7,8 +7,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const FRANJAS = ['', 'MANANA', 'TARDE'];
 const MAX_DIAS_ADELANTE = 90;
 
-// POST /api/solicitudes — público. Guarda la solicitud del portal.
+function idValido(id) {
+  return mongoose.isValidObjectId(id);
+}
+
+// POST /api/solicitudes-cita — público. Guarda la solicitud del portal.
 // Las reglas se validan aquí también: el formulario del portal no es la única puerta.
+// B4: email y servicio son obligatorios (el personal necesita ambos para contactar
+// al solicitante y convertir la solicitud en cita).
 export async function crear(req, res, next) {
   try {
     const { nombre, telefono, email, servicio, fechaPreferida, mensaje, franja, primeraVez } = req.body || {};
@@ -30,7 +36,11 @@ export async function crear(req, res, next) {
     if (!/^[\d\s+()-]+$/.test(telefonoLimpio) || digitos.length < 7 || digitos.length > 15) {
       return res.status(400).json({ ok: false, message: 'Teléfono inválido' });
     }
-    if (email && (email.length > 254 || !EMAIL_RE.test(email.trim()))) {
+    const emailLimpio = (email ?? '').trim();
+    if (!emailLimpio) {
+      return res.status(400).json({ ok: false, message: 'Email requerido' });
+    }
+    if (emailLimpio.length > 254 || !EMAIL_RE.test(emailLimpio)) {
       return res.status(400).json({ ok: false, message: 'Email inválido' });
     }
     if (mensaje && mensaje.length > 1000) {
@@ -39,16 +49,15 @@ export async function crear(req, res, next) {
     if (franja !== undefined && !FRANJAS.includes(franja)) {
       return res.status(400).json({ ok: false, message: 'Franja horaria inválida' });
     }
-    let servicioId = null;
-    if (servicio) {
-      if (!mongoose.isValidObjectId(servicio)) {
-        return res.status(400).json({ ok: false, message: 'Servicio inválido' });
-      }
-      const existe = await Service.findOne({ _id: servicio, activo: true });
-      if (!existe) {
-        return res.status(400).json({ ok: false, message: 'Servicio no disponible' });
-      }
-      servicioId = servicio;
+    if (!servicio) {
+      return res.status(400).json({ ok: false, message: 'Servicio requerido' });
+    }
+    if (!idValido(servicio)) {
+      return res.status(400).json({ ok: false, message: 'Servicio inválido' });
+    }
+    const servicioExiste = await Service.findOne({ _id: servicio, activo: true });
+    if (!servicioExiste) {
+      return res.status(400).json({ ok: false, message: 'Servicio no disponible' });
     }
     let fecha = null;
     if (fechaPreferida) {
@@ -77,8 +86,8 @@ export async function crear(req, res, next) {
     const solicitud = new AppointmentRequest({
       nombre: nombreLimpio,
       telefono: telefonoLimpio,
-      email: email ? email.trim() : '',
-      servicio: servicioId,
+      email: emailLimpio.toLowerCase(),
+      servicio,
       fechaPreferida: fecha,
       franja: franja || '',
       primeraVez: primeraVez === true,
@@ -95,10 +104,20 @@ export async function crear(req, res, next) {
   }
 }
 
-// GET /api/solicitudes — personal autorizado (recepción y admin la atienden).
+// GET /api/solicitudes-cita — personal autorizado (recepción y admin la atienden).
+// B4: filtro por estado (validado) para la bandeja de solicitudes.
 export async function listar(req, res, next) {
   try {
-    const solicitudes = await AppointmentRequest.find()
+    const { estado } = req.query;
+    if (estado && !ESTADOS_SOLICITUD.includes(estado)) {
+      return res.status(400).json({
+        ok: false,
+        message: `Estado inválido. Válidos: ${ESTADOS_SOLICITUD.join(', ')}`
+      });
+    }
+    const filtro = {};
+    if (estado) filtro.estado = estado;
+    const solicitudes = await AppointmentRequest.find(filtro)
       .populate('servicio', 'nombre')
       .populate('citaGenerada', 'inicio fin estado')
       .populate('atendidaPor', 'nombre email')
@@ -109,10 +128,12 @@ export async function listar(req, res, next) {
   }
 }
 
-// PATCH /api/solicitudes/:id — cambia estado. Personal autorizado.
+// PATCH /api/solicitudes-cita/:id/estado — contrato legado de B1.
+// Se conserva para no romper clientes existentes; el rechazo formal con motivo
+// se hace con PATCH /:id/rechazar.
 export async function cambiarEstado(req, res, next) {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (!idValido(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Solicitud no encontrada' });
     }
     const solicitud = await AppointmentRequest.findById(req.params.id);
@@ -126,6 +147,52 @@ export async function cambiarEstado(req, res, next) {
     solicitud.estado = estado;
     await solicitud.save();
     res.json({ ok: true, solicitud });
+  } catch (e) {
+    next(e);
+  }
+}
+
+// PATCH /api/solicitudes-cita/:id/rechazar — rechazo explícito y atómico.
+// Solo una solicitud PENDIENTE puede rechazarse; el motivo es obligatorio.
+export async function rechazar(req, res, next) {
+  try {
+    if (!idValido(req.params.id)) {
+      return res.status(404).json({ ok: false, message: 'Solicitud no encontrada' });
+    }
+    const { motivoRechazo } = req.body || {};
+    if (typeof motivoRechazo !== 'string' || !motivoRechazo.trim()) {
+      return res.status(400).json({ ok: false, message: 'motivoRechazo es obligatorio' });
+    }
+    if (motivoRechazo.trim().length > 1000) {
+      return res.status(400).json({ ok: false, message: 'motivoRechazo no puede superar 1000 caracteres' });
+    }
+    const solicitud = await AppointmentRequest.findById(req.params.id).select('estado');
+    if (!solicitud) {
+      return res.status(404).json({ ok: false, message: 'Solicitud no encontrada' });
+    }
+    if (solicitud.estado !== 'PENDIENTE') {
+      return res.status(409).json({ ok: false, message: 'Solo se pueden rechazar solicitudes PENDIENTES' });
+    }
+    const actualizada = await AppointmentRequest.findOneAndUpdate(
+      { _id: req.params.id, estado: 'PENDIENTE' },
+      {
+        $set: {
+          estado: 'RECHAZADA',
+          motivoRechazo: motivoRechazo.trim(),
+          citaGenerada: null,
+          atendidaPor: req.usuario?._id || null,
+          fechaAtencion: new Date()
+        }
+      },
+      { new: true }
+    )
+      .populate('servicio', 'nombre')
+      .populate('citaGenerada', 'inicio fin estado')
+      .populate('atendidaPor', 'nombre email');
+    if (!actualizada) {
+      return res.status(409).json({ ok: false, message: 'Solo se pueden rechazar solicitudes PENDIENTES' });
+    }
+    res.json({ ok: true, solicitud: actualizada });
   } catch (e) {
     next(e);
   }

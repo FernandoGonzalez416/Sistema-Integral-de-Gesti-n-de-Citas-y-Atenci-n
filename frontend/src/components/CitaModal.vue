@@ -206,7 +206,7 @@
                       </div>
 
                       <div class="ct-campo" :class="{ invalido: ver('email') }">
-                        <label for="ct-email">Correo electrónico <span class="ct-opc">(opcional)</span></label>
+                        <label for="ct-email">Correo electrónico <span class="ct-req">*</span></label>
                         <input id="ct-email" :value="form.email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="tucorreo@ejemplo.com" :aria-invalid="ver('email')" aria-describedby="ct-ayuda-email" @input="alCorreo" @blur="tocar('email')" />
                         <small id="ct-ayuda-email" :class="{ error: ver('email') }">{{ ver('email') ? errores.email : 'Para enviarte recordatorios.' }}</small>
                       </div>
@@ -436,7 +436,7 @@ function validarTelefono(v) {
 }
 function validarCorreo(v) {
   const t = v.trim();
-  if (!t) return ''; // opcional
+  if (!t) return 'Escribe tu correo electrónico.';
   if (!t.includes('@')) return 'Falta el símbolo @ en el correo.';
   if (t.includes('..') || !EMAIL_RE.test(t)) return 'Escribe un correo válido, por ejemplo: nombre@dominio.com';
   return '';
@@ -603,9 +603,9 @@ async function enviar() {
     fechaPreferida: form.fecha,
     franja: form.franja,
     primeraVez: form.primeraVez,
-    mensaje: form.mensaje.trim()
+    mensaje: form.mensaje.trim(),
+    email: form.email.trim().toLowerCase()
   };
-  if (form.email.trim()) carga.email = form.email.trim().toLowerCase();
   try {
     const r = await postSolicitud(carga);
     Object.assign(resumen, {

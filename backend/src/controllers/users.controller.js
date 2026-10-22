@@ -101,3 +101,35 @@ export async function actualizar(req, res, next) {
     next(e);
   }
 }
+
+// PATCH /api/usuarios/:id/restablecer-password — solo ADMINISTRADOR.
+// No se acepta el hash ni se devuelve: el hook pre-save de User hashea el valor.
+export async function restablecerPassword(req, res, next) {
+  try {
+    if (!idValido(req.params.id)) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+    }
+    const { passwordNueva } = req.body || {};
+    if (typeof passwordNueva !== 'string') {
+      return res.status(400).json({ ok: false, message: 'passwordNueva debe ser texto' });
+    }
+    if (passwordNueva.length < 6 || passwordNueva.length > 72) {
+      return res.status(400).json({
+        ok: false,
+        message: 'passwordNueva debe tener entre 6 y 72 caracteres'
+      });
+    }
+    const usuario = await User.findById(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+    }
+    usuario.password = passwordNueva;
+    await usuario.save();
+    res.json({ ok: true, message: 'Contraseña restablecida', usuario: publico(usuario) });
+  } catch (e) {
+    if (e.code === 11000) {
+      return res.status(409).json({ ok: false, message: 'Email ya registrado' });
+    }
+    next(e);
+  }
+}

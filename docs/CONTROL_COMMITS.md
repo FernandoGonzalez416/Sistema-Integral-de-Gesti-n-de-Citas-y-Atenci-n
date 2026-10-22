@@ -18,7 +18,10 @@ Convención: `COMMIT_CONVENTION.md` (Conventional Commits, encabezado ≤ 72 car
 | B3 | feat/b3-modelos-relaciones | 506ab43 | feat(ui): completar campos de modelos en los formularios (B3) | FernandoGonzalez416 | creado |
 | B3 | feat/b3-modelos-relaciones | 7b01f40 | test(postman): verificar campos y vínculos de modelos (B3) | FernandoGonzalez416 | creado |
 | B3 | feat/b3-modelos-relaciones | este commit | docs(b3): registrar modelos, relaciones y migración | FernandoGonzalez416 | creado |
-| B4 | feat/b4-citas-solicitudes | — | — | — | pendiente |
+| B4 | feat/b4-citas-solicitudes | 788677b | feat(api): atender solicitudes y restringir citas por rol (B4) | FernandoGonzalez416 | creado |
+| B4 | feat/b4-citas-solicitudes | aa3f9f8 | feat(ui): agregar citas, solicitudes y roles de acceso (B4) | FernandoGonzalez416 | creado |
+| B4 | feat/b4-citas-solicitudes | 4327baf | test(postman): cubrir solicitudes, roles y reset (B4) | FernandoGonzalez416 | creado |
+| B4 | feat/b4-citas-solicitudes | este commit | docs(b4): registrar reglas, permisos y verificacion | FernandoGonzalez416 | creado |
 | B5 | feat/b5-seed | — | — | — | pendiente |
 | B6 | feat/b6-portal-contenido | — | — | — | pendiente |
 | B7 | feat/b7-entrega | — | — | — | pendiente |

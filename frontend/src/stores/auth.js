@@ -38,6 +38,8 @@ export const useAuthStore = defineStore('auth', {
     esCliente: (state) => state.usuario?.rol === 'CLIENTE',
     esPersonal: (state) => ROLES_PERSONAL.includes(state.usuario?.rol),
     esAdmin: (state) => state.usuario?.rol === 'ADMINISTRADOR',
+    esRecepcionista: (state) => state.usuario?.rol === 'RECEPCIONISTA',
+    esProfesional: (state) => state.usuario?.rol === 'PROFESIONAL',
     // Pantalla de inicio según el rol.
     rutaInicio() {
       return this.esPersonal ? '/admin' : '/perfil';

@@ -129,12 +129,27 @@ export const getCitas = (token, params = {}) => {
   return authFetch(token, `/api/citas${qs ? '?' + qs : ''}`);
 };
 export const getCita = (token, id) => authFetch(token, `/api/citas/${id}`);
+export const createCita = (token, datos) => authFetch(token, '/api/citas', { method: 'POST', body: JSON.stringify(datos) });
 export const updateCita = (token, id, datos) => authFetch(token, `/api/citas/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const patchEstadoCita = (token, id, estado) => authFetch(token, `/api/citas/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) });
+export const atenderSolicitud = (token, id, datos) => authFetch(token, `/api/citas/solicitudes/${id}/atender`, { method: 'POST', body: JSON.stringify(datos) });
+
+export const getSolicitudes = (token, params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return authFetch(token, `/api/solicitudes-cita${qs ? '?' + qs : ''}`);
+};
+export const rechazarSolicitud = (token, id, motivoRechazo) =>
+  authFetch(token, `/api/solicitudes-cita/${id}/rechazar`, { method: 'PATCH', body: JSON.stringify({ motivoRechazo }) });
+export const patchEstadoSolicitud = (token, id, estado) =>
+  authFetch(token, `/api/solicitudes-cita/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) });
 
 export const getProfesionales = (token, params = {}) => {
   const qs = new URLSearchParams(params).toString();
   return authFetch(token, `/api/profesionales${qs ? '?' + qs : ''}`);
 };
+export const createProfesional = (token, datos) => authFetch(token, '/api/profesionales', { method: 'POST', body: JSON.stringify(datos) });
+export const updateProfesional = (token, id, datos) => authFetch(token, `/api/profesionales/${id}`, { method: 'PATCH', body: JSON.stringify(datos) });
+export const desactivarProfesional = (token, id) => authFetch(token, `/api/profesionales/${id}/desactivar`, { method: 'PATCH' });
 
 // Petición con errores tipados: error.red = true si no hubo conexión; error.status = código HTTP.
 async function peticion(ruta, opciones = {}, mensajePorDefecto = 'No se pudo completar la solicitud') {
@@ -191,6 +206,11 @@ export const createUsuario = (token, datos) =>
   conAuth(token, '/api/usuarios', { method: 'POST', body: JSON.stringify(datos) });
 export const updateUsuario = (token, id, datos) =>
   conAuth(token, `/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(datos) });
+export const restablecerPasswordUsuario = (token, id, passwordNueva) =>
+  conAuth(token, `/api/usuarios/${id}/restablecer-password`, {
+    method: 'PATCH',
+    body: JSON.stringify({ passwordNueva })
+  });
 export const getServiciosTodos = (token) => conAuth(token, '/api/servicios/admin/todos');
 export const createServicio = (token, datos) =>
   conAuth(token, '/api/servicios', { method: 'POST', body: JSON.stringify(datos) });

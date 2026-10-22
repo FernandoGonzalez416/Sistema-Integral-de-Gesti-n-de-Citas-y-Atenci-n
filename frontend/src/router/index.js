@@ -13,6 +13,9 @@ import PacienteMaterialesView from '../views/PacienteMaterialesView.vue';
 import PagosView from '../views/PagosView.vue';
 import CajaView from '../views/CajaView.vue';
 import CalendarioView from '../views/CalendarioView.vue';
+import CitasView from '../views/CitasView.vue';
+import SolicitudesView from '../views/SolicitudesView.vue';
+import ProfesionalesView from '../views/ProfesionalesView.vue';
 import AdminView from '../views/AdminView.vue';
 import LoginView from '../views/LoginView.vue';
 import RegistroView from '../views/RegistroView.vue';
@@ -73,17 +76,20 @@ const router = createRouter({
       meta: { requiereAuth: true, requierePersonal: true },
       children: [
         { path: '', name: 'admin', component: AdminView },
-        { path: 'usuarios', name: 'usuarios', component: UsersView },
-        { path: 'servicios', name: 'servicios', component: ServicesView },
-        { path: 'contenidos', name: 'contenidos', component: ContentView },
-        { path: 'pacientes', name: 'pacientes', component: PacientesView },
-        { path: 'pacientes/:pacienteId/responsables', name: 'paciente-responsables', component: PacienteResponsablesView },
-        { path: 'pacientes/:pacienteId/materiales', name: 'paciente-materiales', component: PacienteMaterialesView },
-        { path: 'responsables', name: 'responsables', component: ResponsablesView },
-        { path: 'materiales', name: 'materiales', component: MaterialesView },
-        { path: 'pagos', name: 'pagos', component: PagosView },
-        { path: 'caja', name: 'caja', component: CajaView },
-        { path: 'calendario', name: 'calendario', component: CalendarioView }
+        { path: 'usuarios', name: 'usuarios', component: UsersView, meta: { roles: ['ADMINISTRADOR'] } },
+        { path: 'servicios', name: 'servicios', component: ServicesView, meta: { roles: ['ADMINISTRADOR'] } },
+        { path: 'contenidos', name: 'contenidos', component: ContentView, meta: { roles: ['ADMINISTRADOR'] } },
+        { path: 'pacientes', name: 'pacientes', component: PacientesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'pacientes/:pacienteId/responsables', name: 'paciente-responsables', component: PacienteResponsablesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
+        { path: 'pacientes/:pacienteId/materiales', name: 'paciente-materiales', component: PacienteMaterialesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'responsables', name: 'responsables', component: ResponsablesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
+        { path: 'materiales', name: 'materiales', component: MaterialesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'pagos', name: 'pagos', component: PagosView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
+        { path: 'caja', name: 'caja', component: CajaView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
+        { path: 'calendario', name: 'calendario', component: CalendarioView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'citas', name: 'citas', component: CitasView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'solicitudes', name: 'solicitudes', component: SolicitudesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
+        { path: 'profesionales', name: 'profesionales', component: ProfesionalesView, meta: { roles: ['ADMINISTRADOR'] } }
       ]
     },
     { path: '/:ruta(.*)', name: 'no-encontrada', component: NotFoundView }
@@ -109,6 +115,11 @@ router.beforeEach(async (to) => {
 
   if (to.meta.soloInvitados) return auth.rutaInicio;
   if (to.meta.requierePersonal && !auth.esPersonal) return { name: 'perfil' };
+  // Roles: el backend es la autoridad final; aquí solo se evita abrir una
+  // pantalla que el usuario no puede usar.
+  if (to.meta.roles && !to.meta.roles.includes(auth.usuario?.rol)) {
+    return { name: 'admin' };
+  }
 });
 
 export default router;

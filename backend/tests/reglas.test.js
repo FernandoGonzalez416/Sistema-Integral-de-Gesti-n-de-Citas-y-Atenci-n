@@ -37,13 +37,15 @@ const Patient = (await import('../src/models/Patient.js')).default;
 const Responsible = (await import('../src/models/Responsible.js')).default;
 const Schedule = (await import('../src/models/Schedule.js')).default;
 const AppointmentRequest = (await import('../src/models/AppointmentRequest.js')).default;
+const Appointment = (await import('../src/models/Appointment.js')).default;
+const Payment = (await import('../src/models/Payment.js')).default;
 
 const PASS = 'Test1234';
 const tok = {};
 let server;
-let servicio, servicioLargo, profesional, paciente, menor, responsable;
-let profUser;
-let lunesBase, martes, miercoles;
+let servicio, servicioLargo, profesional, profesionalOtro, paciente, menor, responsable;
+let profUser, profLinkUser, profOtroUser;
+let lunesBase, martes, miercoles, jueves, viernes;
 let citaB7, citaD, citaE, pagoP1, pagoP2, pagoP3, cajaC1, cajaRecep, pagoRecep, cajaG4, solicitudH1;
 
 function proximoDia(numeroDia) {
@@ -107,6 +109,14 @@ const cambiarEstado = (citaId, estado) =>
 before(async () => {
   await mongoose.connect(URI);
   await mongoose.connection.dropDatabase();
+  // Los índices únicos parciales son parte de la garantía B4: se crean antes de
+  // las pruebas (Mongoose autoIndex no es determinista en un arranque de test).
+  await Promise.all([
+    Appointment.createIndexes(),
+    Professional.createIndexes(),
+    Payment.createIndexes(),
+    User.createIndexes()
+  ]);
 
   await Schedule.insertMany(
     [1, 2, 3, 4, 5].map((dia) => ({ dia, horaInicio: '08:00', horaFin: '17:00' }))
@@ -116,6 +126,8 @@ before(async () => {
   await new User({ nombre: 'Recep', email: 'recep.test@sigca.test', password: PASS, rol: 'RECEPCIONISTA' }).save();
   await new User({ nombre: 'Prof', email: 'prof.test@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
   profUser = await new User({ nombre: 'Prof Dos', email: 'prof.dos@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
+  profLinkUser = await new User({ nombre: 'Prof Link', email: 'prof.link@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
+  profOtroUser = await new User({ nombre: 'Prof Otro', email: 'prof.otro@sigca.test', password: PASS, rol: 'PROFESIONAL' }).save();
 
   servicio = await new Service({
     nombre: 'Consulta test', precioCentavos: 10000, duracionMinutos: 30
@@ -125,7 +137,13 @@ before(async () => {
   }).save();
   profesional = await new Professional({
     nombre: 'Prof', apellido: 'Base', especialidad: 'General',
-    telefono: '5551000', email: 'prof.base@test', dni: '70000001', matricula: 'MP-70001'
+    telefono: '5551000', email: 'prof.base@test', dni: '70000001', matricula: 'MP-70001',
+    usuario: profLinkUser._id
+  }).save();
+  profesionalOtro = await new Professional({
+    nombre: 'Prof', apellido: 'Otro', especialidad: 'General',
+    telefono: '5551010', email: 'prof.otro@test', dni: '70000011', matricula: 'MP-70011',
+    usuario: profOtroUser._id
   }).save();
   paciente = await new Patient({
     nombre: 'Pac', apellido: 'Adulto', fechaNacimiento: new Date('1990-01-01'),
@@ -143,6 +161,8 @@ before(async () => {
   lunesBase = proximoLunes();
   martes = proximoDia(2);
   miercoles = proximoDia(3);
+  jueves = proximoDia(4);
+  viernes = proximoDia(5);
 
   server = app.listen(PORT);
   const login = async (email) =>
@@ -150,6 +170,8 @@ before(async () => {
   tok.admin = await login('admin.test@sigca.test');
   tok.recep = await login('recep.test@sigca.test');
   tok.prof = await login('prof.test@sigca.test');
+  tok.profLink = await login('prof.link@sigca.test');
+  tok.profOtro = await login('prof.otro@sigca.test');
 });
 
 after(async () => {
@@ -556,7 +578,10 @@ describe('G. Caja: caja por usuario, movimientos y arqueo', () => {
 describe('H. Atender solicitud de cita', () => {
   test('H1 atender una solicitud PENDIENTE con paciente registrado → 201', async () => {
     await api('POST', '/api/solicitudes-cita', {
-      body: { nombre: 'Solicitante', telefono: '5559999', servicio: String(servicio._id), mensaje: 'h1-demo' }
+      body: {
+        nombre: 'Solicitante', telefono: '5559999', email: 'solicitante.h1@test.local',
+        servicio: String(servicio._id), mensaje: 'h1-demo'
+      }
     });
     solicitudH1 = await AppointmentRequest.findOne({ mensaje: 'h1-demo' });
     assert.ok(solicitudH1, 'la solicitud pública debe persistir');
@@ -573,13 +598,16 @@ describe('H. Atender solicitud de cita', () => {
     assert.equal(r.json.cita.estado, 'PENDIENTE');
     const refrescada = await AppointmentRequest.findById(solicitudH1._id);
     assert.equal(refrescada.estado, 'ATENDIDA');
+    assert.equal(String(refrescada.citaGenerada), String(r.json.cita._id));
+    assert.equal(String(refrescada.atendidaPor), String((await User.findOne({ email: 'admin.test@sigca.test' }))._id));
+    assert.ok(refrescada.fechaAtencion);
   });
 
-  test('H2 atender sin servicio (solicitud sin servicio y sin servicioId) → 400', async () => {
-    await api('POST', '/api/solicitudes-cita', {
-      body: { nombre: 'Sin servicio', telefono: '5558888', mensaje: 'h2-demo' }
-    });
-    const sol = await AppointmentRequest.findOne({ mensaje: 'h2-demo' });
+  test('H2 atender una solicitud histórica sin servicio y sin servicioId → 400', async () => {
+    // La API pública ya exige servicio; se simula una solicitud histórica sin él.
+    const sol = await new AppointmentRequest({
+      nombre: 'Sin servicio', telefono: '5558888', email: 'sinservicio@test.local', mensaje: 'h2-demo'
+    }).save();
     const r = await api('POST', `/api/citas/solicitudes/${sol._id}/atender`, {
       token: tok.admin,
       body: {
@@ -591,7 +619,7 @@ describe('H. Atender solicitud de cita', () => {
     assert.equal(r.status, 400);
   });
 
-  test('H3 no se puede atender dos veces la misma solicitud → 400', async () => {
+  test('H3 no se puede atender dos veces la misma solicitud → 409 y una sola cita', async () => {
     const r = await api('POST', `/api/citas/solicitudes/${solicitudH1._id}/atender`, {
       token: tok.admin,
       body: {
@@ -600,7 +628,8 @@ describe('H. Atender solicitud de cita', () => {
         inicio: slot(11, 0, martes)
       }
     });
-    assert.equal(r.status, 400);
+    assert.equal(r.status, 409);
+    assert.equal(await Appointment.countDocuments({ solicitudOrigen: solicitudH1._id }), 1);
   });
 });
 
@@ -1020,5 +1049,455 @@ describe('L. Modelos y relaciones (B3)', () => {
     const encontrada = r.json.solicitudes.find((s) => String(s._id) === String(solicitud._id));
     assert.equal(String(encontrada.citaGenerada._id), String(citaB7._id));
     assert.equal(encontrada.atendidaPor.email, 'admin.test@sigca.test');
+  });
+});
+
+describe('M. Restricciones del rol PROFESIONAL (B4)', () => {
+  let citaM, citaOtro, materialM, pacienteAjeno;
+
+  test('M1 un PROFESIONAL sin vínculo no puede listar citas → 403', async () => {
+    const r = await api('GET', '/api/citas', { token: tok.prof });
+    assert.equal(r.status, 403);
+    assert.match(r.json.message, /profesional activo vinculado/i);
+  });
+
+  test('M2 el filtro profesional se ignora para el PROFESIONAL autenticado', async () => {
+    const r = await api('GET', `/api/citas?profesional=${profesionalOtro._id}&limit=100`, {
+      token: tok.profLink
+    });
+    assert.equal(r.status, 200);
+    assert.ok(r.json.citas.length > 0);
+    for (const c of r.json.citas) {
+      assert.equal(String(c.profesional._id), String(profesional._id));
+    }
+  });
+
+  test('M3 se crea una cita propia y otra de otro profesional', async () => {
+    const propia = await api('POST', '/api/citas', {
+      token: tok.admin,
+      body: {
+        pacienteId: String(paciente._id),
+        profesionalId: String(profesional._id),
+        servicioId: String(servicio._id),
+        inicio: slot(9, 0, jueves)
+      }
+    });
+    assert.equal(propia.status, 201);
+    citaM = propia.json.cita;
+    assert.equal((await cambiarEstado(citaM._id, 'CONFIRMADA')).status, 200);
+
+    const ajena = await api('POST', '/api/citas', {
+      token: tok.admin,
+      body: {
+        pacienteId: String(paciente._id),
+        profesionalId: String(profesionalOtro._id),
+        servicioId: String(servicio._id),
+        inicio: slot(10, 0, jueves)
+      }
+    });
+    assert.equal(ajena.status, 201);
+    citaOtro = ajena.json.cita;
+  });
+
+  test('M4 el PROFESIONAL puede leer su propia cita → 200', async () => {
+    const r = await api('GET', `/api/citas/${citaM._id}`, { token: tok.profLink });
+    assert.equal(r.status, 200);
+    assert.equal(String(r.json.cita._id), String(citaM._id));
+  });
+
+  test('M5 la cita de otro profesional no es visible → 404', async () => {
+    assert.equal((await api('GET', `/api/citas/${citaOtro._id}`, { token: tok.profLink })).status, 404);
+  });
+
+  test('M6 el PROFESIONAL completa una cita propia CONFIRMADA → 200', async () => {
+    const r = await api('PATCH', `/api/citas/${citaM._id}/estado`, {
+      token: tok.profLink,
+      body: { estado: 'COMPLETADA' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.cita.estado, 'COMPLETADA');
+  });
+
+  test('M7 el PROFESIONAL no puede completar la cita de otro → 404', async () => {
+    const r = await api('PATCH', `/api/citas/${citaOtro._id}/estado`, {
+      token: tok.profLink,
+      body: { estado: 'COMPLETADA' }
+    });
+    assert.equal(r.status, 404);
+  });
+
+  test('M8 PENDIENTE→COMPLETADA con rol PROFESIONAL → 400', async () => {
+    const alta = await api('POST', '/api/citas', {
+      token: tok.admin,
+      body: {
+        pacienteId: String(paciente._id),
+        profesionalId: String(profesional._id),
+        servicioId: String(servicio._id),
+        inicio: slot(11, 0, jueves)
+      }
+    });
+    assert.equal(alta.status, 201);
+    const r = await api('PATCH', `/api/citas/${alta.json.cita._id}/estado`, {
+      token: tok.profLink,
+      body: { estado: 'COMPLETADA' }
+    });
+    assert.equal(r.status, 400);
+    const cancelar = await api('PATCH', `/api/citas/${alta.json.cita._id}/estado`, {
+      token: tok.profLink,
+      body: { estado: 'CANCELADA' }
+    });
+    assert.equal(cancelar.status, 403);
+  });
+
+  test('M9 el PROFESIONAL solo ve datos básicos de sus pacientes', async () => {
+    const r = await api('GET', '/api/pacientes?limit=100', { token: tok.profLink });
+    assert.equal(r.status, 200);
+    assert.ok(r.json.pacientes.length > 0);
+    for (const p of r.json.pacientes) {
+      assert.equal(p.email, undefined);
+      assert.equal(p.direccion, undefined);
+      assert.ok(p.nombre);
+      assert.ok(p.apellido);
+      assert.ok(p.telefono);
+    }
+    const propia = await api('GET', `/api/pacientes/${paciente._id}`, { token: tok.profLink });
+    assert.equal(propia.status, 200);
+    assert.equal(propia.json.paciente.email, undefined);
+  });
+
+  test('M10 un paciente sin cita con el PROFESIONAL no es visible → 404', async () => {
+    const alta = await api('POST', '/api/pacientes', {
+      token: tok.admin,
+      body: {
+        nombre: 'Ajeno', apellido: 'Sin Cita', fechaNacimiento: '1990-01-01',
+        sexo: 'M', telefono: '5557100'
+      }
+    });
+    assert.equal(alta.status, 201);
+    pacienteAjeno = alta.json.paciente;
+    const r = await api('GET', `/api/pacientes/${alta.json.paciente._id}`, { token: tok.profLink });
+    assert.equal(r.status, 404);
+  });
+
+  test('M11 el PROFESIONAL asigna materiales a su propio paciente, no a uno ajeno', async () => {
+    const material = await api('POST', '/api/materiales', {
+      token: tok.admin,
+      body: { titulo: 'Material B4', descripcion: 'Material B4', tipo: 'DOCUMENTO' }
+    });
+    assert.equal(material.status, 201);
+    materialM = material.json.material;
+    const propio = await api('POST', `/api/pacientes/${paciente._id}/materiales`, {
+      token: tok.profLink,
+      body: { materialId: materialM._id }
+    });
+    assert.equal(propio.status, 201);
+    assert.equal(propio.json.relacion.asignadoPor.email, 'prof.link@sigca.test');
+
+    const lista = await api('GET', `/api/pacientes/${paciente._id}/materiales`, { token: tok.profLink });
+    assert.equal(lista.status, 200);
+
+    const ajeno = await api('POST', `/api/pacientes/${pacienteAjeno._id}/materiales`, {
+      token: tok.profLink,
+      body: { materialId: materialM._id }
+    });
+    assert.equal(ajeno.status, 404);
+  });
+
+  test('M12 asignar material a un paciente inactivo → 409 (RN-09)', async () => {
+    const alta = await api('POST', '/api/pacientes', {
+      token: tok.admin,
+      body: {
+        nombre: 'Inactivo', apellido: 'B4', fechaNacimiento: '1992-01-01',
+        sexo: 'F', telefono: '5557101'
+      }
+    });
+    assert.equal(alta.status, 201);
+    const pacienteInactivo = alta.json.paciente;
+    const cita = await api('POST', '/api/citas', {
+      token: tok.admin,
+      body: {
+        pacienteId: String(pacienteInactivo._id),
+        profesionalId: String(profesional._id),
+        servicioId: String(servicio._id),
+        inicio: slot(12, 0, jueves)
+      }
+    });
+    assert.equal(cita.status, 201);
+    const baja = await api('PATCH', `/api/pacientes/${pacienteInactivo._id}/estado`, {
+      token: tok.admin,
+      body: { activo: false }
+    });
+    assert.equal(baja.status, 200);
+    const r = await api('POST', `/api/pacientes/${pacienteInactivo._id}/materiales`, {
+      token: tok.profLink,
+      body: { materialId: materialM._id }
+    });
+    assert.equal(r.status, 409);
+  });
+
+  test('M13 un PROFESIONAL sin vínculo no accede a materiales de pacientes → 403', async () => {
+    const r = await api('GET', `/api/pacientes/${paciente._id}/materiales`, { token: tok.prof });
+    assert.equal(r.status, 403);
+  });
+});
+
+describe('N. Solicitudes y conversión atómica (B4)', () => {
+  test('N1 alta sin email → 400', async () => {
+    const r = await api('POST', '/api/solicitudes-cita', {
+      body: { nombre: 'Sin Email', telefono: '5557200', servicio: String(servicio._id) }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('N2 alta sin servicio → 400', async () => {
+    const r = await api('POST', '/api/solicitudes-cita', {
+      body: { nombre: 'Sin Servicio', telefono: '5557201', email: 'sinservicio.n2@test.local' }
+    });
+    assert.equal(r.status, 400);
+  });
+
+  test('N3 servicio inválido o inactivo → 400', async () => {
+    assert.equal((await api('POST', '/api/solicitudes-cita', {
+      body: { nombre: 'Mal Servicio', telefono: '5557202', email: 'mal.n3@test.local', servicio: 'no-es-id' }
+    })).status, 400);
+    const inexistente = new mongoose.Types.ObjectId();
+    assert.equal((await api('POST', '/api/solicitudes-cita', {
+      body: { nombre: 'No Existe', telefono: '5557203', email: 'no.n3@test.local', servicio: String(inexistente) }
+    })).status, 400);
+  });
+
+  test('N4 alta válida, listado y filtro por estado', async () => {
+    const alta = await api('POST', '/api/solicitudes-cita', {
+      body: {
+        nombre: 'Solicitud B4', telefono: '5557204', email: 'solicitud.b4@test.local',
+        servicio: String(servicio._id), mensaje: 'n4-demo'
+      }
+    });
+    assert.equal(alta.status, 201);
+    const lista = await api('GET', '/api/solicitudes-cita?estado=PENDIENTE', { token: tok.admin });
+    assert.equal(lista.status, 200);
+    assert.ok(lista.json.solicitudes.every((s) => s.estado === 'PENDIENTE'));
+    assert.ok(lista.json.solicitudes.some((s) => s.mensaje === 'n4-demo'));
+    assert.equal((await api('GET', '/api/solicitudes-cita?estado=NOPE', { token: tok.admin })).status, 400);
+  });
+
+  test('N5 rechazo sin motivo → 400', async () => {
+    const sol = await AppointmentRequest.findOne({ mensaje: 'n4-demo' });
+    assert.equal((await api('PATCH', `/api/solicitudes-cita/${sol._id}/rechazar`, {
+      token: tok.admin,
+      body: {}
+    })).status, 400);
+    assert.equal((await api('PATCH', `/api/solicitudes-cita/${sol._id}/rechazar`, {
+      token: tok.admin,
+      body: { motivoRechazo: '   ' }
+    })).status, 400);
+  });
+
+  test('N6 rechazo con motivo → RECHAZADA y auditoría', async () => {
+    const sol = await AppointmentRequest.findOne({ mensaje: 'n4-demo' });
+    const r = await api('PATCH', `/api/solicitudes-cita/${sol._id}/rechazar`, {
+      token: tok.admin,
+      body: { motivoRechazo: 'Fuera de cobertura' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.solicitud.estado, 'RECHAZADA');
+    assert.equal(r.json.solicitud.motivoRechazo, 'Fuera de cobertura');
+    assert.equal(r.json.solicitud.atendidaPor.email, 'admin.test@sigca.test');
+    assert.ok(r.json.solicitud.fechaAtencion);
+  });
+
+  test('N7 rechazar una solicitud ya no PENDIENTE → 409', async () => {
+    const sol = await AppointmentRequest.findOne({ mensaje: 'n4-demo' });
+    const r = await api('PATCH', `/api/solicitudes-cita/${sol._id}/rechazar`, {
+      token: tok.admin,
+      body: { motivoRechazo: 'Otra vez' }
+    });
+    assert.equal(r.status, 409);
+  });
+
+  test('N8 dos atender concurrentes de la misma solicitud → 1 éxito, 1 cita', async () => {
+    const alta = await api('POST', '/api/solicitudes-cita', {
+      body: {
+        nombre: 'Concurrente', telefono: '5557205', email: 'concurrente.n8@test.local',
+        servicio: String(servicio._id), mensaje: 'n8-demo'
+      }
+    });
+    assert.equal(alta.status, 201);
+    const sol = await AppointmentRequest.findOne({ mensaje: 'n8-demo' });
+    const body = {
+      pacienteId: String(paciente._id),
+      profesionalId: String(profesional._id),
+      inicio: slot(9, 0, viernes)
+    };
+    const [a, b] = await Promise.all([
+      api('POST', `/api/citas/solicitudes/${sol._id}/atender`, { token: tok.admin, body }),
+      api('POST', `/api/citas/solicitudes/${sol._id}/atender`, { token: tok.admin, body })
+    ]);
+    assert.deepEqual([a.status, b.status].sort((x, y) => x - y), [201, 409]);
+    assert.equal(await Appointment.countDocuments({ solicitudOrigen: sol._id }), 1);
+  });
+
+  test('N9 dos crearCita concurrentes en el mismo horario → 1 cita', async () => {
+    const body = {
+      pacienteId: String(paciente._id),
+      profesionalId: String(profesional._id),
+      servicioId: String(servicio._id),
+      inicio: slot(10, 0, viernes)
+    };
+    const [a, b] = await Promise.all([
+      api('POST', '/api/citas', { token: tok.admin, body }),
+      api('POST', '/api/citas', { token: tok.admin, body })
+    ]);
+    assert.equal([a.status, b.status].filter((s) => s === 201).length, 1);
+    assert.ok([a.status, b.status].every((s) => s === 201 || s === 400 || s === 409));
+    assert.equal(await Appointment.countDocuments({
+      profesional: profesional._id,
+      estado: { $in: ['PENDIENTE', 'CONFIRMADA'] },
+      inicio: new Date(body.inicio)
+    }), 1);
+  });
+
+  test('N10 el índice único parcial de solicitudOrigen existe', async () => {
+    const indices = await Appointment.collection.indexes();
+    const idx = indices.find((i) => i.name === 'solicitudOrigen_1');
+    assert.ok(idx, 'debe existir el índice solicitudOrigen_1');
+    assert.equal(idx.unique, true);
+    assert.deepEqual(idx.partialFilterExpression, { solicitudOrigen: { $type: 'objectId' } });
+  });
+
+  test('N11 reparar enlace si la cita ya existe pero la solicitud quedó PENDIENTE', async () => {
+    const sol = await new AppointmentRequest({
+      nombre: 'Reparar', telefono: '5557206', email: 'reparar.n11@test.local',
+      servicio: servicio._id, mensaje: 'n11-demo'
+    }).save();
+    const citaExistente = await new Appointment({
+      paciente: paciente._id,
+      profesional: profesional._id,
+      servicio: servicio._id,
+      inicio: new Date(slot(11, 0, viernes)),
+      fin: new Date(new Date(slot(11, 0, viernes)).getTime() + 30 * 60000),
+      precioCentavos: servicio.precioCentavos,
+      duracionMinutos: servicio.duracionMinutos,
+      estado: 'PENDIENTE',
+      solicitudOrigen: sol._id
+    }).save();
+    const r = await api('POST', `/api/citas/solicitudes/${sol._id}/atender`, {
+      token: tok.admin,
+      body: {
+        pacienteId: String(paciente._id),
+        profesionalId: String(profesional._id),
+        inicio: slot(12, 0, viernes)
+      }
+    });
+    assert.equal(r.status, 409);
+    const reparada = await AppointmentRequest.findById(sol._id);
+    assert.equal(reparada.estado, 'ATENDIDA');
+    assert.equal(String(reparada.citaGenerada), String(citaExistente._id));
+    assert.equal(await Appointment.countDocuments({ solicitudOrigen: sol._id }), 1);
+  });
+});
+
+describe('O. Restablecimiento de contraseña por ADMINISTRADOR (B4)', () => {
+  let usuarioReset;
+
+  test('O1 el admin restablece la contraseña; la anterior deja de funcionar', async () => {
+    const alta = await api('POST', '/api/usuarios', {
+      token: tok.admin,
+      body: {
+        nombre: 'Reset User', email: 'reset.test@sigca.test', password: PASS, rol: 'RECEPCIONISTA'
+      }
+    });
+    assert.equal(alta.status, 201);
+    usuarioReset = alta.json.usuario;
+    assert.equal((await api('POST', '/api/auth/login', {
+      body: { email: 'reset.test@sigca.test', password: PASS }
+    })).status, 200);
+    const r = await api('PATCH', `/api/usuarios/${usuarioReset.id}/restablecer-password`, {
+      token: tok.admin,
+      body: { passwordNueva: 'Nueva1234' }
+    });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.usuario.password, undefined);
+    assert.equal(JSON.stringify(r.json).includes('$2'), false);
+    assert.equal((await api('POST', '/api/auth/login', {
+      body: { email: 'reset.test@sigca.test', password: PASS }
+    })).status, 401);
+    assert.equal((await api('POST', '/api/auth/login', {
+      body: { email: 'reset.test@sigca.test', password: 'Nueva1234' }
+    })).status, 200);
+  });
+
+  test('O2 RECEPCIONISTA y PROFESIONAL no pueden restablecer contraseñas → 403', async () => {
+    for (const token of [tok.recep, tok.profLink]) {
+      const r = await api('PATCH', `/api/usuarios/${usuarioReset.id}/restablecer-password`, {
+        token,
+        body: { passwordNueva: 'Otra1234' }
+      });
+      assert.equal(r.status, 403);
+    }
+  });
+
+  test('O3 contraseña corta, tipo inválido y usuario inexistente', async () => {
+    assert.equal((await api('PATCH', `/api/usuarios/${usuarioReset.id}/restablecer-password`, {
+      token: tok.admin, body: { passwordNueva: '123' }
+    })).status, 400);
+    assert.equal((await api('PATCH', `/api/usuarios/${usuarioReset.id}/restablecer-password`, {
+      token: tok.admin, body: { passwordNueva: 12345678 }
+    })).status, 400);
+    assert.equal((await api('PATCH', `/api/usuarios/${new mongoose.Types.ObjectId()}/restablecer-password`, {
+      token: tok.admin, body: { passwordNueva: 'Nueva1234' }
+    })).status, 404);
+  });
+});
+
+describe('P. Índices, filtros y robustez de entrada (B4)', () => {
+  test('P1 índice único parcial de Professional.usuario', async () => {
+    const idx = (await Professional.collection.indexes()).find((i) => i.name === 'usuario_1');
+    assert.ok(idx);
+    assert.equal(idx.unique, true);
+    assert.deepEqual(idx.partialFilterExpression, { usuario: { $type: 'objectId' } });
+  });
+
+  test('P2 índice único parcial de Payment.numeroComprobante', async () => {
+    const idx = (await Payment.collection.indexes()).find((i) => i.name === 'numeroComprobante_1');
+    assert.ok(idx);
+    assert.equal(idx.unique, true);
+    assert.deepEqual(idx.partialFilterExpression, { numeroComprobante: { $type: 'string' } });
+  });
+
+  test('P3 filtros inválidos de citas y solicitudes → 400, nunca 5xx', async () => {
+    const casos = [
+      ['GET', '/api/citas?paciente=no-es-id', tok.admin],
+      ['GET', '/api/citas?servicio=no-es-id', tok.admin],
+      ['GET', '/api/citas?profesional=no-es-id', tok.admin],
+      ['GET', '/api/citas?desde=no-es-fecha', tok.admin],
+      ['GET', '/api/solicitudes-cita?estado=NOPE', tok.admin]
+    ];
+    for (const [metodo, ruta, token] of casos) {
+      const r = await api(metodo, ruta, { token });
+      assert.equal(r.status, 400, `${ruta} debe ser 400`);
+    }
+  });
+
+  test('P4 IDs inválidos en rutas nuevas → 404, nunca 5xx', async () => {
+    const casos = [
+      ['GET', '/api/citas/no-es-id', tok.admin],
+      ['GET', '/api/citas/no-es-id', tok.profLink],
+      ['PATCH', '/api/solicitudes-cita/no-es-id/rechazar', tok.admin],
+      ['PATCH', '/api/usuarios/no-es-id/restablecer-password', tok.admin],
+      ['GET', '/api/profesionales/no-es-id', tok.admin]
+    ];
+    for (const [metodo, ruta, token] of casos) {
+      const r = await api(metodo, ruta, {
+        token,
+        body: metodo === 'PATCH' ? { motivoRechazo: 'x', passwordNueva: 'Nueva1234' } : undefined
+      });
+      assert.equal(r.status, 404, `${ruta} debe ser 404`);
+    }
+  });
+
+  test('P5 RECEPCIONISTA conserva acceso a citas y no a usuarios', async () => {
+    assert.equal((await api('GET', '/api/citas', { token: tok.recep })).status, 200);
+    assert.equal((await api('GET', '/api/usuarios', { token: tok.recep })).status, 403);
   });
 });

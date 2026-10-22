@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listar, crear, obtener, actualizar } from '../controllers/users.controller.js';
+import { listar, crear, obtener, actualizar, restablecerPassword } from '../controllers/users.controller.js';
 import { auth } from '../middlewares/auth.js';
 import { permitir } from '../middlewares/roles.js';
 
@@ -12,5 +12,6 @@ router.get('/', listar);
 router.post('/', crear);
 router.get('/:id', obtener);
 router.put('/:id', actualizar);
+router.patch('/:id/restablecer-password', restablecerPassword);
 
 export default router;

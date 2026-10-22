@@ -1,6 +1,6 @@
 # Estado del Proyecto — SIGCA
 
-Actualizado: 2026-10-21 (sincronización con `origin/master` + rama `fix/validaciones-tipos` + **cierre de la coerción de tipos a texto** en toda la API).
+Actualizado: 2026-10-21 (B4 completado: solicitudes/citas atómicas sin replica set, permisos PROFESIONAL, reset de contraseña y pantallas de citas/solicitudes/profesionales).
 
 ## Avance real
 
@@ -35,7 +35,8 @@ Actualizado: 2026-10-21 (sincronización con `origin/master` + rama `fix/validac
 - **FASE 13 — corrección del orden de montaje (2026-10-16):** autorizado por el usuario. Se movieron en `backend/src/app.js` los montajes de `/api/pacientes/:pacienteId/responsables` y `/api/pacientes/:pacienteId/materiales` **antes** de `/api/pacientes`. Reproducción **antes** (BD desechable `sigca_verif_montaje`): **11/16** con 5 fallos (PROF → **403** en `GET/POST/PATCH` de materiales). Verificación **después**: **16/16 OK**, incluye flujo **funcional real** (ADMIN crea material → **PROF asigna** al paciente → 201 → lo lista → 200 → lo desasigna → 200); PROF sigue en **403** en `/api/pacientes`, `/api/pacientes/:id` y en la subruta de responsables (ADMIN+RECEP). Regresión: **matriz de roles 74/74** (expectativa actualizada) y **`npm test` 43/43**. BD y scripts temporales eliminados; `sigca` intacta. Sin commits. Detalle en `docs/PRUEBAS.md`.
 - **FASE 13 tarea 3 (2026-10-16):** revisión de **validaciones y manejo de errores**. Barrido por HTTP real de **38 rutas que escriben × 2 payloads** (vacío y «basura» con tipos/enums inválidos) + casos específicos + JSON malformado + control de efectos secundarios = **84 comprobaciones**: **84/84 OK, 0 respuestas 5xx**, todas las respuestas de error con `{ ok:false, message }`, JSON malformado → 400, y **ninguna colección** modificada. Sin defectos, sin cambios de código. BD desechable `sigca_verif_valid` eliminada; `sigca` intacta. Detalle en `docs/PRUEBAS.md`.
 - **Verificación funcional del módulo Materiales educativos / asignación a pacientes (2026-10-16):** verificación funcional real (**90 comprobaciones** por HTTP real + MongoDB) sobre BD **dedicada y desechable** `sigca_verif_materiales` (puerto 3983, eliminada al terminar; `sigca` intacta). Resultado inicial **85/90** con **5 respuestas 500** → se encontró y corrigió **1 defecto del módulo**: **falta de validación de tipos en la escritura**. Afectaba a `q` con regex inválida (`?q=(` → 500), paginación fuera de rango (`?page=0` → 500), `PATCH` con `_id` o tipos inválidos (`titulo:{}`, `tipo:null`, … → 500), `POST` con tipos inválidos o `titulo` en blanco (500) / `titulo:{}` (201 basura), `activo:null` (corrupción) y `notas` no‑texto en la asignación (500). **Alcanzable desde la UI** (buscador libre). Corrección mínima en `backend/src/controllers/materials.controller.js` (escaper la búsqueda, sanear `page`/`limit`, validar tipos, lista blanca de campos en el `PATCH`) y `backend/src/controllers/patientMaterials.controller.js` (validar `notas`). **Después: 90/90 OK, 0 respuestas 5xx**; regresión `npm test` **43/43**. UI en navegador: **NO EJECUTADA** (sin navegador). Detalle en `docs/PRUEBAS.md`.
-- Repo `ProyectoFinalDesarrolloWeb`: sin commits; contiene `COMMIT_CONVENTION.md`, `.gitmessage`, `.gitignore`, `postman/`, `backend/tests/`, `docs/DECISION_LOG.md` + plan.
+- **B4 completado (2026-10-21, rama `feat/b4-citas-solicitudes`):** solicitudes/citas atómicas **sin replica set ni transacciones**, permisos por rol `PROFESIONAL`, filtros validados, rechazo formal con motivo, reset de contraseña por ADMINISTRADOR y pantallas de citas, solicitudes y profesionales con menús por rol. Backend: índice único parcial `Appointment.solicitudOrigen`, `atender` idempotente con reparación de enlaces/compensación/re-chequeo y mutex en proceso, scoping por `Professional.usuario`, pacientes básicos y materiales propios, `PATCH /api/usuarios/:id/restablecer-password`. Frontend: `CitasView`, `SolicitudesView`, `ProfesionalesView`, reset en `UsersView`, guard `meta.roles` y menús por rol; `CitaModal` y el portal exigen email/servicio. Pruebas: **119/119** en 16 grupos (dos corridas), build **verde** y Postman **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx** en `sigca_test_postman` (eliminada). **UI no verificada en navegador** (solo build).
+- Repo `ProyectoFinalDesarrolloWeb`: historia en la rama de integración; contiene `COMMIT_CONVENTION.md`, `.gitmessage`, `.gitignore`, `postman/`, `backend/tests/`, `docs/DECISION_LOG.md` + plan.
 - Remoto configurado: `https://github.com/FernandoGonzalez416/Sistema-Integral-de-Gesti-n-de-Citas-y-Atenci-n.git` (sin push aún).
 - Referencias reutilizables fuera del repo: `Tarea 2 API REST/api-tareas` (Express+Mongoose CommonJS) y `Tarea 3 vueApiRest` (Vue 3+Vite+Pinia+Router). No copiados al proyecto final.
 
@@ -47,9 +48,9 @@ Actualizado: 2026-10-21 (sincronización con `origin/master` + rama `fix/validac
 
 ## Qué falta (resumen)
 
-- FASE 13 ✅ **COMPLETADA**: tareas 1 (secretos, S13.1/S13.2), 2 (roles y códigos HTTP), corrección del **orden de montaje** de rutas de pacientes y 3 (validaciones y manejo de errores) — todas verificadas por HTTP real.
-- FASE 14: cierre de entregables (README final, evidencias). FASE 12 ya está cerrada (seed demo + pruebas de reglas clave).
-- Prueba manual de login en navegador (ver advertencia arriba).
+- B1/B2/B3/B4 **completados**. B4 cierra citas/solicitudes, permisos PROFESIONAL, reset y pantallas asociadas.
+- B5 (seed definitivo), B6 (portal/logo/carrusel/bandeja) y B7 (entrega final) **pendientes**.
+- Prueba manual de login e interfaz en navegador (ver advertencia arriba); B4 solo tiene verificación por build y API.
 
 ## Errores conocidos
 

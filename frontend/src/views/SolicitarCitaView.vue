@@ -5,11 +5,11 @@
       <form @submit.prevent="enviar">
         <FormField etiqueta="Nombre completo" v-model="form.nombre" placeholder="Tu nombre" />
         <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
-        <FormField etiqueta="Email (opcional)" type="email" v-model="form.email" />
+        <FormField etiqueta="Email" type="email" v-model="form.email" />
         <label class="campo">
-          <span>Servicio (opcional)</span>
-          <select v-model="form.servicio">
-            <option value="">Sin preferencia</option>
+          <span>Servicio</span>
+          <select v-model="form.servicio" required>
+            <option value="">Selecciona un servicio</option>
             <option v-for="s in servicios" :key="s._id" :value="s._id">{{ s.nombre }}</option>
           </select>
         </label>
@@ -46,8 +46,11 @@ async function enviar() {
   try {
     error.value = '';
     enviado.value = false;
+    if (!form.email.trim() || !form.servicio) {
+      error.value = 'Email y servicio son obligatorios';
+      return;
+    }
     const datos = { ...form };
-    if (!datos.servicio) delete datos.servicio;
     if (!datos.fechaPreferida) delete datos.fechaPreferida;
     await postSolicitud(datos);
     enviado.value = true;
