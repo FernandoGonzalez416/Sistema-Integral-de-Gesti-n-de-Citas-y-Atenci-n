@@ -45,18 +45,7 @@
 
     <!-- Calendario -->
     <Card>
-      <FullCalendar
-        ref="calendarRef"
-        :initialView="initialView"
-        :events="cargarEventos"
-        :eventClick="verDetalle"
-        :locale="'es'"
-        :height="600"
-        :headerToolbar="headerToolbar"
-        :weekends="true"
-        :dayMaxEventRows="3"
-        :eventDisplay="'block'"
-      />
+      <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </Card>
 
     <!-- Modal de detalle -->
@@ -109,6 +98,7 @@ import { getCitas, getCita, getProfesionales } from '../api/client.js';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import esLocale from '@fullcalendar/core/locales/es';
 import Card from '../components/Card.vue';
 import { ESTADOS_CITA, COLORES_ESTADO_CITA } from '../constants/sigca.js';
 
@@ -131,6 +121,21 @@ const headerToolbar = {
   left: 'prev,next today',
   center: 'title',
   right: 'dayGridMonth,dayGridWeek,dayGridDay'
+};
+
+// @fullcalendar/vue3 recibe TODAS las opciones en un único prop `options`.
+// Pasarlas como props sueltas (initialView, plugins, events...) las ignoraba.
+const calendarOptions = {
+  plugins: [dayGridPlugin, interactionPlugin],
+  initialView,
+  events: cargarEventos,
+  eventClick: verDetalle,
+  locale: esLocale,
+  height: 600,
+  headerToolbar,
+  weekends: true,
+  dayMaxEventRows: 3,
+  eventDisplay: 'block'
 };
 
 async function cargarProfesionales() {
