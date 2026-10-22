@@ -1,12 +1,14 @@
 import InstitutionalContent from '../models/InstitutionalContent.js';
 import Publication from '../models/Publication.js';
+import CarouselSlide from '../models/CarouselSlide.js';
 
 // Bloques iniciales. Solo crea los que falten; nunca borra ni sobrescribe ediciones.
 const INICIALES = [
   { clave: 'mision', titulo: 'Misión', cuerpo: 'Brindar atención integral en salud a cada persona y a su familia, con profesionales calificados, trato humano y servicios accesibles. Respaldamos nuestro trabajo con una gestión de citas ordenada y confiable que respeta el tiempo de quienes nos visitan, y promovemos la educación en salud como base del bienestar.' },
   { clave: 'vision', titulo: 'Visión', cuerpo: 'Ser el centro de referencia en atención integral y educación en salud de nuestra comunidad, reconocido por la calidad humana y profesional de nuestro equipo, la innovación en nuestros servicios y el compromiso permanente con el bienestar de las familias.' },
-  { clave: 'nosotros', titulo: 'Quiénes somos', cuerpo: 'Contenido pendiente de edición.' },
+  { clave: 'nosotros', titulo: 'Información principal', cuerpo: 'Somos un centro comprometido con la salud de las familias. Ofrecemos atención cercana, servicios de calidad y educación para el bienestar de nuestra comunidad.' },
   { clave: 'contacto-nombre', titulo: 'Nombre del centro', cuerpo: 'Centro de Salud SIGSA' },
+  { clave: 'sitio-logo', titulo: 'Logotipo', cuerpo: '/logo-sigsa.svg' },
   { clave: 'contacto-email', titulo: 'Correo de contacto', cuerpo: 'contacto@sigsa.com.gt' },
   { clave: 'contacto-telefono', titulo: 'Teléfono', cuerpo: '+502 7839-4521' },
   { clave: 'contacto-direccion', titulo: 'Dirección', cuerpo: '4a. Avenida 5-20, Zona 1, Chimaltenango, Guatemala' }
@@ -19,6 +21,25 @@ export async function seedContenidos() {
   }
   console.log('Contenidos base verificados');
   await seedPublicaciones();
+  await seedCarrusel();
+}
+
+// Carrusel inicial de cinco diapositivas. Solo se crea cuando la colección
+// está vacía para no resucitar diapositivas que el administrador eliminó.
+const DIAPOSITIVAS = [
+  ['/carrusel-1.svg', 'Atención integral para tu familia'],
+  ['/carrusel-2.svg', 'Profesionales calificados'],
+  ['/carrusel-3.svg', 'Servicios pensados para ti'],
+  ['/carrusel-4.svg', 'Educación en salud'],
+  ['/carrusel-5.svg', 'Reserva tu cita hoy']
+];
+
+export async function seedCarrusel() {
+  if ((await CarouselSlide.countDocuments()) > 0) return;
+  await CarouselSlide.insertMany(
+    DIAPOSITIVAS.map(([imagenUrl, titulo], i) => ({ imagenUrl, titulo, orden: i + 1, activo: true }))
+  );
+  console.log('Carrusel inicial creado');
 }
 
 // Publicaciones de ejemplo. Solo se crean si la colección está vacía, así que nunca

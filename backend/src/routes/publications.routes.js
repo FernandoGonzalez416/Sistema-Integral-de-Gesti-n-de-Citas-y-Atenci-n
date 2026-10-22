@@ -15,6 +15,7 @@ router.get('/', listarPublico);
 router.get('/admin/todas', auth, permitir('ADMINISTRADOR'), listarTodas);
 router.get('/:id', obtener);
 router.post('/', auth, permitir('ADMINISTRADOR'), crear);
+router.put('/:id', auth, permitir('ADMINISTRADOR'), actualizar);
 router.patch('/:id', auth, permitir('ADMINISTRADOR'), actualizar);
 
 export default router;

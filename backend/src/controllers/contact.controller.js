@@ -13,7 +13,10 @@ export async function crear(req, res, next) {
       || typeof asunto !== 'string' || typeof mensaje !== 'string') {
       return res.status(400).json({ ok: false, message: 'Los campos del formulario deben ser texto' });
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+    if (nombre.trim().length < 2 || nombre.trim().length > 100) {
+      return res.status(400).json({ ok: false, message: 'El nombre debe tener entre 2 y 100 caracteres' });
+    }
+    if (email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
       return res.status(400).json({ ok: false, message: 'Email inválido' });
     }
     const digitos = telefono.replace(/\D/g, '');
@@ -39,15 +42,41 @@ export async function crear(req, res, next) {
     await msg.save();
     res.status(201).json({ ok: true, mensaje: 'Mensaje recibido. Te contactaremos pronto.' });
   } catch (e) {
+    if (e.name === 'ValidationError') {
+      return res.status(400).json({ ok: false, message: 'Datos del mensaje inválidos' });
+    }
     next(e);
   }
 }
 
-// GET /api/contacto — solo ADMINISTRADOR. Incluye leídos y no leídos.
+function filtroLeido(req, res) {
+  if (req.query.leido === undefined) return { filtro: {} };
+  if (req.query.leido !== 'true' && req.query.leido !== 'false') {
+    return { error: 'El filtro leido debe ser true o false' };
+  }
+  return { filtro: { leido: req.query.leido === 'true' } };
+}
+
+// GET /api/contacto?leido=true|false — solo ADMINISTRADOR. Incluye el total sin leer.
 export async function listar(req, res, next) {
   try {
-    const mensajes = await ContactMessage.find().sort({ createdAt: -1 });
-    res.json({ ok: true, mensajes });
+    const { filtro, error } = filtroLeido(req, res);
+    if (error) return res.status(400).json({ ok: false, message: error });
+    const [mensajes, noLeidos] = await Promise.all([
+      ContactMessage.find(filtro).sort({ createdAt: -1 }),
+      ContactMessage.countDocuments({ leido: false })
+    ]);
+    res.json({ ok: true, mensajes, noLeidos });
+  } catch (e) {
+    next(e);
+  }
+}
+
+// GET /api/contacto/contador — solo ADMINISTRADOR. Contador del menú.
+export async function contador(req, res, next) {
+  try {
+    const noLeidos = await ContactMessage.countDocuments({ leido: false });
+    res.json({ ok: true, noLeidos });
   } catch (e) {
     next(e);
   }
@@ -59,12 +88,17 @@ export async function marcar(req, res, next) {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Mensaje no encontrado' });
     }
-    const msg = await ContactMessage.findById(req.params.id);
+    if (typeof req.body?.leido !== 'boolean') {
+      return res.status(400).json({ ok: false, message: 'leido debe ser verdadero o falso' });
+    }
+    const msg = await ContactMessage.findByIdAndUpdate(
+      req.params.id,
+      { $set: { leido: req.body.leido } },
+      { new: true, runValidators: true }
+    );
     if (!msg) {
       return res.status(404).json({ ok: false, message: 'Mensaje no encontrado' });
     }
-    if (req.body?.leido !== undefined) msg.leido = !!req.body.leido;
-    await msg.save();
     res.json({ ok: true, mensaje: msg });
   } catch (e) {
     next(e);
