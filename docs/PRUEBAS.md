@@ -1404,3 +1404,36 @@ app.use('/api/pacientes', patientsRoutes);
 **`String()` que se mantiene (solo validación o uso interno; no pueden guardar datos coercionados):** `auth` `limpiar()` (sus usos pasan por `RE_NOMBRE`/`RE_TELEFONO` o por el chequeo `typeof`), `utils/consulta.js` `regexBusqueda` (búsqueda escapada, no persiste), `content.controller.js` (`req.params.clave`, siempre texto), `receipt.js`/`seedDemo.js`/`users.controller.js` (ObjectIds y numeración internos) y `requests.controller.js` (test de forma ISO sobre `fechaPreferida`, ya validada con `new Date` y no persistida tal cual).
 
 **Aislamiento y limpieza:** BDs `sigca_verif_coercion_before`/`_after` eliminadas; script temporal borrado; `sigca` **intacta**.
+
+## 2026-10-21 - B4: solicitudes/citas, permisos PROFESIONAL y reset
+
+**Alcance verificado:** alta de solicitudes con email/servicio obligatorios, filtro por estado, rechazo con motivo, conversión atómica sin replica set, reparación de enlaces, permisos del rol PROFESIONAL, reset de contraseña y filtros/IDs inválidos sin 5xx.
+
+**Suite de reglas (`npm test`):**
+
+- Comando: `cd backend && npm test` (`node --test "tests/**/*.test.js"`).
+- BD desechable `sigca_test_rules` (puerto 3992), eliminada al terminar; `sigca` intacta.
+- Resultado: **119/119 pass, 0 fail en dos corridas consecutivas**; 16 grupos A-P.
+- Grupos B4: **M** restricciones PROFESIONAL (13), **N** solicitudes/concurrencia/índice (11), **O** reset (3), **P** índices, filtros y robustez (5).
+- Casos destacados: `atender` concurrente de la misma solicitud → 1 éxito y 1 cita; dos `crearCita` concurrentes en el mismo horario → 1 cita; `E11000` repara enlace; profesional sin vínculo → 403; cita ajena → 404; paciente con cita → solo campos básicos; rechazo doble → 409; filtros/IDs inválidos → 400/404, nunca 5xx.
+
+**Build frontend:**
+
+- `cd frontend && npm run build` → **verde**, `165 módulos transformados`; `dist/` no se versiona.
+- **UI no verificada en navegador** (no hay navegador disponible); no se afirma funcionamiento visual de `CitasView`, `SolicitudesView`, `ProfesionalesView`, menús ni reset.
+
+**Colección Postman:**
+
+- Archivos: `postman/SIGCA.postman_collection.json` y `postman/SIGCA.postman_environment.json`.
+- **110 peticiones / 166 aserciones, 0 fallos, 0 respuestas 5xx**.
+- Ejecución por **emulación** de las peticiones y test-scripts de la colección (variables de entorno, tokens, `pm.test`/`pm.expect`) contra `app.js` real, en la BD desechable `sigca_test_postman` con seed demo; la BD se eliminó al terminar.
+- Cobertura B4 añadida: reset (200, login con nueva contraseña, 403 para PROFESIONAL, 400 sin `passwordNueva`), solicitud sin email/servicio, servicio inactivo, filtro inválido, rechazo con/sin motivo y doble rechazo, atender duplicado 409, listado y lectura PROFESIONAL, creación/cancelación denegadas, cita propia PENDIENTE→COMPLETADA 400, confirmación por recepción y COMPLETADA propia 200, cita ajena 404, pacientes básicos sin datos sensibles.
+- La emulación se hizo con un script temporal (no versionado) y no sustituye una ejecución desde la aplicación Postman; queda documentado como verificación por HTTP real y scripts equivalentes.
+
+**Script de duplicados (`npm run verificar:solicitudes -- --dry-run`):**
+
+- Base vacía `sigca_test_dup`: responde “la colección de citas aún no existe” sin error.
+- Base con dos citas apuntando a la misma solicitud: informa 1 solicitud duplicada, lista las dos citas y termina con **código 1**.
+- BD temporal eliminada; `sigca` intacta.
+
+**Limpieza:** BDs `sigca_test_rules`, `sigca_test_postman` y `sigca_test_dup` eliminadas; scripts temporales de verificación borrados; sin cambios en `sigca`.
