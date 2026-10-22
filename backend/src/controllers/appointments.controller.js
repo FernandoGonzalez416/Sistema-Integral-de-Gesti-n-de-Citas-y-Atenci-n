@@ -13,6 +13,7 @@ import PatientResponsible from '../models/PatientResponsible.js';
 import mongoose from 'mongoose';
 import { paginacion } from '../utils/consulta.js';
 import { calcularSaldo } from '../utils/saldo.js';
+import { profesionalDelUsuario } from '../utils/profesional.js';
 
 function idValido(id) {
   return mongoose.isValidObjectId(id);
@@ -45,6 +46,38 @@ function hayTraslape(profesionalId, inicio, fin, excluirId = null) {
   };
   if (excluirId) filtro._id = { $ne: excluirId };
   return Appointment.exists(filtro);
+}
+
+// B4: comprobación de carrera. Si dos peticiones concurrentes insertan a la vez,
+// la de _id mayor detecta a la de _id menor y se compensa a sí misma.
+function hayTraslapeAnterior(profesionalId, inicio, fin, citaId) {
+  return Appointment.exists({
+    profesional: profesionalId,
+    estado: { $in: ESTADOS_CITA_ACTIVOS },
+    _id: { $lt: citaId },
+    $or: [{ inicio: { $lt: fin }, fin: { $gt: inicio } }]
+  });
+}
+
+// Serializa las operaciones de agenda del mismo profesional dentro de este
+// proceso. El re-chequeo en base de datos sigue siendo la garantía entre
+// procesos; el bloqueo evita carreras de dos requests del mismo servidor.
+const colasAgenda = new Map();
+
+async function conBloqueo(clave, tarea) {
+  const anterior = colasAgenda.get(clave) || Promise.resolve();
+  let liberar;
+  const actual = new Promise((resolver) => {
+    liberar = resolver;
+  });
+  colasAgenda.set(clave, actual);
+  await anterior;
+  try {
+    return await tarea();
+  } finally {
+    liberar();
+    if (colasAgenda.get(clave) === actual) colasAgenda.delete(clave);
+  }
 }
 
 // RN-02, RN-11, RN-12 y RN-13.
@@ -95,20 +128,62 @@ function poblarCita(id) {
     .populate('servicio', 'nombre precioCentavos duracionMinutos');
 }
 
+// Repara el vínculo solicitud→cita si un intento anterior insertó la cita y
+// falló antes de actualizar la solicitud. Es idempotente: solo rellena huecos.
+async function repararEnlaceSolicitud(solicitudId, citaId, usuarioId) {
+  const solicitud = await AppointmentRequest.findById(solicitudId).select(
+    'estado citaGenerada atendidaPor fechaAtencion'
+  );
+  if (!solicitud) return;
+  const cambios = {};
+  if (solicitud.estado === 'PENDIENTE') cambios.estado = 'ATENDIDA';
+  if (!solicitud.citaGenerada) cambios.citaGenerada = citaId;
+  if (!solicitud.atendidaPor) cambios.atendidaPor = usuarioId;
+  if (!solicitud.fechaAtencion) cambios.fechaAtencion = new Date();
+  if (Object.keys(cambios).length > 0) {
+    await AppointmentRequest.updateOne({ _id: solicitudId }, { $set: cambios });
+  }
+}
+
 export async function listarCitas(req, res, next) {
   try {
     const { paciente, profesional, servicio, estado, desde, hasta } = req.query;
+    const esProfesional = req.usuario?.rol === 'PROFESIONAL';
+    let profesionalPropio = null;
+
+    if (esProfesional) {
+      profesionalPropio = await profesionalDelUsuario(req.usuario);
+      if (!profesionalPropio) {
+        return res.status(403).json({
+          ok: false,
+          message: 'El usuario PROFESIONAL no tiene un profesional activo vinculado'
+        });
+      }
+    }
+
     if (estado && !ESTADOS_CITA.includes(estado)) {
       return res.status(400).json({
         ok: false,
         message: `Estado inválido. Válidos: ${ESTADOS_CITA.join(', ')}`
       });
     }
+    for (const [campo, valor] of [['paciente', paciente], ['servicio', servicio]]) {
+      if (valor && !idValido(valor)) {
+        return res.status(400).json({ ok: false, message: `${campo} inválido` });
+      }
+    }
+    // Un PROFESIONAL no puede espiar la agenda de otro: su parámetro se ignora.
+    if (!esProfesional && profesional && !idValido(profesional)) {
+      return res.status(400).json({ ok: false, message: 'profesional inválido' });
+    }
+
     const filtro = {};
     if (paciente) filtro.paciente = paciente;
-    if (profesional) filtro.profesional = profesional;
     if (servicio) filtro.servicio = servicio;
     if (estado) filtro.estado = estado;
+    if (profesionalPropio) filtro.profesional = profesionalPropio._id;
+    else if (profesional) filtro.profesional = profesional;
+
     if (desde || hasta) {
       filtro.inicio = {};
       if (desde) {
@@ -144,7 +219,22 @@ export async function obtenerCita(req, res, next) {
     if (!idValido(req.params.id)) {
       return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
     }
-    const cita = await poblarCita(req.params.id);
+    let cita;
+    if (req.usuario?.rol === 'PROFESIONAL') {
+      const profesional = await profesionalDelUsuario(req.usuario);
+      if (!profesional) {
+        return res.status(403).json({
+          ok: false,
+          message: 'El usuario PROFESIONAL no tiene un profesional activo vinculado'
+        });
+      }
+      cita = await Appointment.findOne({ _id: req.params.id, profesional: profesional._id })
+        .populate('paciente', 'nombre apellido telefono email')
+        .populate('profesional', 'nombre apellido especialidad')
+        .populate('servicio', 'nombre precioCentavos duracionMinutos');
+    } else {
+      cita = await poblarCita(req.params.id);
+    }
     if (!cita) {
       return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
     }
@@ -227,21 +317,34 @@ export async function crearCita(req, res, next) {
     }
     // RN-12: la hora de fin se calcula con la duración del servicio.
     const finDt = new Date(inicioDt.getTime() + servicio.duracionMinutos * 60000);
-    const disp = await validarDisponibilidad(profesionalId, inicioDt, finDt);
-    if (!disp.ok) return res.status(400).json({ ok: false, message: disp.mensaje });
-    const cita = new Appointment({
-      paciente: pacienteId,
-      profesional: profesionalId,
-      servicio: servicioId,
-      inicio: inicioDt,
-      fin: finDt,
-      precioCentavos: servicio.precioCentavos,
-      duracionMinutos: servicio.duracionMinutos,
-      estado: 'PENDIENTE',
-      observaciones: observaciones || ''
+
+    const resultado = await conBloqueo(String(profesionalId), async () => {
+      const disp = await validarDisponibilidad(profesionalId, inicioDt, finDt);
+      if (!disp.ok) return { status: 400, message: disp.mensaje };
+      const cita = new Appointment({
+        paciente: pacienteId,
+        profesional: profesionalId,
+        servicio: servicioId,
+        inicio: inicioDt,
+        fin: finDt,
+        precioCentavos: servicio.precioCentavos,
+        duracionMinutos: servicio.duracionMinutos,
+        estado: 'PENDIENTE',
+        observaciones: observaciones || ''
+      });
+      await cita.save();
+      const carrera = await hayTraslapeAnterior(profesionalId, inicioDt, finDt, cita._id);
+      if (carrera) {
+        await Appointment.deleteOne({ _id: cita._id });
+        return { status: 409, message: 'El profesional ya tiene una cita en ese horario' };
+      }
+      return { status: 201, cita };
     });
-    await cita.save();
-    res.status(201).json({ ok: true, cita: await poblarCita(cita._id) });
+
+    if (resultado.status !== 201) {
+      return res.status(resultado.status).json({ ok: false, message: resultado.message });
+    }
+    res.status(201).json({ ok: true, cita: await poblarCita(resultado.cita._id) });
   } catch (e) {
     next(e);
   }
@@ -321,29 +424,53 @@ export async function actualizarCita(req, res, next) {
       inicioFinal = inicioDt;
     }
     const finFinal = new Date(inicioFinal.getTime() + duracionFinal * 60000);
+    const profesionalFinal = profesionalCambio ? profesionalId : cita.profesional;
     const cambioHorario = inicio !== undefined || profesionalCambio || servicioCambio;
-    if (cambioHorario) {
-      const disp = await validarDisponibilidad(
-        profesionalCambio ? profesionalId : cita.profesional,
-        inicioFinal,
-        finFinal,
-        cita._id
-      );
-      if (!disp.ok) return res.status(400).json({ ok: false, message: disp.mensaje });
-    }
 
-    if (pacienteId !== undefined) cita.paciente = pacienteId;
-    if (profesionalId !== undefined) cita.profesional = profesionalId;
-    if (servicioCambio) {
-      cita.servicio = servicioId;
-      cita.precioCentavos = servicio.precioCentavos;
-      cita.duracionMinutos = servicio.duracionMinutos;
+    const resultado = await conBloqueo(String(profesionalFinal), async () => {
+      if (cambioHorario) {
+        const disp = await validarDisponibilidad(profesionalFinal, inicioFinal, finFinal, cita._id);
+        if (!disp.ok) return { status: 400, message: disp.mensaje };
+      }
+
+      const anterior = {
+        paciente: cita.paciente,
+        profesional: cita.profesional,
+        servicio: cita.servicio,
+        inicio: cita.inicio,
+        fin: cita.fin,
+        precioCentavos: cita.precioCentavos,
+        duracionMinutos: cita.duracionMinutos,
+        observaciones: cita.observaciones
+      };
+
+      if (pacienteId !== undefined) cita.paciente = pacienteId;
+      if (profesionalId !== undefined) cita.profesional = profesionalId;
+      if (servicioCambio) {
+        cita.servicio = servicioId;
+        cita.precioCentavos = servicio.precioCentavos;
+        cita.duracionMinutos = servicio.duracionMinutos;
+      }
+      if (inicio !== undefined) cita.inicio = inicioFinal;
+      cita.fin = finFinal;
+      if (observaciones !== undefined) cita.observaciones = observaciones;
+      // El estado se conserva: reprogramar ya no cambia el estado.
+      await cita.save();
+
+      if (cambioHorario) {
+        const carrera = await hayTraslapeAnterior(profesionalFinal, inicioFinal, finFinal, cita._id);
+        if (carrera) {
+          Object.assign(cita, anterior);
+          await cita.save();
+          return { status: 409, message: 'El profesional ya tiene una cita en ese horario' };
+        }
+      }
+      return { status: 200, cita };
+    });
+
+    if (resultado.status !== 200) {
+      return res.status(resultado.status).json({ ok: false, message: resultado.message });
     }
-    if (inicio !== undefined) cita.inicio = inicioFinal;
-    cita.fin = finFinal;
-    if (observaciones !== undefined) cita.observaciones = observaciones;
-    // El estado se conserva: reprogramar ya no cambia el estado.
-    await cita.save();
     res.json({ ok: true, cita: await poblarCita(cita._id) });
   } catch (e) {
     next(e);
@@ -353,6 +480,10 @@ export async function actualizarCita(req, res, next) {
 // Atender solicitud: convertir en cita a partir de un paciente ya registrado.
 // Body: { pacienteId, profesionalId, servicioId?, inicio, observaciones? }
 // El servicio, si no se indica, se toma de la propia solicitud.
+//
+// Sin transacciones (MongoDB standalone): la cita se inserta primero; el índice
+// único parcial de solicitudOrigen impide duplicados y el update condicional
+// PENDIENTE→ATENDIDA confirma la operación. Si algo falla, se compensa.
 export async function atenderSolicitud(req, res, next) {
   try {
     const { solicitudId } = req.params;
@@ -366,12 +497,15 @@ export async function atenderSolicitud(req, res, next) {
     if (!idValido(pacienteId) || !idValido(profesionalId)) {
       return res.status(400).json({ ok: false, message: 'IDs inválidos' });
     }
+    if (observaciones !== undefined && typeof observaciones !== 'string') {
+      return res.status(400).json({ ok: false, message: 'observaciones debe ser texto' });
+    }
     const solicitud = await AppointmentRequest.findById(solicitudId);
     if (!solicitud) {
       return res.status(404).json({ ok: false, message: 'Solicitud no encontrada' });
     }
     if (solicitud.estado !== 'PENDIENTE') {
-      return res.status(400).json({ ok: false, message: 'Solo se pueden atender solicitudes PENDIENTES' });
+      return res.status(409).json({ ok: false, message: 'La solicitud ya fue atendida o rechazada' });
     }
     const servicioFinalId = servicioId || solicitud.servicio;
     if (!servicioFinalId) {
@@ -401,24 +535,78 @@ export async function atenderSolicitud(req, res, next) {
       return res.status(400).json({ ok: false, message: 'Servicio no disponible' });
     }
     const finDt = new Date(inicioDt.getTime() + servicio.duracionMinutos * 60000);
-    const disp = await validarDisponibilidad(profesionalId, inicioDt, finDt);
-    if (!disp.ok) return res.status(400).json({ ok: false, message: disp.mensaje });
-    const cita = new Appointment({
-      paciente: paciente._id,
-      profesional: profesionalId,
-      servicio: servicioFinalId,
-      inicio: inicioDt,
-      fin: finDt,
-      precioCentavos: servicio.precioCentavos,
-      duracionMinutos: servicio.duracionMinutos,
-      estado: 'PENDIENTE',
-      observaciones: observaciones || '',
-      solicitudOrigen: solicitudId
+
+    const resultado = await conBloqueo(String(profesionalId), async () => {
+      // La solicitud pudo ser atendida/rechazada mientras esperaba el bloqueo.
+      const estadoActual = await AppointmentRequest.findById(solicitudId).select('estado');
+      if (!estadoActual || estadoActual.estado !== 'PENDIENTE') {
+        return { status: 409, message: 'La solicitud ya fue atendida o rechazada' };
+      }
+      const disp = await validarDisponibilidad(profesionalId, inicioDt, finDt);
+      if (!disp.ok) return { status: 400, message: disp.mensaje };
+
+      const cita = new Appointment({
+        paciente: paciente._id,
+        profesional: profesionalId,
+        servicio: servicioFinalId,
+        inicio: inicioDt,
+        fin: finDt,
+        precioCentavos: servicio.precioCentavos,
+        duracionMinutos: servicio.duracionMinutos,
+        estado: 'PENDIENTE',
+        observaciones: observaciones || '',
+        solicitudOrigen: solicitudId
+      });
+
+      try {
+        await cita.save();
+      } catch (e) {
+        if (e.code === 11000) {
+          const existente = await Appointment.findOne({ solicitudOrigen: solicitudId }).select('_id');
+          if (existente) {
+            await repararEnlaceSolicitud(solicitudId, existente._id, req.usuario?._id);
+            return { status: 409, message: 'La solicitud ya fue atendida' };
+          }
+        }
+        throw e;
+      }
+
+      // Carrera de agenda: se compensa la cita recién insertada.
+      const carrera = await hayTraslapeAnterior(profesionalId, inicioDt, finDt, cita._id);
+      if (carrera) {
+        await Appointment.deleteOne({ _id: cita._id });
+        return { status: 409, message: 'El profesional ya tiene una cita en ese horario' };
+      }
+
+      // Update condicional: solo una petición puede pasar PENDIENTE→ATENDIDA.
+      const actualizada = await AppointmentRequest.findOneAndUpdate(
+        { _id: solicitudId, estado: 'PENDIENTE' },
+        {
+          $set: {
+            estado: 'ATENDIDA',
+            citaGenerada: cita._id,
+            atendidaPor: req.usuario?._id || null,
+            fechaAtencion: new Date()
+          }
+        },
+        { new: true }
+      );
+      if (!actualizada) {
+        // Otra petición ganó la carrera o la rechazó: se elimina la cita creada.
+        await Appointment.deleteOne({ _id: cita._id });
+        return { status: 409, message: 'La solicitud ya fue atendida o rechazada' };
+      }
+      return { status: 201, cita, solicitud: actualizada };
     });
-    await cita.save();
-    solicitud.estado = 'ATENDIDA';
-    await solicitud.save();
-    res.status(201).json({ ok: true, cita: await poblarCita(cita._id), solicitud });
+
+    if (resultado.status !== 201) {
+      return res.status(resultado.status).json({ ok: false, message: resultado.message });
+    }
+    res.status(201).json({
+      ok: true,
+      cita: await poblarCita(resultado.cita._id),
+      solicitud: resultado.solicitud
+    });
   } catch (e) {
     next(e);
   }
@@ -437,10 +625,29 @@ export async function cambiarEstadoCita(req, res, next) {
         message: `Estado inválido. Válidos: ${ESTADOS_CITA.join(', ')}`
       });
     }
-    const cita = await Appointment.findById(req.params.id);
-    if (!cita) {
-      return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
+
+    let cita;
+    if (req.usuario?.rol === 'PROFESIONAL') {
+      if (estado !== 'COMPLETADA') {
+        return res.status(403).json({
+          ok: false,
+          message: 'El profesional solo puede completar sus propias citas'
+        });
+      }
+      const profesional = await profesionalDelUsuario(req.usuario);
+      if (!profesional) {
+        return res.status(403).json({
+          ok: false,
+          message: 'El usuario PROFESIONAL no tiene un profesional activo vinculado'
+        });
+      }
+      cita = await Appointment.findOne({ _id: req.params.id, profesional: profesional._id });
+      if (!cita) return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
+    } else {
+      cita = await Appointment.findById(req.params.id);
+      if (!cita) return res.status(404).json({ ok: false, message: 'Cita no encontrada' });
     }
+
     const error = validarTransicion(cita.estado, estado);
     if (error) return res.status(400).json({ ok: false, message: error });
     // RN-27: no se cancela una cita con pagos válidos; primero se anulan.

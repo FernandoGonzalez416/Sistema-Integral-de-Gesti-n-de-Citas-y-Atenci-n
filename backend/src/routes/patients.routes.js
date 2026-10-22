@@ -11,13 +11,17 @@ import { permitir } from '../middlewares/roles.js';
 
 const router = Router();
 
-// Todas requieren autenticación y rol ADMINISTRADOR o RECEPCIONISTA.
-router.use(auth, permitir('ADMINISTRADOR', 'RECEPCIONISTA'));
+router.use(auth);
 
-router.get('/', listarPacientes);
-router.get('/:id', obtenerPaciente);
-router.post('/', crearPaciente);
-router.put('/:id', actualizarPaciente);
-router.patch('/:id/estado', cambiarEstadoPaciente);
+// PROFESIONAL solo lee los datos básicos de los pacientes con cita con él;
+// el controlador aplica ese filtro. La gestión sigue siendo de ADMIN/RECEP.
+const lectura = permitir('ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL');
+const gestion = permitir('ADMINISTRADOR', 'RECEPCIONISTA');
+
+router.get('/', lectura, listarPacientes);
+router.get('/:id', lectura, obtenerPaciente);
+router.post('/', gestion, crearPaciente);
+router.put('/:id', gestion, actualizarPaciente);
+router.patch('/:id/estado', gestion, cambiarEstadoPaciente);
 
 export default router;

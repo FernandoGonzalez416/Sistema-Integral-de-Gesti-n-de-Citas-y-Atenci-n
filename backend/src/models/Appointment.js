@@ -26,6 +26,12 @@ const appointmentSchema = new mongoose.Schema(
 appointmentSchema.index({ profesional: 1, inicio: 1 });
 appointmentSchema.index({ paciente: 1, inicio: 1 });
 appointmentSchema.index({ estado: 1 });
+// B4: una solicitud solo puede originar UNA cita. El índice es parcial para no
+// afectar a las citas creadas directamente (solicitudOrigen null/ausente).
+appointmentSchema.index(
+  { solicitudOrigen: 1 },
+  { unique: true, partialFilterExpression: { solicitudOrigen: { $type: 'objectId' } } }
+);
 
 // Estados exigidos por RF-07. El estado financiero (PENDIENTE/PARCIAL/PAGADO)
 // es independiente y se calcula a partir de los pagos válidos.
