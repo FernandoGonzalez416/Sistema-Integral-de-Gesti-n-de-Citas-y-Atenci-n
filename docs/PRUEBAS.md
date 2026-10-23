@@ -1670,3 +1670,30 @@ Capturas en `C:\Users\ggonz\AppData\Local\Temp\sigca-ui-b7` (no versionadas).
 - La corrida de Postman no se repitió porque B7 no cambia contratos de API (solo añade pruebas y corrige una vista).
 - La verificación visual cubre los flujos de la sección 16 y las pantallas históricas nombradas; no sustituye una revisión manual exhaustiva de todos los estilos.
 - Los datos de la UI son ficticios y viven en `sigca_ui_b7`, eliminada al terminar.
+
+## 2026-10-21 — Publicación e integración de B7
+
+Comprobaciones previas al `push` (rama `feat/b7-entrega`, HEAD `4d4c179`):
+
+| Comprobación | Comando / revisión | Resultado |
+|---|---|---|
+| Base de la rama | `git merge-base --is-ancestor f0ca46d feat/b7-entrega` | **ok** (exit 0): B7 sale de `integracion` en `f0ca46d`, después de B6 |
+| Rama publicada | `git rev-parse origin/feat/b7-entrega` | `4d4c179`, igual que la rama local |
+| Orden de rutas fijas | `backend/src/routes/content.routes.js` | sin cambios respecto a B6: `GET/PUT /sitio` y `use /carrusel` antes de `GET /:clave` y `PUT /:id` |
+| Sección 16 | `node --test tests/b7.test.js` | **16/16** pruebas, 22 pasos de la sección 16 |
+| Regresión backend | `npm test` | **152/152**, 19 suites, 0 fallos |
+| Build frontend | `npm run build` | **135 módulos**, verde (aviso de chunk > 500 kB ya conocido) |
+
+Publicación e integración:
+
+```
+git push -u origin feat/b7-entrega     # nueva rama remota en 4d4c179
+git switch integracion && git pull --ff-only origin integracion   # ya al día en f0ca46d
+git merge --no-ff feat/b7-entrega -m "merge(b7): seccion 16 e integridad de datos"
+git push origin integracion            # f0ca46d..285fc13
+```
+
+- Merge de integración: **`285fc13`** (`merge(b7): seccion 16 e integridad de datos`), 7 archivos, +990/−12.
+- `origin/integracion` quedó en `285fc13`; `origin/feat/b7-entrega` conserva los 3 commits de B7.
+- Sin conflictos y sin cambios de código adicionales: la revisión no encontró defectos que corregir.
+- Con B7 integrado queda cerrada la **sección 16** del enunciado y la auditoría de las pantallas históricas (pacientes, responsables, materiales, pagos y caja) en Edge headless.

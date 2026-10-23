@@ -208,3 +208,12 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Corrección:** usar `getPaciente(auth.token, pacienteId)` (`GET /api/pacientes/:id`) para cargar el paciente. Solo cambia el import y la llamada.
 - **Verificación:** en Edge headless la cabecera muestra nombre y edad reales, aparece el aviso de menor y la asociación de responsables funciona. **0 errores de consola** y **0 respuestas 5xx** en el recorrido.
 - **Commit relacionado:** `0df5711`.
+
+## 2026-10-21 - merge(b7): publicación e integración en `integracion`
+
+- **Cambio:** se publicó `feat/b7-entrega` y se integró con `--no-ff` en `integracion`.
+- **Verificación previa:** `git merge-base --is-ancestor f0ca46d feat/b7-entrega` → ok (B7 sale de `integracion` en `f0ca46d`, docs de publicación de B6). `content.routes.js` sigue con `/sitio` y `/carrusel` antes de `/:clave` y `/:id`; B7 no tocó rutas ni contratos de API, solo pruebas y una vista.
+- **Regresión:** `npm test` **152/152** (19 suites), `node --test tests/b7.test.js` **16/16** y `npm run build` **135 módulos**, verdes antes del push.
+- **Impacto:** sin cambios de código adicionales ni conflictos. 7 archivos, +990/−12.
+- **Integración:** `git merge --no-ff feat/b7-entrega` → **`285fc13`**, publicado en `origin/integracion` (`f0ca46d..285fc13`). `origin/feat/b7-entrega` conserva los 3 commits de B7.
+- **Cierre:** B1 a B7 quedan completados e integrados; la sección 16 del enunciado y la auditoría de pantallas históricas (pacientes, responsables, materiales, pagos y caja) quedan documentadas en `docs/PRUEBAS.md`.
