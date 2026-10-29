@@ -156,3 +156,170 @@ La cabecera de `/admin/pacientes/:id/responsables` quedaba vacía ("Responsables
 npm test        → tests 152 / pass 152 / fail 0 (19 suites)
 npm run build   → 135 modules transformed · built
 ```
+
+## Cierre 2026-10-27 — historial, comprobante y consulta de pagos
+
+Base `sigca` limpia y resembrada con el conjunto B5 (77 registros). Todas las
+capturas se tomaron en Edge headless (CDP) contra el backend real en
+`http://localhost:3000` y Vite en `http://localhost:5173`.
+
+### `02-pacientes-historial-enlace.png`
+
+- Tabla de pacientes con la acción **Historial** y las fechas en una sola línea,
+  sin desbordar la tarjeta.
+- Verificado con ADMINISTRADOR.
+
+### `02-historial-paciente.png`
+
+- Historial consolidado de un paciente con sus citas y sus pagos reales.
+- Incluye el pago **ANULADO** con motivo y su comprobante.
+- Verificado también con PROFESIONAL: ve el historial clínico pero **no** montos
+  ni pagos (la API responde 403 en `/api/pagos`).
+- 0 errores de consola en ambos roles.
+
+### `03-pagos-lista.png`
+
+- Tabla de pagos de una cita con la columna **Comprobante**, el número
+  (`REC-2026-…`), el estado y las acciones **Ver comprobante** / **Anular**.
+
+### `03-comprobante-pago.png`
+
+- Modal del comprobante de un pago REGISTRADO: número, estado, paciente,
+  servicio, cita, profesional, método, fecha, usuario que registró, caja y total.
+- En modo impresión (`Emulation.setEmulatedMedia: print`) el contenedor queda
+  `hidden`, la hoja `visible` y los botones `display: none`.
+
+### `03-comprobante-anulado.png`
+
+- Comprobante de un pago ANULADO (`REC-2026-000003`, Q250.00) con el bloque rojo
+  de motivo, fecha de anulación y usuario que anuló.
+
+### `04-pagos-consulta.png`
+
+- Consulta global de pagos sin filtros: **10 pagos**, 9 REGISTRADO por
+  **Q1,210.00** y 1 ANULADO por **Q250.00**.
+
+### `04-pagos-filtro-anulado.png`
+
+- Consulta global filtrada por estado ANULADO: 1 pago, con su comprobante y la
+  opción de abrirlo desde la propia tabla.
+- El filtro por método EFECTIVO devuelve 4 pagos por Q700.00 y los filtros de
+  fecha por día coinciden con los pagos del seed.
+
+### Regresión
+
+```
+npm test        → tests 152 / pass 152 / fail 0 (19 suites)
+npm run build   → 138 modules transformed · built
+```
+
+## Cierre 2026-10-28 — capturas del portal y de la administración
+
+21 capturas nuevas en `docs/evidencias/`, tomadas en Edge headless (CDP) contra el
+backend real (`http://localhost:3000`) y Vite (`http://localhost:5173`) sobre la
+base `sigca` con el conjunto B5 (77 registros). **0 errores de consola y 0 respuestas
+5xx** en todo el recorrido; `faltantes: []`, `sinArchivo: []`, `errores: []`.
+
+### Portal público
+
+| Captura | Contenido |
+| --- | --- |
+| `01-portal-inicio.png` | Portada: logotipo, menú, carrusel de 5 diapositivas, accesos, indicadores (4 servicios, 3 áreas, horario), servicios destacados, misión/visión, publicaciones y horarios. |
+| `01-portal-servicios.png` | Catálogo agrupado por área con buscador y filtros; primer servicio expandido mostrando su **imagen real** (`/servicios/consulta-odontologica.svg`). |
+| `01-portal-contenido.png` | Contenido educativo y corporativo con las publicaciones sembradas y su tipo (ARTÍCULO, VIDEO, DOCUMENTO). |
+| `01-portal-contacto.png` | Modal **Contacto** (`#cm-titulo`) con nombre, correo, teléfono, motivo y mensaje. |
+| `01-portal-solicitud.png` | Modal **Solicitar cita** (`#ct-titulo`) con servicio preseleccionado, datos del paciente y fecha. |
+
+Las 5 imágenes de servicio eran URLs a un dominio inexistente
+(`https://ejemplo.sigca/...`) y la app caía al placeholder. Se sustituyeron por
+SVG locales en `frontend/public/servicios/` (mismo estilo que el carrusel) y se
+actualizaron los 5 documentos de la colección `services`. Verificado en el DOM:
+`4/4` miniaturas con `naturalWidth = 200`.
+
+### Administración
+
+| Captura | Contenido |
+| --- | --- |
+| `05-admin-panel.png` | Panel de gestión con los accesos por módulo. |
+| `05-admin-citas.png` | Citas con paciente, profesional, servicio, fecha, estado y acciones. |
+| `05-admin-solicitudes.png` | Solicitudes del portal con estado y conversión a cita. |
+| `05-admin-calendario.png` | Calendario de citas con las 15 citas del seed y leyenda de estados. |
+| `05-admin-pacientes.png` | Pacientes con filtros, acciones e **Historial**. |
+| `05-admin-responsables.png` | Responsables con email y dirección completos. |
+| `05-admin-materiales.png` | Materiales educativos con tipo y enlace. |
+| `05-admin-profesionales.png` | Profesionales con su usuario vinculado. |
+| `05-admin-usuarios.png` | Usuarios por rol. |
+| `05-admin-servicios.png` | Servicios con precio, duración, categoría y estado. |
+| `05-admin-contenidos.png` | Contenido institucional, carrusel y publicaciones. |
+| `05-admin-mensajes.png` | Bandeja de mensajes de contacto (estado vacío real: 0 mensajes en el seed). |
+| `05-admin-paciente-responsables.png` | Ficha de responsables de un paciente con el aviso de menor. |
+| `05-admin-paciente-materiales.png` | Materiales asignados a un paciente. |
+| `05-admin-caja-abierta.png` | Caja ABIERTA de `recepcion.demo` con monto inicial e ingresos. |
+| `05-admin-caja-cerrada.png` | Caja CERRADA de `recepcion2.demo` con el resumen del cierre. |
+
+### Nota sobre el método
+
+Durante la primera tanda, `/admin/calendario` salía teñido de naranja. Se
+inspeccionó el DOM y la capa era `div#coverTemperature` (`z-index: 99999999`,
+`opacity: 0.3`), **inyectada por una extensión del navegador**, no por la
+aplicación: no aparece ni en `src/`, ni en `frontend/public/`, ni en
+`node_modules`. Las capturas definitivas se tomaron con
+`--disable-extensions --disable-component-extensions-with-background-pages`, y el
+script verifica en cada captura que `#coverTemperature` no exista
+(`overlayNavegador: false` en las 21).
+
+## Verificación final 2026-10-28
+
+### Suite automatizada (`npm test`)
+
+```
+tests 152
+suites 19
+pass 152
+fail 0
+cancelled 0
+skipped 0
+todo 0
+```
+
+Incluye `tests/b7.test.js` (16 pruebas), que ejecuta el recorrido completo de la
+**sección 16** del enunciado sobre la base desechable `sigca_test_b7`.
+
+### Build de producción (`npm run build`)
+
+```
+vite v5.4.21 building for production...
+✓ 138 modules transformed.
+dist/assets/index-D412tKY-.css   137.55 kB │ gzip:  26.82 kB
+dist/assets/index-azqu-Vyk.js    605.66 kB │ gzip: 189.26 kB
+✓ built in 6.14s
+```
+
+Aviso no bloqueante de Vite: el *chunk* principal supera los 500 kB (sin
+code-splitting). No impide la entrega.
+
+### Colección Postman
+
+- Base desechable `sigca_postman_cierre` (puerto 3011) sembrada con `seed:demo`
+  (77 registros) y eliminada al terminar; `sigca` sin cambios.
+- **131 peticiones, 196 pruebas, 0 fallidas, 0 respuestas 5xx.** Todas las
+  respuestas fueron 2xx, incluidos los códigos de error esperados (401/403/404/
+  409) que la colección provoca a propósito.
+- Se ejecutó con un emulador fiel (sustitución de `{{variables}}`, tokens,
+  `pm.test`/`pm.expect` y `pm.response`); no sustituye una corrida desde la app
+  de Postman, que no está disponible en el entorno.
+
+### `.gitignore`
+
+```
+git check-ignore -v
+.gitignore:2:node_modules/  backend/node_modules
+.gitignore:2:node_modules/  frontend/node_modules
+.gitignore:5:dist/          frontend/dist
+.gitignore:9:.env           backend/.env
+```
+
+`backend/.env.example` y `frontend/.env.example` sí se versionan (sin secretos).
+`docs/evidencias/` se versiona a propósito: es entregable.
+
+

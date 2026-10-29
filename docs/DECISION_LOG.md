@@ -217,3 +217,12 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Impacto:** sin cambios de código adicionales ni conflictos. 7 archivos, +990/−12.
 - **Integración:** `git merge --no-ff feat/b7-entrega` → **`285fc13`**, publicado en `origin/integracion` (`f0ca46d..285fc13`). `origin/feat/b7-entrega` conserva los 3 commits de B7.
 - **Cierre:** B1 a B7 quedan completados e integrados; la sección 16 del enunciado y la auditoría de pantallas históricas (pacientes, responsables, materiales, pagos y caja) quedan documentadas en `docs/PRUEBAS.md`.
+
+## 2026-10-28 - cierre del proyecto: funcionalidad final, evidencias y entrega
+
+- **Cambios:** historial por paciente (`PacienteHistorialView`), comprobante de pago visible e imprimible y consulta global de pagos con filtros y resumen en el backend. README como entregable (integrantes, MongoDB, estructura y entregables).
+- **Base de datos:** `sigca` limpia y resembrada con el conjunto B5 (**77 registros exactos**). El seed sigue siendo idempotente y no destructivo.
+- **Activos:** las 5 imágenes de servicio pasaron de URLs a un dominio inexistente a SVG locales en `frontend/public/servicios/`.
+- **Evidencias:** **28 capturas** en `docs/evidencias/` (7 de los pasos 2-4 y 21 nuevas del portal y la administración), generadas con un script reproducible en Edge headless/CDP. Se detectó que el tinte del calendario lo inyectaba una extensión del navegador (`#coverTemperature`), no la aplicación.
+- **Verificación:** `npm test` **152/152** (19 suites), `npm run build` **138 módulos**, colección Postman **131 peticiones / 196 pruebas / 0 fallidas / 0 respuestas 5xx** sobre la base desechable `sigca_postman_cierre` (eliminada al terminar). `.gitignore` confirmado con `git check-ignore` (`node_modules`, `dist`, `.env`).
+- **Impacto:** sin dependencias nuevas y sin cambios de contrato en la API; `sigca` intacta tras las pruebas.

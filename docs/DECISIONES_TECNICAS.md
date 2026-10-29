@@ -412,3 +412,43 @@ Ver `docs/DECISION_LOG.md` para el formato detallado de cada entrada. Aquí solo
 - Postman: **131 peticiones / 196 pruebas / 0 fallos / 0 respuestas 5xx**, por emulación contra `app.js` real y `sigca_postman_b6`. Requiere BD limpia por ejecución por el horario del sábado ya existente.
 - UI en Edge headless sobre `sigca_ui_b6`: portal, configuración, carrusel (alta/edición/estado/baja), publicaciones, horarios, servicios, contacto, bandeja, badge, filtros, estado vacío, guardia de recepción, ruta directa y menú móvil a 390×844.
 - Sin dependencias nuevas y sin tocar la BD `sigca` ni la corrección de calendario/checkboxes.
+
+## 2026-10-27 — Cierre del proyecto: alcance funcional y evidencias
+
+### Base de datos de demostración
+
+- Se partió de una base **limpia** y se resembró `sigca` con el conjunto B5: **77 registros exactos**. El reinicio del backend repuebla lo que crea el arranque (20 publicaciones, 5 diapositivas, 8 contenidos institucionales y 5 horarios).
+- El seed se mantiene **no destructivo e idempotente**; una segunda corrida reporta 0/77.
+
+### Historial por paciente
+
+- Se resolvió como **vista nueva** (`PacienteHistorialView.vue`) que **reutiliza la API existente** (`GET /api/citas?paciente=`, `GET /api/pagos?paciente=`) en lugar de crear un endpoint específico. Menos superficie nueva y el backend sigue siendo la autoridad.
+- El rol PROFESIONAL ve el historial clínico pero **no los montos ni los pagos**; la API responde **403** en `/api/pagos`. La vista oculta las columnas financieras con `auth.esProfesional`.
+
+### Comprobante imprimible
+
+- El modal vive dentro de `PagosView.vue`: no se creó una vista aparte porque el comprobante siempre se consulta en el contexto de un pago.
+- La impresión usa `window.print()` + `@media print` global: se oculta toda la interfaz y se deja visible solo `.rec-hoja`. Así se imprime el recibo sin menús ni botones.
+- `GET /api/pagos/:id/comprobante` se enriqueció con servicio, profesional y usuarios (registró/anuló) para cubrir el RF-10 sin llamadas adicionales desde el frontend.
+
+### Consulta global de pagos
+
+- Se **embebió en `PagosView.vue`** en lugar de crear una vista nueva: comparte el modal de comprobante y el estado de sesión.
+- Los **totales se calculan en el backend con `aggregate`** sobre todo el filtro, no sobre la página visible. Evita que el resumen cambie al paginar.
+- `aggregate` no aplica el casting de Mongoose, así que los `ObjectId` de `cita`, `paciente` y `caja` se convierten explícitamente antes del `$match`.
+- El filtro `hasta` es **inclusivo por día**: `AAAA-MM-DD` se interpreta hasta `23:59:59.999` local. Con `new Date('2026-10-23')` se perdían los pagos de ese día.
+- Fechas y `ObjectId` inválidos responden **400** con mensaje, en lugar de 500 o resultados vacíos.
+
+### Estilos
+
+- Las vistas que colisionaban globalmente usan `<style scoped>`. En `PagosView.vue` el bloque de impresión va en un `<style>` global a propósito porque debe afectar a `body` y a elementos teletransportados.
+
+### Evidencias y activos del portal
+
+- Las **imágenes de servicio** del seed apuntaban a `https://ejemplo.sigca/...`, un dominio inexistente: la app caía al placeholder y el navegador registraba errores de red. Se sustituyeron por **SVG locales** en `frontend/public/servicios/`, con el mismo estilo que el carrusel. Ventajas: sin dependencias externas, funcionan sin conexión y el repositorio queda autocontenido.
+- Las capturas se generan con un **script reproducible** sobre Edge headless/CDP (perfil temporal, puerto libre dinámico, timeout por comando) en lugar de recortes manuales, y el script comprueba en cada captura que no haya capas ajenas a la aplicación.
+- La capa naranja que teñía el calendario era `div#coverTemperature`, inyectada por una **extensión del navegador**. Se confirmó que no existe en `src/`, `public/` ni `node_modules` y se desactivaron extensiones para las capturas definitivas.
+
+### Alcance del cierre
+
+- No se añadieron dependencias. Todo el cierre se hizo sobre la API y las vistas existentes, con verificación en Edge headless (CDP) y datos reales de MongoDB.
