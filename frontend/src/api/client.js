@@ -109,6 +109,7 @@ export const getPagos = (token, params = {}) => {
 };
 export const getSaldoCita = (token, citaId) => authFetch(token, `/api/citas/${citaId}/saldo`);
 export const getPagosCita = (token, citaId) => authFetch(token, `/api/citas/${citaId}/pagos`);
+export const getComprobantePago = (token, id) => authFetch(token, `/api/pagos/${id}/comprobante`);
 export const createPago = (token, datos) => authFetch(token, '/api/pagos', { method: 'POST', body: JSON.stringify(datos) });
 export const anularPago = (token, id, motivoAnulacion) => authFetch(token, `/api/pagos/${id}/anular`, { method: 'PATCH', body: JSON.stringify({ motivoAnulacion }) });
 

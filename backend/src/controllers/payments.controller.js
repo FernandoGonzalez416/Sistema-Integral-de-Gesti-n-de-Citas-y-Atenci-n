@@ -16,6 +16,28 @@ function esAdmin(req) {
   return req.usuario?.rol === 'ADMINISTRADOR';
 }
 
+// Convierte un filtro de fecha. Si llega solo la fecha (AAAA-MM-DD), "desde"
+// empieza a las 00:00 y "hasta" termina a las 23:59:59.999 del día local.
+function parseFechaFiltro(valor, finDelDia) {
+  const texto = String(valor ?? '').trim();
+  if (!texto) return null;
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
+  if (partes) {
+    const [, anio, mes, dia] = partes;
+    return new Date(
+      Number(anio),
+      Number(mes) - 1,
+      Number(dia),
+      finDelDia ? 23 : 0,
+      finDelDia ? 59 : 0,
+      finDelDia ? 59 : 0,
+      finDelDia ? 999 : 0
+    );
+  }
+  const fecha = new Date(texto);
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
 // Margen para relojes desfasados al validar la fecha del pago.
 const TOLERANCIA_FUTURO_MS = 5 * 60 * 1000;
 
@@ -23,18 +45,35 @@ export async function listarPagos(req, res, next) {
   try {
     const { cita, paciente, caja, metodo, estado, desde, hasta } = req.query;
     const filtro = {};
-    if (cita) filtro.cita = cita;
-    if (paciente) filtro.paciente = paciente;
-    if (caja) filtro.caja = caja;
+    for (const [campo, valor] of Object.entries({ cita, paciente, caja })) {
+      if (!valor) continue;
+      if (!idValido(valor)) {
+        return res.status(400).json({ ok: false, message: `Filtro ${campo} inválido` });
+      }
+      filtro[campo] = valor;
+    }
     if (metodo) filtro.metodo = metodo;
     if (estado) filtro.estado = estado;
     if (desde || hasta) {
+      const fechaDesde = desde ? parseFechaFiltro(desde, false) : null;
+      const fechaHasta = hasta ? parseFechaFiltro(hasta, true) : null;
+      if ((desde && !fechaDesde) || (hasta && !fechaHasta)) {
+        return res.status(400).json({ ok: false, message: 'Rango de fechas inválido' });
+      }
       filtro.fecha = {};
-      if (desde) filtro.fecha.$gte = new Date(desde);
-      if (hasta) filtro.fecha.$lte = new Date(hasta);
+      if (fechaDesde) filtro.fecha.$gte = fechaDesde;
+      if (fechaHasta) filtro.fecha.$lte = fechaHasta;
     }
+
+    // `aggregate` no aplica el casting de Mongoose: los ObjectId se convierten
+    // explícitamente para que los totales usen exactamente el mismo filtro.
+    const filtroTotales = { ...filtro };
+    for (const campo of ['cita', 'paciente', 'caja']) {
+      if (filtroTotales[campo]) filtroTotales[campo] = new mongoose.Types.ObjectId(filtroTotales[campo]);
+    }
+
     const { page, limit, skip } = paginacion(req.query);
-    const [pagos, total] = await Promise.all([
+    const [pagos, total, agrupado] = await Promise.all([
       Payment.find(filtro)
         .populate('paciente', 'nombre apellido')
         .populate('cita', 'inicio estado precioCentavos')
@@ -43,9 +82,30 @@ export async function listarPagos(req, res, next) {
         .sort({ fecha: -1 })
         .skip(skip)
         .limit(limit),
-      Payment.countDocuments(filtro)
+      Payment.countDocuments(filtro),
+      Payment.aggregate([
+        { $match: filtroTotales },
+        {
+          $group: {
+            _id: '$estado',
+            cantidad: { $sum: 1 },
+            montoCentavos: { $sum: '$montoCentavos' }
+          }
+        }
+      ])
     ]);
-    res.json({ ok: true, pagos, total, page, limit });
+
+    // RF-10/RN-19: solo los pagos REGISTRADO suman; los ANULADO se informan aparte.
+    const resumen = {
+      registrado: { cantidad: 0, montoCentavos: 0 },
+      anulado: { cantidad: 0, montoCentavos: 0 }
+    };
+    for (const fila of agrupado) {
+      const clave = fila._id === 'ANULADO' ? 'anulado' : 'registrado';
+      resumen[clave] = { cantidad: fila.cantidad, montoCentavos: fila.montoCentavos };
+    }
+
+    res.json({ ok: true, pagos, total, page, limit, resumen });
   } catch (e) {
     next(e);
   }
@@ -80,8 +140,22 @@ export async function obtenerComprobantePago(req, res, next) {
     await emitirComprobante(pago);
     const comprobante = await Receipt.findOne({ pago: pago._id })
       .populate('paciente', 'nombre apellido telefono email')
-      .populate('cita', 'inicio fin estado precioCentavos')
-      .populate('pago', 'montoCentavos metodo fecha estado');
+      .populate({
+        path: 'cita',
+        select: 'inicio fin estado precioCentavos servicio profesional',
+        populate: [
+          { path: 'servicio', select: 'nombre duracionMinutos' },
+          { path: 'profesional', select: 'nombre apellido' }
+        ]
+      })
+      .populate({
+        path: 'pago',
+        select: 'montoCentavos metodo fecha estado notas motivoAnulacion anuladoEn registradoPor anuladoPor',
+        populate: [
+          { path: 'registradoPor', select: 'nombre email' },
+          { path: 'anuladoPor', select: 'nombre email' }
+        ]
+      });
     res.json({ ok: true, comprobante });
   } catch (e) {
     next(e);

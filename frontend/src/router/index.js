@@ -8,6 +8,7 @@ import ContenidoView from '../views/ContenidoView.vue';
 import PacientesView from '../views/PacientesView.vue';
 import ResponsablesView from '../views/ResponsablesView.vue';
 import PacienteResponsablesView from '../views/PacienteResponsablesView.vue';
+import PacienteHistorialView from '../views/PacienteHistorialView.vue';
 import MaterialesView from '../views/MaterialesView.vue';
 import PacienteMaterialesView from '../views/PacienteMaterialesView.vue';
 import PagosView from '../views/PagosView.vue';
@@ -83,6 +84,7 @@ const router = createRouter({
         { path: 'contenidos', name: 'contenidos', component: ContentView, meta: { roles: ['ADMINISTRADOR'] } },
         { path: 'mensajes', name: 'mensajes', component: MensajesView, meta: { roles: ['ADMINISTRADOR'] } },
         { path: 'pacientes', name: 'pacientes', component: PacientesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
+        { path: 'pacientes/:pacienteId/historial', name: 'paciente-historial', component: PacienteHistorialView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
         { path: 'pacientes/:pacienteId/responsables', name: 'paciente-responsables', component: PacienteResponsablesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },
         { path: 'pacientes/:pacienteId/materiales', name: 'paciente-materiales', component: PacienteMaterialesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'PROFESIONAL'] } },
         { path: 'responsables', name: 'responsables', component: ResponsablesView, meta: { roles: ['ADMINISTRADOR', 'RECEPCIONISTA'] } },

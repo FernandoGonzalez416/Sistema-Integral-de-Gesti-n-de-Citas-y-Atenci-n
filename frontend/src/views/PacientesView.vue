@@ -40,32 +40,37 @@
 
     <Card titulo="Lista de pacientes">
       <div v-if="cargando">Cargando…</div>
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Nombre</th><th>Edad</th><th>Teléfono</th>
-            <th v-if="!auth.esProfesional">Email</th>
-            <th v-if="!auth.esProfesional">Inicio proceso</th>
-            <th>Activo</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in pacientes" :key="p._id">
-            <td>{{ p.nombre }} {{ p.apellido }}</td>
-            <td>{{ p.edad }}</td>
-            <td>{{ p.telefono }}</td>
-            <td v-if="!auth.esProfesional">{{ p.email || '—' }}</td>
-            <td v-if="!auth.esProfesional">{{ p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '—' }}</td>
-            <td>{{ p.activo ? 'Sí' : 'No' }}</td>
-            <td>
-              <RouterLink v-if="!auth.esProfesional" :to="`/admin/pacientes/${p._id}/responsables`">Responsables</RouterLink>
-              <RouterLink :to="`/admin/pacientes/${p._id}/materiales`">Materiales</RouterLink>
-              <button v-if="!auth.esProfesional" @click="editar(p)">Editar</button>
-              <button v-if="!auth.esProfesional" @click="toggleActivo(p)">{{ p.activo ? 'Desactivar' : 'Activar' }}</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="tabla-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Edad</th><th>Teléfono</th>
+              <th v-if="!auth.esProfesional">Email</th>
+              <th v-if="!auth.esProfesional">Inicio proceso</th>
+              <th>Activo</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in pacientes" :key="p._id">
+              <td>{{ p.nombre }} {{ p.apellido }}</td>
+              <td>{{ p.edad }}</td>
+              <td>{{ p.telefono }}</td>
+              <td v-if="!auth.esProfesional">{{ p.email || '—' }}</td>
+              <td v-if="!auth.esProfesional" class="fecha">{{ p.fechaInicioProceso ? p.fechaInicioProceso.slice(0, 10) : '—' }}</td>
+              <td>{{ p.activo ? 'Sí' : 'No' }}</td>
+              <td>
+                <div class="acciones">
+                  <RouterLink :to="`/admin/pacientes/${p._id}/historial`">Historial</RouterLink>
+                  <RouterLink v-if="!auth.esProfesional" :to="`/admin/pacientes/${p._id}/responsables`">Responsables</RouterLink>
+                  <RouterLink :to="`/admin/pacientes/${p._id}/materiales`">Materiales</RouterLink>
+                  <button v-if="!auth.esProfesional" @click="editar(p)">Editar</button>
+                  <button v-if="!auth.esProfesional" @click="toggleActivo(p)">{{ p.activo ? 'Desactivar' : 'Activar' }}</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p v-if="pacientes.length === 0">No hay pacientes.</p>
       <div class="paginacion" v-if="total > 0">
         <button @click="pagina--" :disabled="pagina === 1">« Anterior</button>
@@ -169,13 +174,17 @@ async function toggleActivo(p) {
 onMounted(cargar);
 </script>
 
-<style>
-.contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
+<style scoped>
+.contenedor { max-width: 1100px; margin: 2rem auto; font-family: sans-serif; }
 .error { color: red; }
 .ayuda { color: #555; }
 .fila { display: flex; gap: 1rem; }
 .fila > * { flex: 1; }
+.tabla-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+td.fecha, th { white-space: nowrap; }
+.acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; min-width: 400px; }
+.acciones a, .acciones button { white-space: nowrap; }
 .paginacion { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
 </style>
