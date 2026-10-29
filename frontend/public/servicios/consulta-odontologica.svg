@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg-odonto" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b3a5c"/>
+      <stop offset="1" stop-color="#1f8fa5"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg-odonto)"/>
+  <circle cx="600" cy="150" r="220" fill="#fff" opacity="0.06"/>
+  <circle cx="150" cy="520" r="190" fill="#fff" opacity="0.05"/>
+  <g fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M400 165c-55-48-140-30-140 55 0 66 28 112 42 186 9 50 50 55 60 8l24-98c4-20 24-20 28 0l24 98c10 47 51 42 60-8 14-74 42-120 42-186 0-85-85-103-140-55z" fill="#fff" fill-opacity="0.14"/>
+    <path d="M355 300l32 32 62-64" stroke="#8ff0e6" stroke-width="18"/>
+  </g>
+</svg>

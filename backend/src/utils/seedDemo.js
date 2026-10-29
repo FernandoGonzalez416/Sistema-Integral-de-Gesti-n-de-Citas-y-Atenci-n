@@ -573,23 +573,23 @@ export async function seedDemo({ dryRun = false } = {}) {
   // ------------------------------------------------------------------
   const s1 = await aplicar(estado, 's1', Service, () => ({ nombre: 'Consulta odontológica general' }), () => ({
     nombre: 'Consulta odontológica general', descripcion: 'Evaluación y diagnóstico odontológico', precioCentavos: 25000, duracionMinutos: 30, activo: true,
-    imagenUrl: 'https://ejemplo.sigca/servicios/consulta-odontologica.jpg', categoria: 'Odontología', icono: 'diente'
+    imagenUrl: '/servicios/consulta-odontologica.svg', categoria: 'Odontología', icono: 'diente'
   }));
   const s2 = await aplicar(estado, 's2', Service, () => ({ nombre: 'Limpieza dental' }), () => ({
     nombre: 'Limpieza dental', descripcion: 'Profilaxis y pulido dental', precioCentavos: 18000, duracionMinutos: 30, activo: true,
-    imagenUrl: 'https://ejemplo.sigca/servicios/limpieza-dental.jpg', categoria: 'Odontología', icono: 'diente'
+    imagenUrl: '/servicios/limpieza-dental.svg', categoria: 'Odontología', icono: 'diente'
   }));
   const s3 = await aplicar(estado, 's3', Service, () => ({ nombre: 'Sesión de psicología' }), () => ({
     nombre: 'Sesión de psicología', descripcion: 'Consulta psicológica individual', precioCentavos: 30000, duracionMinutos: 45, activo: true,
-    imagenUrl: 'https://ejemplo.sigca/servicios/sesion-psicologia.jpg', categoria: 'Psicología', icono: 'mente'
+    imagenUrl: '/servicios/sesion-psicologia.svg', categoria: 'Psicología', icono: 'mente'
   }));
   const s4 = await aplicar(estado, 's4', Service, () => ({ nombre: 'Control de niño sano' }), () => ({
     nombre: 'Control de niño sano', descripcion: 'Control pediátrico', precioCentavos: 20000, duracionMinutos: 30, activo: true,
-    imagenUrl: 'https://ejemplo.sigca/servicios/control-nino-sano.jpg', categoria: 'Pediatría', icono: 'corazon'
+    imagenUrl: '/servicios/control-nino-sano.svg', categoria: 'Pediatría', icono: 'corazon'
   }));
   const s5 = await aplicar(estado, 's5', Service, () => ({ nombre: 'Evaluación inicial' }), () => ({
     nombre: 'Evaluación inicial', descripcion: 'Entrevista inicial de evaluación', precioCentavos: 15000, duracionMinutos: 30, activo: false,
-    imagenUrl: 'https://ejemplo.sigca/servicios/evaluacion-inicial.jpg', categoria: 'General', icono: 'estetoscopio'
+    imagenUrl: '/servicios/evaluacion-inicial.svg', categoria: 'General', icono: 'estetoscopio'
   }));
   const servicios = { s1, s2, s3, s4, s5 };
 
