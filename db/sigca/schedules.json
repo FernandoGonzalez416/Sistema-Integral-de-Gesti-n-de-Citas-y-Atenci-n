@@ -1,0 +1,82 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb7d"
+    },
+    "dia": 1,
+    "horaInicio": "08:00",
+    "horaFin": "17:00",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.208Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.208Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb80"
+    },
+    "dia": 2,
+    "horaInicio": "08:00",
+    "horaFin": "17:00",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.209Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.209Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb83"
+    },
+    "dia": 3,
+    "horaInicio": "08:00",
+    "horaFin": "17:00",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.211Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.211Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb86"
+    },
+    "dia": 4,
+    "horaInicio": "08:00",
+    "horaFin": "17:00",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.212Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.212Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb89"
+    },
+    "dia": 5,
+    "horaInicio": "08:00",
+    "horaFin": "17:00",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.213Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.213Z"
+    },
+    "__v": 0
+  }
+]

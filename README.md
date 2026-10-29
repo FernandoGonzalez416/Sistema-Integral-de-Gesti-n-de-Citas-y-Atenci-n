@@ -51,7 +51,31 @@ El sistema **no usa datos simulados**: todo se persiste en MongoDB y la API es l
    MONGO_URI=mongodb://localhost:27017/sigca
    ```
 
-4. Para una demo desde cero (opcional, **borra** la base de desarrollo):
+4. **Restaura los datos incluidos** (recomendado). El repositorio trae el export
+   completo de la base de demostración en `db/sigca/`: **18 colecciones y 126
+   documentos** (usuarios, pacientes, citas, pagos, comprobantes, cajas,
+   publicaciones, carrusel, horarios, etc.). No hace falta `mongodump` ni
+   `mongorestore`:
+
+   ```
+   cd backend
+   npm run db:importar      # solo escribe si la base destino está vacía
+   ```
+
+   El importador **se niega a sobrescribir** una base con datos. Si quieres
+   reemplazarla (por ejemplo, tras hacer pruebas), usa:
+
+   ```
+   npm run db:restaurar     # borra esas colecciones y vuelve a importar
+   ```
+
+   Incluye la colección `counters`, así que la numeración de comprobantes
+   continúa donde quedó (`REC-2026-000004`, …). Los índices y los catálogos base
+   se crean/verifican al arrancar el backend.
+
+5. Alternativa: demo desde cero con el seed (opcional, **borra** la base de
+   desarrollo). Genera el mismo conjunto B5 pero sin el historial exacto del
+   export:
 
    ```
    mongosh sigca --quiet --eval "db.dropDatabase()"
@@ -60,6 +84,16 @@ El sistema **no usa datos simulados**: todo se persiste en MongoDB y la API es l
 
    Mongoose crea las colecciones y los índices al arrancar; el seed solo inserta
    los documentos del conjunto B5 que falten.
+
+6. Para volver a generar el export con los datos de tu base actual:
+
+   ```
+   cd backend
+   npm run db:exportar
+   ```
+
+   Escribe un JSON por colección en `db/sigca/` (formato Extended JSON) y
+   actualiza `_meta.json` con los conteos. Es reproducible y legible en Git.
 
 ## Instalación
 
@@ -102,8 +136,11 @@ ProyectoFinalDesarrolloWeb/
 │   │   ├── routes/            # rutas REST /api
 │   │   ├── middlewares/       # autenticación, roles, errores
 │   │   └── utils/             # seeds, comprobantes, saldos
-│   ├── scripts/               # migraciones idempotentes
+│   ├── scripts/               # migraciones y export/import de la base
 │   └── tests/                 # suite node:test
+├── db/
+│   ├── sigca/                 # export JSON de la base de demostración
+│   └── LEEME.md               # cómo restaurar y volver a exportar
 ├── frontend/
 │   └── src/
 │       ├── views/             # portal público y módulos administrativos
@@ -128,6 +165,10 @@ cd backend
 npm run seed:demo:dry   # muestra la base y el plan, sin escribir
 npm run seed:demo       # crea solo lo que falta
 ```
+
+> Para la entrega, la vía recomendada es **restaurar el export incluido**
+> (`npm run db:importar`), que deja exactamente los mismos datos que se
+> verificaron. Ver `db/LEEME.md`.
 
 Carga el conjunto B5: **6 usuarios** (1 administrador, 2 recepcionistas y 3
 profesionales, cada uno vinculado a un usuario `PROFESIONAL` distinto), **10
@@ -244,6 +285,7 @@ Detalle en `docs/PRUEBAS.md` y `docs/EVIDENCIAS.md`.
 - **Colección Postman** (`postman/`) con entorno local listo para importar.
 - **Capturas** del sistema en funcionamiento en `docs/evidencias/`, descritas en
   `docs/EVIDENCIAS.md`.
-- **Base reproducible**: el seed B5 deja 77 registros y el arranque del backend
-  completa el portal (publicaciones, carrusel, contenidos y horarios).
+- **Base reproducible**: export JSON en `db/sigca/` (18 colecciones, 126
+  documentos) con importación de un comando (`npm run db:importar`), además del
+  seed B5 de 77 registros y el completado del portal al arrancar.
 - **Sin secretos**: no se versionan archivos `.env` reales; solo `.env.example`.

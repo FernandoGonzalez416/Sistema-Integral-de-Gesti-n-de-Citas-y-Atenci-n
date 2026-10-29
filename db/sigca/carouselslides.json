@@ -1,0 +1,82 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb76"
+    },
+    "imagenUrl": "/carrusel-1.svg",
+    "titulo": "Atención integral para tu familia",
+    "orden": 1,
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb77"
+    },
+    "imagenUrl": "/carrusel-2.svg",
+    "titulo": "Profesionales calificados",
+    "orden": 2,
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb78"
+    },
+    "imagenUrl": "/carrusel-3.svg",
+    "titulo": "Servicios pensados para ti",
+    "orden": 3,
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb79"
+    },
+    "imagenUrl": "/carrusel-4.svg",
+    "titulo": "Educación en salud",
+    "orden": 4,
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb7a"
+    },
+    "imagenUrl": "/carrusel-5.svg",
+    "titulo": "Reserva tu cita hoy",
+    "orden": 5,
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.206Z"
+    }
+  }
+]

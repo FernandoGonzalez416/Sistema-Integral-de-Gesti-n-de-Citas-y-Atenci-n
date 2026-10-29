@@ -1,0 +1,161 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8757"
+    },
+    "nombre": "Javier Lemos",
+    "telefono": "5551-0201",
+    "email": "javier.lemos@demo.sigca",
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "fechaPreferida": {
+      "$date": "2026-10-28T15:00:00.000Z"
+    },
+    "franja": "",
+    "primeraVez": false,
+    "mensaje": "[seedDemo:sol-01] Quisiera un turno por la mañana.",
+    "estado": "PENDIENTE",
+    "citaGenerada": null,
+    "atendidaPor": null,
+    "fechaAtencion": null,
+    "motivoRechazo": "",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.834Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.834Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba875a"
+    },
+    "nombre": "Carla Méndez",
+    "telefono": "5551-0003",
+    "email": "paciente.carla@demo.sigca",
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "fechaPreferida": null,
+    "franja": "",
+    "primeraVez": false,
+    "mensaje": "[seedDemo:sol-02] Consulta de psicología.",
+    "estado": "ATENDIDA",
+    "citaGenerada": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "atendidaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaAtencion": {
+      "$date": "2026-10-24T16:00:00.000Z"
+    },
+    "motivoRechazo": "",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.836Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.864Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba875d"
+    },
+    "nombre": "Roberto Díaz",
+    "telefono": "5551-0203",
+    "email": "roberto.diaz@demo.sigca",
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "fechaPreferida": {
+      "$date": "2026-10-21T15:00:00.000Z"
+    },
+    "franja": "",
+    "primeraVez": false,
+    "mensaje": "[seedDemo:sol-03] Consulta de limpieza dental.",
+    "estado": "RECHAZADA",
+    "citaGenerada": null,
+    "atendidaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaAtencion": {
+      "$date": "2026-10-21T16:00:00.000Z"
+    },
+    "motivoRechazo": "Sin disponibilidad en la fecha solicitada",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.837Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.837Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8760"
+    },
+    "nombre": "Lucía Fernández",
+    "telefono": "5551-0004",
+    "email": "paciente.lucia@demo.sigca",
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "fechaPreferida": {
+      "$date": "2026-11-02T15:00:00.000Z"
+    },
+    "franja": "",
+    "primeraVez": false,
+    "mensaje": "[seedDemo:sol-04] Primera consulta odontológica.",
+    "estado": "ATENDIDA",
+    "citaGenerada": {
+      "$oid": "6ae004e073a25966b4ba8778"
+    },
+    "atendidaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaAtencion": {
+      "$date": "2026-10-25T16:00:00.000Z"
+    },
+    "motivoRechazo": "",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.839Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.868Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8763"
+    },
+    "nombre": "Marta Ruiz",
+    "telefono": "5551-0205",
+    "email": "marta.ruiz@demo.sigca",
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86ee"
+    },
+    "fechaPreferida": {
+      "$date": "2026-10-29T15:00:00.000Z"
+    },
+    "franja": "",
+    "primeraVez": false,
+    "mensaje": "[seedDemo:sol-05] Control de niño sano.",
+    "estado": "PENDIENTE",
+    "citaGenerada": null,
+    "atendidaPor": null,
+    "fechaAtencion": null,
+    "motivoRechazo": "",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.840Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.840Z"
+    },
+    "__v": 0
+  }
+]

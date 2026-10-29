@@ -1,0 +1,92 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8739"
+    },
+    "titulo": "Cuidado bucal diario",
+    "descripcion": "Guía de cepillado y uso de hilo dental",
+    "tipo": "DOCUMENTO",
+    "url": "https://ejemplo.sigca/materiales/cuidado-bucal.pdf",
+    "archivoNombre": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.819Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.819Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba873c"
+    },
+    "titulo": "Alimentación saludable",
+    "descripcion": "Recomendaciones de alimentación para toda la familia",
+    "tipo": "DOCUMENTO",
+    "url": "https://ejemplo.sigca/materiales/alimentacion.pdf",
+    "archivoNombre": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.821Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.821Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba873f"
+    },
+    "titulo": "Video: cepillado correcto",
+    "descripcion": "Técnica de cepillado paso a paso",
+    "tipo": "VIDEO",
+    "url": "https://ejemplo.sigca/materiales/cepillado.mp4",
+    "archivoNombre": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.822Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.822Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8742"
+    },
+    "titulo": "Higiene de manos",
+    "descripcion": "Pasos para una correcta higiene de manos",
+    "tipo": "DOCUMENTO",
+    "url": "https://ejemplo.sigca/materiales/higiene-manos.pdf",
+    "archivoNombre": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.824Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.824Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8745"
+    },
+    "titulo": "Video: alimentación equilibrada",
+    "descripcion": "Ideas para una alimentación equilibrada en familia",
+    "tipo": "VIDEO",
+    "url": "https://ejemplo.sigca/materiales/alimentacion-equilibrada.mp4",
+    "archivoNombre": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.825Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.825Z"
+    },
+    "__v": 0
+  }
+]

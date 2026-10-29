@@ -1,0 +1,102 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba871b"
+    },
+    "nombre": "Ana",
+    "apellido": "Ríos",
+    "telefono": "5551-0001",
+    "email": "responsable.ana@demo.sigca",
+    "direccion": "Colonia Centro, calle 1, casa 10",
+    "fotoUrl": "",
+    "parentesco": "Madre",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.805Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.805Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba871e"
+    },
+    "nombre": "Marta",
+    "apellido": "Fernández",
+    "telefono": "5551-0104",
+    "email": "responsable.marta@demo.sigca",
+    "direccion": "Colonia Las Flores, avenida 4, casa 22",
+    "fotoUrl": "",
+    "parentesco": "Madre",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.806Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.806Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8721"
+    },
+    "nombre": "Carlos",
+    "apellido": "García",
+    "telefono": "5551-0105",
+    "email": "responsable.carlos@demo.sigca",
+    "direccion": "Barrio El Sol, calle 8, casa 5",
+    "fotoUrl": "",
+    "parentesco": "Padre",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.808Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.808Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8724"
+    },
+    "nombre": "Patricia",
+    "apellido": "Castro",
+    "telefono": "5551-0106",
+    "email": "responsable.patricia@demo.sigca",
+    "direccion": "Residencial Los Pinos, calle 12, casa 3",
+    "fotoUrl": "",
+    "parentesco": "Madre",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.809Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.809Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8727"
+    },
+    "nombre": "Miguel",
+    "apellido": "Castro",
+    "telefono": "5551-0107",
+    "email": "responsable.miguel@demo.sigca",
+    "direccion": "Residencial Los Pinos, calle 12, casa 3",
+    "fotoUrl": "",
+    "parentesco": "Padre",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.810Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.810Z"
+    },
+    "__v": 0
+  }
+]

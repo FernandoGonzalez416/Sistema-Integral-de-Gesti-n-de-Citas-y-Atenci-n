@@ -1,0 +1,282 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87dd"
+    },
+    "numero": "REC-2026-000001",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87a6"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8766"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "montoCentavos": 25000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-19T15:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.905Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.905Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87e2"
+    },
+    "numero": "REC-2026-000002",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87a9"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "montoCentavos": 10000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-19T16:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.908Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.908Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87e7"
+    },
+    "numero": "REC-2026-000003",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87ac"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba876f"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "montoCentavos": 25000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-19T17:00:00.000Z"
+    },
+    "estado": "ANULADO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.910Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.910Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87ec"
+    },
+    "numero": "REC-2026-000004",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87af"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "montoCentavos": 5000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.913Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.913Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87f1"
+    },
+    "numero": "REC-2026-000005",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87b2"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8772"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "montoCentavos": 30000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-23T15:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.915Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.915Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87f6"
+    },
+    "numero": "REC-2026-000006",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87b5"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877b"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "montoCentavos": 10000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.917Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.917Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87fb"
+    },
+    "numero": "REC-2026-000007",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87b8"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870c"
+    },
+    "montoCentavos": 8000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-23T16:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.920Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.920Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8800"
+    },
+    "numero": "REC-2026-000008",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87bb"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870c"
+    },
+    "montoCentavos": 10000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-23T17:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.922Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.922Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8805"
+    },
+    "numero": "REC-2026-000009",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87be"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8787"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8715"
+    },
+    "montoCentavos": 18000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-23T18:00:00.000Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.924Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.924Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba880a"
+    },
+    "numero": "REC-2026-000010",
+    "pago": {
+      "$oid": "6ae004e073a25966b4ba87c1"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8784"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8712"
+    },
+    "montoCentavos": 5000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "estado": "EMITIDO",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.927Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.927Z"
+    },
+    "__v": 0
+  }
+]

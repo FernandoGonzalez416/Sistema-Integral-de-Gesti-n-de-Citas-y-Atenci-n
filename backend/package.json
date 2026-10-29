@@ -16,7 +16,10 @@
     "migrar:relaciones:dry": "node scripts/completarRelaciones.js --dry-run",
     "verificar:solicitudes": "node scripts/verificarDuplicadosSolicitud.js",
     "verificar:solicitudes:dry": "node scripts/verificarDuplicadosSolicitud.js --dry-run",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node --test \"tests/**/*.test.js\"",
+    "db:exportar": "node scripts/exportarBase.js",
+    "db:importar": "node scripts/importarBase.js",
+    "db:restaurar": "node scripts/importarBase.js --force"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

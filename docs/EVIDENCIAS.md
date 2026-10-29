@@ -322,4 +322,23 @@ git check-ignore -v
 `backend/.env.example` y `frontend/.env.example` sí se versionan (sin secretos).
 `docs/evidencias/` se versiona a propósito: es entregable.
 
+## Base de datos incluida (2026-10-28)
+
+Para que la entrega no dependa de la MongoDB de una sola persona, la base se
+exporta a JSON y se versiona en `db/sigca/`.
+
+- `npm run db:exportar` → **18 colecciones, 126 documentos** (72.7 KB, un JSON por
+  colección más `_meta.json`). La colección `contactmessages` está vacía en el
+  seed y no genera archivo.
+- `npm run db:importar` sobre `sigca_import_test` vacía → **126 documentos**.
+- Backend sobre la base importada: login **200**, 4 servicios, 10 pacientes, 15
+  citas, 10 pagos, resumen 9 REGISTRADO por Q1,210.00 y 1 ANULADO por Q250.00, 20
+  publicaciones y comprobante **REC-2026-000004** (el contador se preserva).
+- Segunda importación sobre la misma base → **rechazada** con el aviso de que ya
+  tiene datos; `npm run db:restaurar` reimporta los 126 documentos sin duplicar y
+  sin cambiar los conteos.
+- Base de prueba eliminada al terminar; `sigca` intacta.
+- No se usan `mongodump`/`mongorestore`: el importador reutiliza el driver de
+  MongoDB del proyecto y reconstruye `ObjectId` y `Date` desde Extended JSON.
+
 

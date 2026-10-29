@@ -1,0 +1,356 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87a6"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8766"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba879d"
+    },
+    "montoCentavos": 25000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-19T15:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000001",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-01] Pago total",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.874Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.906Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87a9"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba879d"
+    },
+    "montoCentavos": 10000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-19T16:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000002",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-02] Seña",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.875Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.909Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87ac"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba876f"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba879d"
+    },
+    "montoCentavos": 25000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-19T17:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000003",
+    "estado": "ANULADO",
+    "motivoAnulacion": "Pago duplicado",
+    "anuladoEn": {
+      "$date": "2026-10-19T17:30:00.000Z"
+    },
+    "anuladoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "notas": "[seedDemo:pago-04] Anulado por duplicado",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.876Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.911Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87af"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a0"
+    },
+    "montoCentavos": 5000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "numeroComprobante": "REC-2026-000004",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-05] Saldo abonado en caja abierta",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.878Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.913Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87b2"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8772"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a3"
+    },
+    "montoCentavos": 30000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-23T15:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000005",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-06] Pago total",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.879Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.916Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87b5"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877b"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a0"
+    },
+    "montoCentavos": 10000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "numeroComprobante": "REC-2026-000006",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-07] Seña",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.880Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.918Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87b8"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870c"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a3"
+    },
+    "montoCentavos": 8000,
+    "metodo": "TARJETA",
+    "fecha": {
+      "$date": "2026-10-23T16:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000007",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-08] Seña",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.881Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.920Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87bb"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba877e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870c"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a3"
+    },
+    "montoCentavos": 10000,
+    "metodo": "EFECTIVO",
+    "fecha": {
+      "$date": "2026-10-23T17:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000008",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-09] Saldo",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.883Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.923Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87be"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8787"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8715"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a3"
+    },
+    "montoCentavos": 18000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-23T18:00:00.000Z"
+    },
+    "numeroComprobante": "REC-2026-000009",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-10] Pago total",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.884Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.925Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87c1"
+    },
+    "cita": {
+      "$oid": "6ae004e073a25966b4ba8784"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8712"
+    },
+    "caja": {
+      "$oid": "6ae004e073a25966b4ba87a0"
+    },
+    "montoCentavos": 5000,
+    "metodo": "TRANSFERENCIA",
+    "fecha": {
+      "$date": "2026-10-27T01:56:48.300Z"
+    },
+    "numeroComprobante": "REC-2026-000010",
+    "estado": "REGISTRADO",
+    "motivoAnulacion": "",
+    "anuladoEn": null,
+    "anuladoPor": null,
+    "notas": "[seedDemo:pago-11] Seña",
+    "registradoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.886Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.927Z"
+    },
+    "__v": 0
+  }
+]

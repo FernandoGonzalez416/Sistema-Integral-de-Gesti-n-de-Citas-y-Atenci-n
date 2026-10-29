@@ -1,0 +1,132 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8748"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "material": {
+      "$oid": "6ae004e073a25966b4ba8739"
+    },
+    "notas": "Entregado en la consulta",
+    "asignadoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "activo": true,
+    "fechaAsignacion": {
+      "$date": "2026-10-27T01:56:48.826Z"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.826Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.826Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba874b"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8700"
+    },
+    "material": {
+      "$oid": "6ae004e073a25966b4ba873f"
+    },
+    "notas": "Para ver en casa con la madre",
+    "asignadoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "activo": true,
+    "fechaAsignacion": {
+      "$date": "2026-10-27T01:56:48.828Z"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.828Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.828Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba874e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "material": {
+      "$oid": "6ae004e073a25966b4ba873c"
+    },
+    "notas": "Recomendado en consulta",
+    "asignadoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "activo": true,
+    "fechaAsignacion": {
+      "$date": "2026-10-27T01:56:48.830Z"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.830Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.830Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8751"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8706"
+    },
+    "material": {
+      "$oid": "6ae004e073a25966b4ba8742"
+    },
+    "notas": "Entregado a la madre",
+    "asignadoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "activo": true,
+    "fechaAsignacion": {
+      "$date": "2026-10-27T01:56:48.831Z"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.831Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.831Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8754"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "material": {
+      "$oid": "6ae004e073a25966b4ba8745"
+    },
+    "notas": "Para ver en familia",
+    "asignadoPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "activo": true,
+    "fechaAsignacion": {
+      "$date": "2026-10-27T01:56:48.833Z"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.833Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.833Z"
+    },
+    "__v": 0
+  }
+]

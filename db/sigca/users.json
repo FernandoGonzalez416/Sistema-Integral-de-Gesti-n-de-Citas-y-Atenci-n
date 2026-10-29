@@ -1,0 +1,194 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86b6"
+    },
+    "nombre": "Administrador Demo",
+    "email": "admin@sigca.local",
+    "password": "$2b$10$t8o5hzjG3t7IYNU.7bG2v.OWh8xVzriPbueZYkfer6ZwiTbCZnqPW",
+    "rol": "ADMINISTRADOR",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.362Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.362Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "nombre": "Recepcionista Demo",
+    "email": "recepcion.demo@demo.sigca",
+    "password": "$2b$10$ypyKD61Ub3c3/xFvq/J4/OlooozOnnaWzzrT7GqtWOlBSfVLe3mJy",
+    "rol": "RECEPCIONISTA",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.439Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.439Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "nombre": "Recepcionista Dos",
+    "email": "recepcion2.demo@demo.sigca",
+    "password": "$2b$10$XctwGE8uelrYltdr4scx1OGLhwN/VIPxRYFJkv7JAqZwaVejfmvT2",
+    "rol": "RECEPCIONISTA",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.509Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.509Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86d3"
+    },
+    "nombre": "Profesional Demo",
+    "email": "profesional.demo@demo.sigca",
+    "password": "$2b$10$VPnhhFYQzO.H4NHcYcUb7.iT60l1MITaHllYxnn.Abyy/L5r4JJIK",
+    "rol": "PROFESIONAL",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.576Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.576Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86db"
+    },
+    "nombre": "Pablo Herrera",
+    "email": "pablo.herrera@demo.sigca",
+    "password": "$2b$10$fJMroK0cayE/DmRhhHBke.FvYijhj2Hf0/0Zdgg/VZtNKFA0jIcNa",
+    "rol": "PROFESIONAL",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.646Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.646Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86e1"
+    },
+    "nombre": "Valentina Ortiz",
+    "email": "valentina.ortiz@demo.sigca",
+    "password": "$2b$10$l/pAptyKBHc7YBmX9IewP.AmcbJb2JYmlY92eQ8/ymJcB5aS3faG.",
+    "rol": "PROFESIONAL",
+    "activo": true,
+    "foto": "",
+    "perfil": {
+      "telefono": "",
+      "fechaNacimiento": null,
+      "sexo": "",
+      "pesoKg": null,
+      "estaturaCm": null,
+      "tipoSangre": "",
+      "alergias": [],
+      "condiciones": [],
+      "contactoEmergencia": {
+        "nombre": "",
+        "telefono": ""
+      }
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.712Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.712Z"
+    },
+    "__v": 0
+  }
+]

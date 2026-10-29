@@ -1,0 +1,109 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba879d"
+    },
+    "estado": "CERRADA",
+    "abiertaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaApertura": {
+      "$date": "2026-10-19T14:00:00.000Z"
+    },
+    "montoInicialCentavos": 20000,
+    "observacionesApertura": "[seedDemo:caja-01] Turno de la mañana",
+    "cerradaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaCierre": {
+      "$date": "2026-10-19T22:00:00.000Z"
+    },
+    "totalesPorMetodo": {
+      "EFECTIVO": 25000,
+      "TARJETA": 10000,
+      "TRANSFERENCIA": 0
+    },
+    "totalIngresosCentavos": 35000,
+    "totalEsperadoCentavos": 45000,
+    "totalRealCentavos": 44500,
+    "diferenciaCentavos": -500,
+    "observacionesCierre": "Falta efectivo en el arqueo",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.870Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.931Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87a0"
+    },
+    "estado": "ABIERTA",
+    "abiertaPor": {
+      "$oid": "6ae004e073a25966b4ba86bf"
+    },
+    "fechaApertura": {
+      "$date": "2026-10-26T14:00:00.000Z"
+    },
+    "montoInicialCentavos": 10000,
+    "observacionesApertura": "[seedDemo:caja-02] Turno de hoy",
+    "cerradaPor": null,
+    "fechaCierre": null,
+    "totalesPorMetodo": {
+      "EFECTIVO": 5000,
+      "TARJETA": 10000,
+      "TRANSFERENCIA": 5000
+    },
+    "totalIngresosCentavos": 20000,
+    "totalEsperadoCentavos": 15000,
+    "totalRealCentavos": 0,
+    "diferenciaCentavos": 0,
+    "observacionesCierre": "",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.871Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.934Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba87a3"
+    },
+    "estado": "CERRADA",
+    "abiertaPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "fechaApertura": {
+      "$date": "2026-10-23T14:00:00.000Z"
+    },
+    "montoInicialCentavos": 15000,
+    "observacionesApertura": "[seedDemo:caja-03] Turno de recepción 2",
+    "cerradaPor": {
+      "$oid": "6ae004e073a25966b4ba86ca"
+    },
+    "fechaCierre": {
+      "$date": "2026-10-23T22:00:00.000Z"
+    },
+    "totalesPorMetodo": {
+      "EFECTIVO": 40000,
+      "TARJETA": 8000,
+      "TRANSFERENCIA": 18000
+    },
+    "totalIngresosCentavos": 66000,
+    "totalEsperadoCentavos": 55000,
+    "totalRealCentavos": 55000,
+    "diferenciaCentavos": 0,
+    "observacionesCierre": "Arqueo sin diferencias",
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.872Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.936Z"
+    },
+    "__v": 0
+  }
+]

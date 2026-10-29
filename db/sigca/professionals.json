@@ -1,0 +1,71 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "nombre": "Laura",
+    "apellido": "Giménez",
+    "especialidad": "Odontología general",
+    "telefono": "5551-1001",
+    "email": "profesional.demo@demo.sigca",
+    "dni": "30000001",
+    "matricula": "MP-30001",
+    "usuario": {
+      "$oid": "6ae004e073a25966b4ba86d3"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.787Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.787Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "nombre": "Pablo",
+    "apellido": "Herrera",
+    "especialidad": "Psicología",
+    "telefono": "5551-1002",
+    "email": "pablo.herrera@demo.sigca",
+    "dni": "30000002",
+    "matricula": "MP-30002",
+    "usuario": {
+      "$oid": "6ae004e073a25966b4ba86db"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.789Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.789Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86fa"
+    },
+    "nombre": "Valentina",
+    "apellido": "Ortiz",
+    "especialidad": "Pediatría",
+    "telefono": "5551-1003",
+    "email": "valentina.ortiz@demo.sigca",
+    "dni": "30000003",
+    "matricula": "MP-30003",
+    "usuario": {
+      "$oid": "6ae004e073a25966b4ba86e1"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.790Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.790Z"
+    },
+    "__v": 0
+  }
+]

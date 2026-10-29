@@ -1,0 +1,112 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "nombre": "Consulta odontológica general",
+    "descripcion": "Evaluación y diagnóstico odontológico",
+    "precioCentavos": 25000,
+    "duracionMinutos": 30,
+    "imagenUrl": "/servicios/consulta-odontologica.svg",
+    "categoria": "Odontología",
+    "icono": "diente",
+    "incluye": [],
+    "preparacion": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.778Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.778Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "nombre": "Limpieza dental",
+    "descripcion": "Profilaxis y pulido dental",
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "imagenUrl": "/servicios/limpieza-dental.svg",
+    "categoria": "Odontología",
+    "icono": "diente",
+    "incluye": [],
+    "preparacion": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.780Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.780Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "nombre": "Sesión de psicología",
+    "descripcion": "Consulta psicológica individual",
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "imagenUrl": "/servicios/sesion-psicologia.svg",
+    "categoria": "Psicología",
+    "icono": "mente",
+    "incluye": [],
+    "preparacion": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.783Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.783Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86ee"
+    },
+    "nombre": "Control de niño sano",
+    "descripcion": "Control pediátrico",
+    "precioCentavos": 20000,
+    "duracionMinutos": 30,
+    "imagenUrl": "/servicios/control-nino-sano.svg",
+    "categoria": "Pediatría",
+    "icono": "corazon",
+    "incluye": [],
+    "preparacion": "",
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.785Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.785Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba86f1"
+    },
+    "nombre": "Evaluación inicial",
+    "descripcion": "Entrevista inicial de evaluación",
+    "precioCentavos": 15000,
+    "duracionMinutos": 30,
+    "imagenUrl": "/servicios/evaluacion-inicial.svg",
+    "categoria": "General",
+    "icono": "estetoscopio",
+    "incluye": [],
+    "preparacion": "",
+    "activo": false,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.786Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.786Z"
+    },
+    "__v": 0
+  }
+]

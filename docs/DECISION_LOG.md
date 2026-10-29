@@ -226,3 +226,12 @@ Este archivo documenta **qué se cambió y por qué**. Cada cambio relevante deb
 - **Evidencias:** **28 capturas** en `docs/evidencias/` (7 de los pasos 2-4 y 21 nuevas del portal y la administración), generadas con un script reproducible en Edge headless/CDP. Se detectó que el tinte del calendario lo inyectaba una extensión del navegador (`#coverTemperature`), no la aplicación.
 - **Verificación:** `npm test` **152/152** (19 suites), `npm run build` **138 módulos**, colección Postman **131 peticiones / 196 pruebas / 0 fallidas / 0 respuestas 5xx** sobre la base desechable `sigca_postman_cierre` (eliminada al terminar). `.gitignore` confirmado con `git check-ignore` (`node_modules`, `dist`, `.env`).
 - **Impacto:** sin dependencias nuevas y sin cambios de contrato en la API; `sigca` intacta tras las pruebas.
+
+## 2026-10-28 - base de datos incluida en el repositorio
+
+- **Problema:** los datos solo existían en la MongoDB local del autor; quien clonara el repositorio veía el portal vacío hasta sembrar a mano.
+- **Decisión:** exportar la base a **JSON versionado** (`db/sigca/`, Extended JSON) en lugar de un `mongodump` binario. Ventajas: es legible y revisable en Git, no exige MongoDB Database Tools y el importador usa el driver que el proyecto ya instala.
+- **Comandos:** `npm run db:exportar`, `npm run db:importar` (solo si la base destino está vacía) y `npm run db:restaurar` (reemplaza esas colecciones).
+- **Salvaguardas:** el importador aborta si encuentra datos y explica cómo forzar; `--force` solo borra las colecciones presentes en el export, no la base completa. Se importa también `counters` para no reiniciar la numeración de comprobantes.
+- **Verificación:** export de 18 colecciones y 126 documentos; import en `sigca_import_test` vacía con 126 documentos; API sobre la base importada con 10 pacientes, 15 citas, 10 pagos, resumen Q1,210.00/Q250.00 y comprobante `REC-2026-000004`; segunda importación rechazada; `db:restaurar` sin duplicar. Base de prueba eliminada.
+- **Documentación:** `README.md` (puesta en marcha en 5 pasos), `db/LEEME.md` y `docs/EVIDENCIAS.md`.

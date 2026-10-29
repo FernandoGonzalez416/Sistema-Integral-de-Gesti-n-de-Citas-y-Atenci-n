@@ -1,0 +1,486 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8766"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "inicio": {
+      "$date": "2026-10-27T15:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-27T15:30:00.000Z"
+    },
+    "precioCentavos": 25000,
+    "duracionMinutos": 30,
+    "estado": "CONFIRMADA",
+    "observaciones": "[seedDemo:cita-01] Consulta de control",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.842Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.842Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8769"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8703"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-10-28T16:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-28T16:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "CONFIRMADA",
+    "observaciones": "[seedDemo:cita-02] Primera sesión",
+    "solicitudOrigen": {
+      "$oid": "6ae004e073a25966b4ba875a"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.844Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.844Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba876c"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8700"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "inicio": {
+      "$date": "2026-10-29T17:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-29T17:30:00.000Z"
+    },
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "estado": "PENDIENTE",
+    "observaciones": "[seedDemo:cita-03] Limpieza (paciente menor, asiste con responsable)",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.845Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.845Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba876f"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "inicio": {
+      "$date": "2026-10-30T21:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-30T21:30:00.000Z"
+    },
+    "precioCentavos": 25000,
+    "duracionMinutos": 30,
+    "estado": "CONFIRMADA",
+    "observaciones": "[seedDemo:cita-04] Control general",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.847Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.847Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8772"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba86fd"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-10-06T15:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-06T15:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "COMPLETADA",
+    "observaciones": "[seedDemo:cita-05] Sesión completada",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.848Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.848Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8775"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8700"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-10-07T16:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-07T16:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "CANCELADA",
+    "observaciones": "[seedDemo:cita-06] Cancelada por la familia",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.849Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.849Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8778"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8706"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86fa"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "inicio": {
+      "$date": "2026-11-02T15:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-11-02T15:30:00.000Z"
+    },
+    "precioCentavos": 25000,
+    "duracionMinutos": 30,
+    "estado": "PENDIENTE",
+    "observaciones": "[seedDemo:cita-07] Primera consulta (desde solicitud)",
+    "solicitudOrigen": {
+      "$oid": "6ae004e073a25966b4ba8760"
+    },
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.850Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.850Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba877b"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-11-02T16:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-11-02T16:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "CONFIRMADA",
+    "observaciones": "[seedDemo:cita-08] Sesión de control",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.852Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.852Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba877e"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870c"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "inicio": {
+      "$date": "2026-10-08T17:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-08T17:30:00.000Z"
+    },
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "estado": "COMPLETADA",
+    "observaciones": "[seedDemo:cita-09] Limpieza completada",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.853Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.853Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8781"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba870f"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86fa"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "inicio": {
+      "$date": "2026-10-09T18:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-09T18:30:00.000Z"
+    },
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "estado": "CANCELADA",
+    "observaciones": "[seedDemo:cita-10] Cancelada por el paciente",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.854Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.854Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8784"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8712"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f4"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-11-03T15:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-11-03T15:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "PENDIENTE",
+    "observaciones": "[seedDemo:cita-11] Primera consulta",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.855Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.855Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8787"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8715"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "inicio": {
+      "$date": "2026-11-03T16:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-11-03T16:30:00.000Z"
+    },
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "estado": "CONFIRMADA",
+    "observaciones": "[seedDemo:cita-12] Limpieza programada",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.857Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.857Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba878a"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8718"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86fa"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e5"
+    },
+    "inicio": {
+      "$date": "2026-11-04T15:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-11-04T15:30:00.000Z"
+    },
+    "precioCentavos": 25000,
+    "duracionMinutos": 30,
+    "estado": "PENDIENTE",
+    "observaciones": "[seedDemo:cita-13] Control pediátrico",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.858Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.858Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba878d"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8706"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86f7"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86eb"
+    },
+    "inicio": {
+      "$date": "2026-10-10T19:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-10T19:45:00.000Z"
+    },
+    "precioCentavos": 30000,
+    "duracionMinutos": 45,
+    "estado": "COMPLETADA",
+    "observaciones": "[seedDemo:cita-14] Sesión completada",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.859Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.859Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8790"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "profesional": {
+      "$oid": "6ae004e073a25966b4ba86fa"
+    },
+    "servicio": {
+      "$oid": "6ae004e073a25966b4ba86e8"
+    },
+    "inicio": {
+      "$date": "2026-10-11T20:00:00.000Z"
+    },
+    "fin": {
+      "$date": "2026-10-11T20:30:00.000Z"
+    },
+    "precioCentavos": 18000,
+    "duracionMinutos": 30,
+    "estado": "CANCELADA",
+    "observaciones": "[seedDemo:cita-15] Cancelada por la familia",
+    "solicitudOrigen": null,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.860Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.860Z"
+    },
+    "__v": 0
+  }
+]

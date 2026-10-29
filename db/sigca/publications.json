@@ -1,0 +1,422 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb60"
+    },
+    "titulo": "Lavado de manos: el hábito que protege",
+    "descripcion": "Lavarse las manos con agua y jabón durante 20 segundos reduce el contagio de infecciones respiratorias y digestivas. Hazlo antes de comer y después de usar el baño.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-27T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb61"
+    },
+    "titulo": "Alimentación balanceada para toda la familia",
+    "descripcion": "Incluye frutas, verduras, granos integrales y proteínas en cada día. Reducir azúcares y ultraprocesados ayuda a prevenir diabetes e hipertensión.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-26T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb62"
+    },
+    "titulo": "Vacunas: esquema al día, familia protegida",
+    "descripcion": "Las vacunas previenen enfermedades graves en niños y adultos. Consulta con tu profesional de salud si tu esquema está completo.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-25T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb63"
+    },
+    "titulo": "Higiene del sueño",
+    "descripcion": "Dormir entre 7 y 9 horas, mantener horarios regulares y evitar pantallas antes de acostarte mejora la memoria, el ánimo y las defensas.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-24T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb64"
+    },
+    "titulo": "Actividad física diaria",
+    "descripcion": "Treinta minutos de movimiento al día fortalecen el corazón, los huesos y la salud mental. Caminar, bailar o subir escaleras también cuenta.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-23T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb65"
+    },
+    "titulo": "Salud bucal desde la infancia",
+    "descripcion": "Cepillar los dientes dos veces al día y visitar al odontólogo cada seis meses previene caries y problemas de encías.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-22T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb66"
+    },
+    "titulo": "Hidratación: cuánta agua necesitas",
+    "descripcion": "El agua regula la temperatura, ayuda a la digestión y al funcionamiento de los riñones. Aumenta su consumo en climas cálidos y al hacer ejercicio.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-21T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb67"
+    },
+    "titulo": "Cómo manejar el estrés",
+    "descripcion": "Respiración profunda, pausas activas y hablar con alguien de confianza ayudan a reducir la tensión. Si persiste, busca apoyo profesional.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-20T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb68"
+    },
+    "titulo": "Prevención de caídas en adultos mayores",
+    "descripcion": "Buena iluminación, pisos secos, calzado firme y ejercicios de equilibrio reducen el riesgo de caídas en el hogar.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-19T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb69"
+    },
+    "titulo": "Control de la presión arterial",
+    "descripcion": "La hipertensión suele no dar síntomas. Medirla con regularidad, reducir la sal y mantenerse activo ayuda a controlarla.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-18T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6a"
+    },
+    "titulo": "Primeros auxilios básicos",
+    "descripcion": "Saber detener una hemorragia, atender una quemadura leve o reconocer una señal de alarma puede marcar la diferencia mientras llega la ayuda.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-17T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6b"
+    },
+    "titulo": "Salud mental en familia",
+    "descripcion": "Conversar, escuchar sin juzgar y compartir tiempo de calidad fortalece el bienestar emocional de niños, jóvenes y adultos.",
+    "tipo": "EDUCATIVO",
+    "fecha": {
+      "$date": "2026-10-16T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6c"
+    },
+    "titulo": "Bienvenidos a nuestro centro",
+    "descripcion": "Somos un equipo comprometido con brindar atención integral, cercana y de calidad a cada paciente y su familia.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-27T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6d"
+    },
+    "titulo": "Nuestro equipo profesional",
+    "descripcion": "Contamos con profesionales calificados y en formación continua para acompañarte en cada etapa de tu bienestar.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-26T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6e"
+    },
+    "titulo": "Gestión de citas ordenada",
+    "descripcion": "Solicita tu cita desde el portal y respetamos tu tiempo con horarios claros y confirmación oportuna.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-25T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb6f"
+    },
+    "titulo": "Compromiso con la calidad",
+    "descripcion": "Mejoramos de forma constante nuestros procesos y servicios para ofrecerte una experiencia segura y confiable.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-24T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb70"
+    },
+    "titulo": "Jornadas de salud comunitaria",
+    "descripcion": "Participamos en jornadas de prevención y orientación para acercar la salud a las comunidades.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-23T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb71"
+    },
+    "titulo": "Privacidad de tu información",
+    "descripcion": "Tus datos personales y clínicos se manejan con confidencialidad y solo para brindarte una mejor atención.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-22T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb72"
+    },
+    "titulo": "Responsabilidad social",
+    "descripcion": "Impulsamos iniciativas solidarias y educativas que benefician a las familias de nuestra comunidad.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-21T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae005284b847552de5ffb73"
+    },
+    "titulo": "Contáctanos",
+    "descripcion": "Escríbenos desde la sección de Contacto o solicita una cita desde Servicios; con gusto te atenderemos.",
+    "tipo": "CORPORATIVO",
+    "fecha": {
+      "$date": "2026-10-20T01:58:00.199Z"
+    },
+    "imagenUrl": "",
+    "enlace": "",
+    "activo": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:58:00.201Z"
+    }
+  }
+]

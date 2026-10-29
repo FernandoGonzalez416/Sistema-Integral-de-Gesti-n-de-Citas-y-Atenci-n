@@ -1,0 +1,31 @@
+{
+  "base": "sigca",
+  "exportadoEn": "2026-10-29T00:47:36.322Z",
+  "colecciones": 19,
+  "documentos": 126,
+  "conteos": {
+    "appointmentrequests": 5,
+    "appointments": 15,
+    "carouselslides": 5,
+    "cashsessions": 3,
+    "contactmessages": 0,
+    "counters": 1,
+    "educationalmaterials": 5,
+    "institutionalcontents": 8,
+    "patientmaterials": 5,
+    "patientresponsibles": 5,
+    "patients": 10,
+    "payments": 10,
+    "professionals": 3,
+    "publications": 20,
+    "receipts": 10,
+    "responsibles": 5,
+    "schedules": 5,
+    "services": 5,
+    "users": 6
+  },
+  "coleccionesVacias": [
+    "contactmessages"
+  ],
+  "nota": "Generado por backend/scripts/exportarBase.js. Restaurar con npm run db:importar."
+}

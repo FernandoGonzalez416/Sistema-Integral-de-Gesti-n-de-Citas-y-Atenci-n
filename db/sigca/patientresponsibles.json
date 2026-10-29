@@ -1,0 +1,97 @@
+[
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba872a"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8700"
+    },
+    "responsable": {
+      "$oid": "6ae004e073a25966b4ba871b"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.812Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.812Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba872d"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8706"
+    },
+    "responsable": {
+      "$oid": "6ae004e073a25966b4ba871e"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.813Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.813Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8730"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8709"
+    },
+    "responsable": {
+      "$oid": "6ae004e073a25966b4ba8721"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.815Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.815Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8733"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8718"
+    },
+    "responsable": {
+      "$oid": "6ae004e073a25966b4ba8724"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.816Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.816Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6ae004e073a25966b4ba8736"
+    },
+    "paciente": {
+      "$oid": "6ae004e073a25966b4ba8718"
+    },
+    "responsable": {
+      "$oid": "6ae004e073a25966b4ba8727"
+    },
+    "activo": true,
+    "createdAt": {
+      "$date": "2026-10-27T01:56:48.818Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-27T01:56:48.818Z"
+    },
+    "__v": 0
+  }
+]
