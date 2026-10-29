@@ -459,7 +459,7 @@ async function toggleBloque(c) {
 onMounted(cargar);
 </script>
 
-<style>
+<style scoped>
 .error { color: #b42318; font-weight: 600; }
 .ok { color: #1f7a4d; font-weight: 600; }
 .ayuda { margin: 0 0 1rem; color: #5a7a8c; font-size: 0.88rem; }

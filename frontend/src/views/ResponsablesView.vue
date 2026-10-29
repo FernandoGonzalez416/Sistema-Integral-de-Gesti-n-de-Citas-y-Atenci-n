@@ -139,7 +139,7 @@ async function toggleActivo(r) {
 onMounted(cargar);
 </script>
 
-<style>
+<style scoped>
 .contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
 .error { color: red; }
 .fila { display: flex; gap: 1rem; }

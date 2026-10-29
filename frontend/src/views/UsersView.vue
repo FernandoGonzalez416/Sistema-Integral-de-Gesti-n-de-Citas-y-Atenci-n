@@ -142,7 +142,7 @@ async function guardarReset() {
 onMounted(cargar);
 </script>
 
-<style>
+<style scoped>
 .error { color: red; }
 .ok { color: #1e7e34; }
 .campo { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }

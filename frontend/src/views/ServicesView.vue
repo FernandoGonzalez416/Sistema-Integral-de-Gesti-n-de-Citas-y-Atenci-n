@@ -119,7 +119,7 @@ async function cambiarActivo(s) {
 onMounted(cargar);
 </script>
 
-<style>
+<style scoped>
 .error { color: red; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }

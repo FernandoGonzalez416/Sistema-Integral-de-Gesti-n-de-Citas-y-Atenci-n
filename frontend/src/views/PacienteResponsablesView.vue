@@ -98,7 +98,7 @@ async function desasociar(relacionId) {
 onMounted(cargar);
 </script>
 
-<style>
+<style scoped>
 .contenedor { max-width: 700px; margin: 2rem auto; font-family: sans-serif; }
 .error { color: red; }
 .ayuda { color: #b8860b; font-size: 0.9rem; }
