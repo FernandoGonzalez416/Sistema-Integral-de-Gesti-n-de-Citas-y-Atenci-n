@@ -1,38 +1,24 @@
 <template>
   <main class="contenedor">
-    <h1>{{ auth.esProfesional ? 'Mis pacientes' : 'Pacientes' }}</h1>
+    <div class="cab-pagina">
+      <div>
+        <h1>{{ auth.esProfesional ? 'Mis pacientes' : 'Pacientes' }}</h1>
+        <p class="ayuda">
+          {{ auth.esProfesional
+            ? 'Solo se muestran los datos básicos de los pacientes que tienen cita contigo.'
+            : 'Registra pacientes, consulta su historial y gestiona sus responsables y materiales.' }}
+        </p>
+      </div>
+      <button v-if="!auth.esProfesional" type="button" class="principal" @click="abrirNuevo">
+        <Icono name="plus" :size="18" /> Nuevo paciente
+      </button>
+    </div>
     <p v-if="error" class="error">{{ error }}</p>
-    <p v-if="auth.esProfesional" class="ayuda">
-      Solo se muestran los datos básicos de los pacientes que tienen cita contigo.
-    </p>
 
-    <Card v-if="!auth.esProfesional" titulo="Registrar paciente">
-      <form @submit.prevent="crear">
-        <div class="fila">
-          <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre" />
-          <FormField etiqueta="Apellido" v-model="form.apellido" placeholder="Apellido" />
-        </div>
-        <div class="fila">
-          <FormField etiqueta="Fecha de nacimiento" type="date" v-model="form.fechaNacimiento" />
-          <FormField etiqueta="Sexo" v-model="form.sexo" placeholder="M/F/Otro" />
-        </div>
-        <div class="fila">
-          <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
-          <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="opcional" />
-        </div>
-        <FormField etiqueta="Dirección" v-model="form.direccion" placeholder="Opcional" />
-        <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
-        <div class="fila">
-          <FormField etiqueta="Inicio del proceso" type="date" v-model="form.fechaInicioProceso" />
-          <FormField etiqueta="Observaciones administrativas" v-model="form.observacionesAdministrativas" placeholder="Opcional (máx. 2000)" />
-        </div>
-        <button type="submit">Registrar</button>
-      </form>
-    </Card>
 
     <Card titulo="Buscar">
       <div class="fila">
-        <FormField etiqueta="Buscar (nombre, apellido, tel, email)" v-model="busqueda" />
+        <FormField etiqueta="Buscar (nombre, apellido, tel, email)" v-model="busqueda" @keyup.enter="cargar" />
         <FormField etiqueta="Activos" v-model="soloActivos" type="checkbox" />
       </div>
       <button @click="cargar">Buscar</button>
@@ -78,6 +64,44 @@
         <button @click="pagina++" :disabled="pagina >= Math.ceil(total / limite)">Siguiente »</button>
       </div>
     </Card>
+
+    <AdminModal
+      :abierto="formAbierto && !auth.esProfesional"
+      :titulo="editando ? 'Editar paciente' : 'Registrar paciente'"
+      subtitulo="Los datos básicos del paciente y su inicio de proceso."
+      icono="users"
+      ancho="lg"
+      :bloquear="guardando"
+      @cerrar="cerrarForm"
+    >
+      <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+    <form @submit.prevent="crear">
+            <div class="fila">
+              <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre" />
+              <FormField etiqueta="Apellido" v-model="form.apellido" placeholder="Apellido" />
+            </div>
+            <div class="fila">
+              <FormField etiqueta="Fecha de nacimiento" type="date" v-model="form.fechaNacimiento" />
+              <FormField etiqueta="Sexo" v-model="form.sexo" placeholder="M/F/Otro" />
+            </div>
+            <div class="fila">
+              <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
+              <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="opcional" />
+            </div>
+            <FormField etiqueta="Dirección" v-model="form.direccion" placeholder="Opcional" />
+            <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
+            <div class="fila">
+              <FormField etiqueta="Inicio del proceso" type="date" v-model="form.fechaInicioProceso" />
+              <FormField etiqueta="Observaciones administrativas" v-model="form.observacionesAdministrativas" placeholder="Opcional (máx. 2000)" />
+            </div>
+            <div class="acciones">
+        <button type="submit" class="principal" :disabled="guardando">
+          {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Registrar paciente') }}
+        </button>
+        <button type="button" class="secundario" :disabled="guardando" @click="cerrarForm">Cancelar</button>
+      </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -89,6 +113,8 @@ import {
 } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const pacientes = ref([]);
@@ -107,6 +133,9 @@ const form = reactive({
 });
 
 const editando = ref(false);
+const formAbierto = ref(false);
+const guardando = ref(false);
+const errorForm = ref('');
 
 async function cargar() {
   try {
@@ -134,22 +163,42 @@ function limpiar() {
   editando.value = false;
 }
 
+function abrirNuevo() {
+  limpiar();
+  errorForm.value = '';
+  formAbierto.value = true;
+}
+
+function cerrarForm() {
+  if (guardando.value) return;
+  formAbierto.value = false;
+  errorForm.value = '';
+  limpiar();
+}
+
 async function crear() {
   try {
     error.value = '';
+    errorForm.value = '';
+    guardando.value = true;
     if (editando.value) {
       await updatePaciente(auth.token, form._id, { ...form });
     } else {
       await createPaciente(auth.token, { ...form });
     }
-    limpiar();
+    guardando.value = false;
+    cerrarForm();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
+  } finally {
+    guardando.value = false;
   }
 }
 
 function editar(p) {
+  errorForm.value = '';
+  formAbierto.value = true;
   editando.value = true;
   Object.assign(form, p);
   // El input date necesita AAAA-MM-DD; el API devuelve ISO completo.
@@ -173,18 +222,3 @@ async function toggleActivo(p) {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.contenedor { max-width: 1100px; margin: 2rem auto; font-family: sans-serif; }
-.error { color: red; }
-.ayuda { color: #555; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-.tabla-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-td.fecha, th { white-space: nowrap; }
-.acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; min-width: 400px; }
-.acciones a, .acciones button { white-space: nowrap; }
-.paginacion { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
-</style>

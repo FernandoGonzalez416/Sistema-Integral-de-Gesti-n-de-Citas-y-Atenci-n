@@ -1,18 +1,16 @@
 <template>
-  <h1>Servicios</h1>
+  <div>
+  <div class="cab-pagina">
+    <div>
+      <h1>Servicios</h1>
+      <p class="ayuda">Catálogo de servicios con su precio y duración.</p>
+    </div>
+    <button type="button" class="principal" @click="abrirNuevo">
+      <Icono name="plus" :size="18" /> Nuevo servicio
+    </button>
+  </div>
   <p v-if="error" class="error">{{ error }}</p>
 
-  <Card :titulo="editando ? 'Editar servicio' : 'Registrar servicio'">
-    <form @submit.prevent="guardar">
-      <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Limpieza dental" />
-      <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Opcional" />
-      <FormField etiqueta="Imagen URL" v-model="form.imagenUrl" placeholder="https://... (opcional)" />
-      <FormField etiqueta="Precio (Q)" type="number" v-model="form.precio" placeholder="250.00" />
-      <FormField etiqueta="Duración (minutos)" type="number" v-model="form.duracion" placeholder="60" />
-      <button type="submit">{{ editando ? 'Guardar' : 'Registrar' }}</button>
-      <button v-if="editando" type="button" @click="cancelar">Cancelar</button>
-    </form>
-  </Card>
 
   <Card titulo="Lista de servicios">
     <table>
@@ -34,6 +32,28 @@
       </tbody>
     </table>
   </Card>
+
+  <AdminModal
+    :abierto="formAbierto"
+    :titulo="editando ? 'Editar servicio' : 'Registrar servicio'"
+    subtitulo="Nombre, precio y duración de la atención."
+    icono="briefcase"
+    @cerrar="cancelar"
+  >
+    <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+  <form @submit.prevent="guardar">
+        <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Limpieza dental" />
+        <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Opcional" />
+        <FormField etiqueta="Imagen URL" v-model="form.imagenUrl" placeholder="https://... (opcional)" />
+        <FormField etiqueta="Precio (Q)" type="number" v-model="form.precio" placeholder="250.00" />
+        <FormField etiqueta="Duración (minutos)" type="number" v-model="form.duracion" placeholder="60" />
+        <div class="acciones">
+          <button type="submit" class="principal">{{ editando ? 'Guardar cambios' : 'Registrar servicio' }}</button>
+          <button type="button" class="secundario" @click="cancelar">Cancelar</button>
+        </div>
+      </form>
+  </AdminModal>
+  </div>
 </template>
 
 <script setup>
@@ -42,11 +62,15 @@ import { useAuthStore } from '../stores/auth.js';
 import { getServiciosTodos, createServicio, updateServicio } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 import { formatoMoneda } from '../composables/catalogo.js';
 
 const auth = useAuthStore();
 const servicios = ref([]);
 const error = ref('');
+const errorForm = ref('');
+const formAbierto = ref(false);
 const editando = ref(null);
 const form = reactive({ nombre: '', descripcion: '', imagenUrl: '', precio: '', duracion: '' });
 
@@ -69,9 +93,16 @@ function limpiar() {
   editando.value = null;
 }
 
+function abrirNuevo() {
+  limpiar();
+  errorForm.value = '';
+  formAbierto.value = true;
+}
+
 async function guardar() {
   try {
     error.value = '';
+    errorForm.value = '';
     const datos = {
       nombre: form.nombre,
       descripcion: form.descripcion,
@@ -84,14 +115,16 @@ async function guardar() {
     } else {
       await createServicio(auth.token, datos);
     }
-    limpiar();
+    cancelar();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
   }
 }
 
 function editar(s) {
+  errorForm.value = '';
+  formAbierto.value = true;
   editando.value = s._id;
   Object.assign(form, {
     nombre: s.nombre,
@@ -103,6 +136,8 @@ function editar(s) {
 }
 
 function cancelar() {
+  formAbierto.value = false;
+  errorForm.value = '';
   limpiar();
 }
 
@@ -118,9 +153,3 @@ async function cambiarActivo(s) {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.error { color: red; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-</style>

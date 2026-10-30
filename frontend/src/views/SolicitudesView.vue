@@ -1,10 +1,14 @@
 <template>
   <main class="contenedor">
-    <h1>Solicitudes de cita</h1>
-    <p class="ayuda">
-      Atiende una solicitud registrando al paciente y la cita, o recházala indicando el motivo.
-      Una solicitud solo puede convertirse en una cita.
-    </p>
+    <div class="cab-pagina">
+      <div>
+        <h1>Solicitudes de cita</h1>
+        <p class="ayuda">
+          Atiende una solicitud registrando al paciente y la cita, o recházala indicando el motivo.
+          Una solicitud solo puede convertirse en una cita.
+        </p>
+      </div>
+    </div>
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="mensaje" class="ok">{{ mensaje }}</p>
@@ -22,77 +26,7 @@
       <button class="secundario" @click="cargar">Actualizar</button>
     </Card>
 
-    <Card v-if="solicitudActiva && modo === 'atender'" titulo="Atender solicitud">
-      <p class="resumen">
-        <strong>{{ solicitudActiva.nombre }}</strong> · {{ solicitudActiva.telefono }} ·
-        {{ solicitudActiva.email }} · {{ solicitudActiva.servicio?.nombre || 'Sin servicio' }}
-      </p>
-      <form @submit.prevent="atender">
-        <div class="fila">
-          <label class="campo">
-            <span>Paciente registrado *</span>
-            <select v-model="form.pacienteId" required>
-              <option value="">Selecciona un paciente</option>
-              <option v-for="p in pacientes" :key="p._id" :value="p._id">
-                {{ p.nombre }} {{ p.apellido }}
-              </option>
-            </select>
-          </label>
-          <label class="campo">
-            <span>Profesional *</span>
-            <select v-model="form.profesionalId" required>
-              <option value="">Selecciona un profesional</option>
-              <option v-for="p in profesionales" :key="p._id" :value="p._id">
-                {{ p.nombre }} {{ p.apellido }} ({{ p.especialidad }})
-              </option>
-            </select>
-          </label>
-        </div>
-        <div class="fila">
-          <label class="campo">
-            <span>Servicio *</span>
-            <select v-model="form.servicioId" required>
-              <option value="">Selecciona un servicio</option>
-              <option v-for="s in servicios" :key="s._id" :value="s._id">{{ s.nombre }}</option>
-            </select>
-          </label>
-          <label class="campo">
-            <span>Inicio *</span>
-            <input type="datetime-local" v-model="form.inicio" required />
-          </label>
-        </div>
-        <label class="campo">
-          <span>Observaciones (opcional)</span>
-          <textarea v-model="form.observaciones" rows="2" maxlength="1000"></textarea>
-        </label>
-        <div class="acciones">
-          <button type="submit" class="principal" :disabled="guardando">
-            {{ guardando ? 'Atendiendo…' : 'Crear cita y marcar ATENDIDA' }}
-          </button>
-          <button type="button" class="secundario" @click="cerrar">Cancelar</button>
-        </div>
-      </form>
-    </Card>
 
-    <Card v-if="solicitudActiva && modo === 'rechazar'" titulo="Rechazar solicitud">
-      <p class="resumen">
-        <strong>{{ solicitudActiva.nombre }}</strong> · {{ solicitudActiva.telefono }} ·
-        {{ solicitudActiva.email }}
-      </p>
-      <form @submit.prevent="rechazar">
-        <label class="campo">
-          <span>Motivo del rechazo *</span>
-          <textarea v-model="motivoRechazo" rows="3" maxlength="1000" required
-            placeholder="Explica brevemente por qué no se puede atender"></textarea>
-        </label>
-        <div class="acciones">
-          <button type="submit" class="peligro" :disabled="guardando">
-            {{ guardando ? 'Rechazando…' : 'Rechazar solicitud' }}
-          </button>
-          <button type="button" class="secundario" @click="cerrar">Cancelar</button>
-        </div>
-      </form>
-    </Card>
 
     <Card titulo="Bandeja de solicitudes">
       <div v-if="cargando">Cargando…</div>
@@ -142,6 +76,98 @@
       </table>
       <p v-if="!cargando && solicitudes.length === 0">No hay solicitudes con ese estado.</p>
     </Card>
+
+    <!-- Ventanita: atender solicitud -->
+    <AdminModal
+      :abierto="!!solicitudActiva && modo === 'atender'"
+      titulo="Atender solicitud"
+      subtitulo="Registra la cita y la solicitud quedará como atendida."
+      icono="inbox"
+      ancho="lg"
+      :bloquear="guardando"
+      @cerrar="cerrar"
+    >
+      <p v-if="errorModal" class="error" role="alert">{{ errorModal }}</p>
+    <p class="resumen">
+            <strong>{{ solicitudActiva.nombre }}</strong> · {{ solicitudActiva.telefono }} ·
+            {{ solicitudActiva.email }} · {{ solicitudActiva.servicio?.nombre || 'Sin servicio' }}
+          </p>
+    <form @submit.prevent="atender">
+            <div class="fila">
+              <label class="campo">
+                <span>Paciente registrado *</span>
+                <select v-model="form.pacienteId" required>
+                  <option value="">Selecciona un paciente</option>
+                  <option v-for="p in pacientes" :key="p._id" :value="p._id">
+                    {{ p.nombre }} {{ p.apellido }}
+                  </option>
+                </select>
+              </label>
+              <label class="campo">
+                <span>Profesional *</span>
+                <select v-model="form.profesionalId" required>
+                  <option value="">Selecciona un profesional</option>
+                  <option v-for="p in profesionales" :key="p._id" :value="p._id">
+                    {{ p.nombre }} {{ p.apellido }} ({{ p.especialidad }})
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="fila">
+              <label class="campo">
+                <span>Servicio *</span>
+                <select v-model="form.servicioId" required>
+                  <option value="">Selecciona un servicio</option>
+                  <option v-for="s in servicios" :key="s._id" :value="s._id">{{ s.nombre }}</option>
+                </select>
+              </label>
+              <label class="campo">
+                <span>Inicio *</span>
+                <input type="datetime-local" v-model="form.inicio" required />
+              </label>
+            </div>
+            <label class="campo">
+              <span>Observaciones (opcional)</span>
+              <textarea v-model="form.observaciones" rows="2" maxlength="1000"></textarea>
+            </label>
+            <div class="acciones">
+              <button type="submit" class="principal" :disabled="guardando">
+                {{ guardando ? 'Atendiendo…' : 'Crear cita y marcar ATENDIDA' }}
+              </button>
+              <button type="button" class="secundario" @click="cerrar">Cancelar</button>
+            </div>
+          </form>
+    </AdminModal>
+
+    <!-- Ventanita: rechazar solicitud -->
+    <AdminModal
+      :abierto="!!solicitudActiva && modo === 'rechazar'"
+      titulo="Rechazar solicitud"
+      subtitulo="Indica el motivo: quedará registrado en la solicitud."
+      icono="alert"
+      ancho="sm"
+      :bloquear="guardando"
+      @cerrar="cerrar"
+    >
+      <p v-if="errorModal" class="error" role="alert">{{ errorModal }}</p>
+    <p class="resumen">
+            <strong>{{ solicitudActiva.nombre }}</strong> · {{ solicitudActiva.telefono }} ·
+            {{ solicitudActiva.email }}
+          </p>
+    <form @submit.prevent="rechazar">
+            <label class="campo">
+              <span>Motivo del rechazo *</span>
+              <textarea v-model="motivoRechazo" rows="3" maxlength="1000" required
+                placeholder="Explica brevemente por qué no se puede atender"></textarea>
+            </label>
+            <div class="acciones">
+              <button type="submit" class="peligro" :disabled="guardando">
+                {{ guardando ? 'Rechazando…' : 'Rechazar solicitud' }}
+              </button>
+              <button type="button" class="secundario" @click="cerrar">Cancelar</button>
+            </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -154,6 +180,8 @@ import {
 } from '../api/client.js';
 import { ESTADOS_SOLICITUD } from '../constants/sigca.js';
 import Card from '../components/Card.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const estados = ESTADOS_SOLICITUD;
@@ -165,6 +193,7 @@ const cargando = ref(false);
 const guardando = ref(false);
 const error = ref('');
 const mensaje = ref('');
+const errorModal = ref('');
 const filtroEstado = ref('PENDIENTE');
 
 const solicitudActiva = ref(null);
@@ -227,6 +256,7 @@ async function cargarCatalogos() {
 }
 
 function abrirAtender(s) {
+  errorModal.value = '';
   solicitudActiva.value = s;
   modo.value = 'atender';
   motivoRechazo.value = '';
@@ -240,12 +270,15 @@ function abrirAtender(s) {
 }
 
 function abrirRechazar(s) {
+  errorModal.value = '';
   solicitudActiva.value = s;
   modo.value = 'rechazar';
   motivoRechazo.value = '';
 }
 
 function cerrar() {
+  if (guardando.value) return;
+  errorModal.value = '';
   solicitudActiva.value = null;
   modo.value = '';
   motivoRechazo.value = '';
@@ -254,6 +287,7 @@ function cerrar() {
 async function atender() {
   try {
     error.value = '';
+    errorModal.value = '';
     mensaje.value = '';
     guardando.value = true;
     await atenderSolicitud(auth.token, solicitudActiva.value._id, {
@@ -264,10 +298,11 @@ async function atender() {
       observaciones: form.observaciones
     });
     mensaje.value = 'Solicitud atendida y cita creada';
+    guardando.value = false;
     cerrar();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorModal.value = e.message;
   } finally {
     guardando.value = false;
   }
@@ -276,14 +311,16 @@ async function atender() {
 async function rechazar() {
   try {
     error.value = '';
+    errorModal.value = '';
     mensaje.value = '';
     guardando.value = true;
     await rechazarSolicitud(auth.token, solicitudActiva.value._id, motivoRechazo.value);
     mensaje.value = 'Solicitud rechazada';
+    guardando.value = false;
     cerrar();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorModal.value = e.message;
   } finally {
     guardando.value = false;
   }
@@ -298,29 +335,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.contenedor { max-width: 1200px; margin: 2rem auto; font-family: sans-serif; }
-.ayuda { color: #555; margin-top: 0; }
-.error { color: #c0392b; }
-.ok { color: #1e7e34; }
-.filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
-.campo { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem; }
-.campo > span { font-size: 0.85rem; color: #555; }
-.campo select, .campo input, .campo textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font: inherit; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-.acciones { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.acciones-celda { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-.resumen { background: #f4f7fa; padding: 0.6rem; border-radius: 4px; }
-button { padding: 0.45rem 0.8rem; border: 1px solid #1a5c8a; border-radius: 4px; background: #1a5c8a; color: #fff; cursor: pointer; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.principal { background: #1a5c8a; }
-.secundario { background: #6c757d; border-color: #6c757d; }
-.peligro { background: #c0392b; border-color: #c0392b; }
-.mini { padding: 0.3rem 0.55rem; font-size: 0.82rem; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; vertical-align: top; }
-.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; color: #fff; font-size: 0.82rem; }
-@media (max-width: 720px) { .fila { flex-direction: column; } }
-</style>

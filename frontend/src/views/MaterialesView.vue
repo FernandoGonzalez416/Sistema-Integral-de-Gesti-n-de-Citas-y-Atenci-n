@@ -1,36 +1,25 @@
 <template>
   <main class="contenedor">
-    <h1>Materiales educativos</h1>
+    <div class="cab-pagina">
+      <div>
+        <h1>Materiales educativos</h1>
+        <p class="ayuda">
+          {{ auth.esProfesional
+            ? 'Catálogo de materiales disponible. Para asignar material a un paciente, entra a Pacientes → Materiales.'
+            : 'Documentos, videos y enlaces que se comparten con los pacientes.' }}
+        </p>
+      </div>
+      <button v-if="!auth.esProfesional" type="button" class="principal" @click="abrirNuevo">
+        <Icono name="plus" :size="18" /> Nuevo material
+      </button>
+    </div>
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="mensaje" class="ok">{{ mensaje }}</p>
-    <p v-if="auth.esProfesional" class="ayuda">
-      Catálogo de materiales disponible. Para asignar material a un paciente, entra a Pacientes → Materiales.
-    </p>
 
-    <Card v-if="!auth.esProfesional" :titulo="editando ? 'Editar material' : 'Registrar material'">
-      <form @submit.prevent="guardar">
-        <FormField etiqueta="Título" v-model="form.titulo" placeholder="Título del material" />
-        <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Descripción" />
-        <div class="fila">
-          <label class="campo">
-            <span>Tipo</span>
-            <select v-model="form.tipo">
-              <option value="">Selecciona tipo</option>
-              <option v-for="t in tipos" :key="t" :value="t">{{ t }}</option>
-            </select>
-          </label>
-          <FormField etiqueta="URL (opcional)" v-model="form.url" placeholder="https://..." />
-        </div>
-        <div class="acciones">
-          <button type="submit">{{ editando ? 'Guardar cambios' : 'Registrar' }}</button>
-          <button type="button" class="secundario" v-if="editando" @click="limpiar">Cancelar</button>
-        </div>
-      </form>
-    </Card>
 
     <Card titulo="Buscar">
       <div class="fila">
-        <FormField etiqueta="Buscar (título, descripción)" v-model="busqueda" />
+        <FormField etiqueta="Buscar (título, descripción)" v-model="busqueda" @keyup.enter="cargar" />
         <label class="campo">
           <span>Tipo</span>
           <select v-model="filtroTipo">
@@ -72,6 +61,34 @@
         <button @click="pagina++" :disabled="pagina >= Math.ceil(total / limite)">Siguiente »</button>
       </div>
     </Card>
+
+    <AdminModal
+      :abierto="formAbierto && !auth.esProfesional"
+      :titulo="editando ? 'Editar material' : 'Registrar material'"
+      subtitulo="Título, tipo y enlace del recurso educativo."
+      icono="book"
+      @cerrar="cerrarForm"
+    >
+      <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+    <form @submit.prevent="guardar">
+            <FormField etiqueta="Título" v-model="form.titulo" placeholder="Título del material" />
+            <FormField etiqueta="Descripción" v-model="form.descripcion" placeholder="Descripción" />
+            <div class="fila">
+              <label class="campo">
+                <span>Tipo</span>
+                <select v-model="form.tipo">
+                  <option value="">Selecciona tipo</option>
+                  <option v-for="t in tipos" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </label>
+              <FormField etiqueta="URL (opcional)" v-model="form.url" placeholder="https://..." />
+            </div>
+            <div class="acciones">
+              <button type="submit" class="principal">{{ editando ? 'Guardar cambios' : 'Registrar material' }}</button>
+              <button type="button" class="secundario" @click="cerrarForm">Cancelar</button>
+            </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -84,6 +101,8 @@ import {
 import { TIPOS_MATERIAL } from '../constants/sigca.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const materiales = ref([]);
@@ -97,6 +116,8 @@ const busqueda = ref('');
 const filtroTipo = ref('');
 const soloActivos = ref(false);
 const editando = ref(false);
+const formAbierto = ref(false);
+const errorForm = ref('');
 
 const tipos = TIPOS_MATERIAL;
 
@@ -125,12 +146,25 @@ function limpiar() {
   editando.value = false;
 }
 
+function abrirNuevo() {
+  limpiar();
+  errorForm.value = '';
+  formAbierto.value = true;
+}
+
+function cerrarForm() {
+  formAbierto.value = false;
+  errorForm.value = '';
+  limpiar();
+}
+
 async function guardar() {
   try {
     error.value = '';
+    errorForm.value = '';
     mensaje.value = '';
     if (!form.titulo || !form.descripcion || !form.tipo) {
-      error.value = 'Título, descripción y tipo son obligatorios';
+      errorForm.value = 'Título, descripción y tipo son obligatorios';
       return;
     }
     if (editando.value) {
@@ -144,14 +178,16 @@ async function guardar() {
       });
       mensaje.value = 'Material registrado';
     }
-    limpiar();
+    cerrarForm();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
   }
 }
 
 function editar(m) {
+  errorForm.value = '';
+  formAbierto.value = true;
   editando.value = true;
   Object.assign(form, {
     _id: m._id, titulo: m.titulo, descripcion: m.descripcion, tipo: m.tipo, url: m.url || ''
@@ -170,21 +206,3 @@ async function toggleActivo(m) {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
-.error { color: red; }
-.ok { color: green; }
-.ayuda { color: #555; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-.campo { display: flex; flex-direction: column; gap: 0.25rem; }
-.campo select { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-.desc { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acciones { display: flex; gap: 0.5rem; }
-.acciones-celda { display: flex; gap: 0.5rem; }
-.secundario { background: #888; }
-.paginacion { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
-</style>

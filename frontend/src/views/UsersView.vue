@@ -1,24 +1,17 @@
 <template>
-  <h1>Usuarios</h1>
+  <div>
+  <div class="cab-pagina">
+    <div>
+      <h1>Usuarios</h1>
+      <p class="ayuda">Cuentas del personal que ingresa al sistema.</p>
+    </div>
+    <button type="button" class="principal" @click="abrirNuevo">
+      <Icono name="plus" :size="18" /> Nuevo usuario
+    </button>
+  </div>
   <p v-if="error" class="error">{{ error }}</p>
   <p v-if="mensaje" class="ok">{{ mensaje }}</p>
 
-  <Card titulo="Registrar usuario">
-    <form @submit.prevent="crear">
-      <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre completo" />
-      <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="usuario@sigca.local" />
-      <FormField etiqueta="Password (mín. 6)" type="password" v-model="form.password" />
-      <label class="campo">
-        <span>Rol</span>
-        <select v-model="form.rol">
-          <option>ADMINISTRADOR</option>
-          <option>RECEPCIONISTA</option>
-          <option>PROFESIONAL</option>
-        </select>
-      </label>
-      <button type="submit">Registrar</button>
-    </form>
-  </Card>
 
   <Card titulo="Lista de usuarios">
     <table>
@@ -40,24 +33,61 @@
     </table>
   </Card>
 
-  <div v-if="reset.abierto" class="modal-fondo" @click.self="cerrarReset">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reset-titulo">
-      <h2 id="reset-titulo">Restablecer contraseña</h2>
-      <p>
-        Usuario: <strong>{{ reset.usuario?.nombre }}</strong>
-        <small>({{ reset.usuario?.email }})</small>
-      </p>
-      <form @submit.prevent="guardarReset">
-        <FormField etiqueta="Nueva contraseña (mín. 6)" type="password" v-model="reset.password" />
-        <p class="nota">La contraseña anterior dejará de funcionar de inmediato. No se muestra ni se guarda en la interfaz.</p>
+  <!-- Ventanita: registrar usuario -->
+  <AdminModal
+    :abierto="nuevoAbierto"
+    titulo="Registrar usuario"
+    subtitulo="Crea una cuenta para el personal del centro."
+    icono="id-card"
+    ancho="sm"
+    :bloquear="guardandoNuevo"
+    @cerrar="cerrarNuevo"
+  >
+    <p v-if="errorModal" class="error" role="alert">{{ errorModal }}</p>
+  <form @submit.prevent="crear">
+        <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre completo" />
+        <FormField etiqueta="Email" type="email" v-model="form.email" placeholder="usuario@sigca.local" />
+        <FormField etiqueta="Password (mín. 6)" type="password" v-model="form.password" />
+        <label class="campo">
+          <span>Rol</span>
+          <select v-model="form.rol">
+            <option>ADMINISTRADOR</option>
+            <option>RECEPCIONISTA</option>
+            <option>PROFESIONAL</option>
+          </select>
+        </label>
         <div class="acciones">
-          <button type="submit" :disabled="reset.guardando">
-            {{ reset.guardando ? 'Guardando…' : 'Restablecer' }}
-          </button>
-          <button type="button" class="secundario" @click="cerrarReset">Cancelar</button>
-        </div>
+        <button type="submit" class="principal" :disabled="guardandoNuevo">{{ guardandoNuevo ? 'Guardando…' : 'Registrar usuario' }}</button>
+        <button type="button" class="secundario" :disabled="guardandoNuevo" @click="cerrarNuevo">Cancelar</button>
+      </div>
       </form>
-    </div>
+  </AdminModal>
+
+  <!-- Ventanita: restablecer contraseña -->
+  <AdminModal
+    :abierto="reset.abierto"
+    titulo="Restablecer contraseña"
+    icono="key"
+    ancho="sm"
+    :bloquear="reset.guardando"
+    @cerrar="cerrarReset"
+  >
+    <p v-if="errorModal" class="error" role="alert">{{ errorModal }}</p>
+    <p>
+      Usuario: <strong>{{ reset.usuario?.nombre }}</strong>
+      <small>({{ reset.usuario?.email }})</small>
+    </p>
+  <form @submit.prevent="guardarReset">
+          <FormField etiqueta="Nueva contraseña (mín. 6)" type="password" v-model="reset.password" />
+          <p class="nota">La contraseña anterior dejará de funcionar de inmediato. No se muestra ni se guarda en la interfaz.</p>
+          <div class="acciones">
+            <button type="submit" class="principal" :disabled="reset.guardando">
+              {{ reset.guardando ? 'Guardando…' : 'Restablecer contraseña' }}
+            </button>
+            <button type="button" class="secundario" :disabled="reset.guardando" @click="cerrarReset">Cancelar</button>
+          </div>
+        </form>
+  </AdminModal>
   </div>
 </template>
 
@@ -67,11 +97,16 @@ import { useAuthStore } from '../stores/auth.js';
 import { getUsuarios, createUsuario, updateUsuario, restablecerPasswordUsuario } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const usuarios = ref([]);
 const error = ref('');
 const mensaje = ref('');
+const errorModal = ref('');
+const nuevoAbierto = ref(false);
+const guardandoNuevo = ref(false);
 const form = reactive({ nombre: '', email: '', password: '', rol: 'RECEPCIONISTA' });
 const reset = reactive({ abierto: false, usuario: null, password: '', guardando: false });
 
@@ -85,16 +120,34 @@ async function cargar() {
   }
 }
 
+function abrirNuevo() {
+  Object.assign(form, { nombre: '', email: '', password: '', rol: 'RECEPCIONISTA' });
+  errorModal.value = '';
+  nuevoAbierto.value = true;
+}
+
+function cerrarNuevo() {
+  if (guardandoNuevo.value) return;
+  nuevoAbierto.value = false;
+  errorModal.value = '';
+}
+
 async function crear() {
   try {
     error.value = '';
+    errorModal.value = '';
     mensaje.value = '';
+    guardandoNuevo.value = true;
     await createUsuario(auth.token, { ...form });
     Object.assign(form, { nombre: '', email: '', password: '', rol: 'RECEPCIONISTA' });
     mensaje.value = 'Usuario registrado';
+    guardandoNuevo.value = false;
+    cerrarNuevo();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorModal.value = e.message;
+  } finally {
+    guardandoNuevo.value = false;
   }
 }
 
@@ -114,11 +167,14 @@ function abrirReset(u) {
   reset.usuario = u;
   reset.password = '';
   error.value = '';
+  errorModal.value = '';
   mensaje.value = '';
 }
 
 function cerrarReset() {
+  if (reset.guardando) return;
   reset.abierto = false;
+  errorModal.value = '';
   reset.usuario = null;
   reset.password = '';
   reset.guardando = false;
@@ -127,13 +183,15 @@ function cerrarReset() {
 async function guardarReset() {
   try {
     error.value = '';
+    errorModal.value = '';
     mensaje.value = '';
     reset.guardando = true;
     await restablecerPasswordUsuario(auth.token, reset.usuario.id, reset.password);
     mensaje.value = `Contraseña restablecida para ${reset.usuario.email}`;
+    reset.guardando = false;
     cerrarReset();
   } catch (e) {
-    error.value = e.message;
+    errorModal.value = e.message;
   } finally {
     reset.guardando = false;
   }
@@ -141,18 +199,3 @@ async function guardarReset() {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.error { color: red; }
-.ok { color: #1e7e34; }
-.campo { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
-.campo select { padding: 0.5rem; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-.secundario { background: #6c757d; border-color: #6c757d; margin-left: 0.35rem; }
-.modal-fondo { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: #fff; border-radius: 8px; padding: 1.5rem; width: min(440px, 92vw); box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
-.modal h2 { margin-top: 0; }
-.nota { color: #666; font-size: 0.85rem; }
-.acciones { display: flex; gap: 0.5rem; }
-</style>

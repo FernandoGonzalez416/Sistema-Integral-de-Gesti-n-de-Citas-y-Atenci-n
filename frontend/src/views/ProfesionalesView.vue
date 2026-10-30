@@ -1,72 +1,21 @@
 <template>
   <main class="contenedor">
-    <h1>Profesionales</h1>
-    <p class="ayuda">
-      Cada profesional se vincula a un usuario con rol PROFESIONAL. Ese vínculo define
-      qué citas y pacientes puede ver en el sistema.
-    </p>
+    <div class="cab-pagina">
+      <div>
+        <h1>Profesionales</h1>
+        <p class="ayuda">
+          Cada profesional se vincula a un usuario con rol PROFESIONAL. Ese vínculo define
+          qué citas y pacientes puede ver en el sistema.
+        </p>
+      </div>
+      <button type="button" class="principal" @click="abrirNuevo">
+        <Icono name="plus" :size="18" /> Nuevo profesional
+      </button>
+    </div>
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="mensaje" class="ok">{{ mensaje }}</p>
 
-    <Card :titulo="editando ? 'Editar profesional' : 'Registrar profesional'">
-      <form @submit.prevent="guardar">
-        <div class="fila">
-          <label class="campo">
-            <span>Nombre *</span>
-            <input v-model="form.nombre" required maxlength="80" />
-          </label>
-          <label class="campo">
-            <span>Apellido *</span>
-            <input v-model="form.apellido" required maxlength="80" />
-          </label>
-        </div>
-        <div class="fila">
-          <label class="campo">
-            <span>Especialidad *</span>
-            <input v-model="form.especialidad" required maxlength="80" />
-          </label>
-          <label class="campo">
-            <span>Teléfono *</span>
-            <input v-model="form.telefono" required maxlength="30" />
-          </label>
-        </div>
-        <div class="fila">
-          <label class="campo">
-            <span>DNI *</span>
-            <input v-model="form.dni" required maxlength="30" />
-          </label>
-          <label class="campo">
-            <span>Matrícula *</span>
-            <input v-model="form.matricula" required maxlength="30" />
-          </label>
-        </div>
-        <div class="fila">
-          <label class="campo">
-            <span>Email (opcional)</span>
-            <input type="email" v-model="form.email" maxlength="120" />
-          </label>
-          <label class="campo">
-            <span>Usuario vinculado *</span>
-            <select v-model="form.usuarioId" required>
-              <option value="">Selecciona un usuario PROFESIONAL</option>
-              <option v-for="u in usuariosDisponibles" :key="u.id" :value="u.id">
-                {{ u.nombre }} ({{ u.email }})
-              </option>
-            </select>
-          </label>
-        </div>
-        <p v-if="usuariosDisponibles.length === 0" class="aviso">
-          No hay usuarios PROFESIONAL activos disponibles. Crea uno en Usuarios antes de registrar al profesional.
-        </p>
-        <div class="acciones">
-          <button type="submit" class="principal" :disabled="guardando">
-            {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Registrar profesional') }}
-          </button>
-          <button type="button" class="secundario" v-if="editando" @click="limpiar">Cancelar</button>
-        </div>
-      </form>
-    </Card>
 
     <Card titulo="Lista de profesionales">
       <div v-if="cargando">Cargando…</div>
@@ -103,6 +52,74 @@
       </table>
       <p v-if="!cargando && profesionales.length === 0">No hay profesionales registrados.</p>
     </Card>
+
+    <AdminModal
+      :abierto="formAbierto"
+      :titulo="editando ? 'Editar profesional' : 'Registrar profesional'"
+      subtitulo="Datos del profesional y el usuario con el que ingresa al sistema."
+      icono="stethoscope"
+      ancho="lg"
+      :bloquear="guardando"
+      @cerrar="cerrarForm"
+    >
+      <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+    <form @submit.prevent="guardar">
+            <div class="fila">
+              <label class="campo">
+                <span>Nombre *</span>
+                <input v-model="form.nombre" required maxlength="80" />
+              </label>
+              <label class="campo">
+                <span>Apellido *</span>
+                <input v-model="form.apellido" required maxlength="80" />
+              </label>
+            </div>
+            <div class="fila">
+              <label class="campo">
+                <span>Especialidad *</span>
+                <input v-model="form.especialidad" required maxlength="80" />
+              </label>
+              <label class="campo">
+                <span>Teléfono *</span>
+                <input v-model="form.telefono" required maxlength="30" />
+              </label>
+            </div>
+            <div class="fila">
+              <label class="campo">
+                <span>DNI *</span>
+                <input v-model="form.dni" required maxlength="30" />
+              </label>
+              <label class="campo">
+                <span>Matrícula *</span>
+                <input v-model="form.matricula" required maxlength="30" />
+              </label>
+            </div>
+            <div class="fila">
+              <label class="campo">
+                <span>Email (opcional)</span>
+                <input type="email" v-model="form.email" maxlength="120" />
+              </label>
+              <label class="campo">
+                <span>Usuario vinculado *</span>
+                <select v-model="form.usuarioId" required>
+                  <option value="">Selecciona un usuario PROFESIONAL</option>
+                  <option v-for="u in usuariosDisponibles" :key="u.id" :value="u.id">
+                    {{ u.nombre }} ({{ u.email }})
+                  </option>
+                </select>
+              </label>
+            </div>
+            <p v-if="usuariosDisponibles.length === 0" class="aviso">
+              No hay usuarios PROFESIONAL activos disponibles. Crea uno en Usuarios antes de registrar al profesional.
+            </p>
+            <div class="acciones">
+              <button type="submit" class="principal" :disabled="guardando">
+                {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Registrar profesional') }}
+              </button>
+              <button type="button" class="secundario" :disabled="guardando" @click="cerrarForm">Cancelar</button>
+            </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -114,6 +131,8 @@ import {
   getUsuarios
 } from '../api/client.js';
 import Card from '../components/Card.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const profesionales = ref([]);
@@ -121,6 +140,8 @@ const usuarios = ref([]);
 const cargando = ref(false);
 const guardando = ref(false);
 const editando = ref(false);
+const formAbierto = ref(false);
+const errorForm = ref('');
 const error = ref('');
 const mensaje = ref('');
 
@@ -165,7 +186,22 @@ async function cargar() {
   }
 }
 
+function abrirNuevo() {
+  limpiar();
+  errorForm.value = '';
+  formAbierto.value = true;
+}
+
+function cerrarForm() {
+  if (guardando.value) return;
+  formAbierto.value = false;
+  errorForm.value = '';
+  limpiar();
+}
+
 function editar(p) {
+  errorForm.value = '';
+  formAbierto.value = true;
   editando.value = true;
   Object.assign(form, {
     _id: p._id,
@@ -183,6 +219,7 @@ function editar(p) {
 async function guardar() {
   try {
     error.value = '';
+    errorForm.value = '';
     mensaje.value = '';
     guardando.value = true;
     const datos = {
@@ -202,10 +239,11 @@ async function guardar() {
       await createProfesional(auth.token, datos);
       mensaje.value = 'Profesional registrado';
     }
-    limpiar();
+    guardando.value = false;
+    cerrarForm();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
   } finally {
     guardando.value = false;
   }
@@ -226,27 +264,3 @@ async function desactivar(p) {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.contenedor { max-width: 1050px; margin: 2rem auto; font-family: sans-serif; }
-.ayuda { color: #555; margin-top: 0; }
-.error { color: #c0392b; }
-.ok { color: #1e7e34; }
-.aviso { color: #8a6d3b; background: #fcf8e3; padding: 0.5rem; border-radius: 4px; }
-.campo { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem; }
-.campo > span { font-size: 0.85rem; color: #555; }
-.campo input, .campo select { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font: inherit; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-.acciones { display: flex; gap: 0.5rem; }
-.acciones-celda { display: flex; gap: 0.35rem; }
-button { padding: 0.45rem 0.8rem; border: 1px solid #1a5c8a; border-radius: 4px; background: #1a5c8a; color: #fff; cursor: pointer; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.principal { background: #1a5c8a; }
-.secundario { background: #6c757d; border-color: #6c757d; }
-.peligro { background: #c0392b; border-color: #c0392b; }
-.mini { padding: 0.3rem 0.55rem; font-size: 0.82rem; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; vertical-align: top; }
-@media (max-width: 720px) { .fila { flex-direction: column; } }
-</style>

@@ -1,6 +1,11 @@
 <template>
   <main class="contenedor">
-    <h1>Calendario de citas</h1>
+    <div class="cab-pagina">
+      <div>
+        <h1>Calendario de citas</h1>
+        <p class="ayuda">Toca una cita para ver su detalle.</p>
+      </div>
+    </div>
     <p v-if="error" class="error">{{ error }}</p>
 
     <!-- Filtros -->
@@ -48,51 +53,51 @@
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </Card>
 
-    <!-- Modal de detalle -->
-    <div v-if="citaSeleccionada" class="modal-overlay" @click="cerrarModal">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h2>Detalle de la cita</h2>
-          <button class="btn-cerrar" @click="cerrarModal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <dl>
-            <dt>Paciente</dt>
-            <dd>{{ citaSeleccionada.paciente?.nombre }} {{ citaSeleccionada.paciente?.apellido }}</dd>
+    <!-- Ventanita con el detalle de la cita -->
+    <AdminModal
+      :abierto="!!citaSeleccionada"
+      titulo="Detalle de la cita"
+      icono="calendar"
+      ancho="sm"
+      @cerrar="cerrarModal"
+    >
+      <template v-if="citaSeleccionada">
+        <dl>
+                    <dt>Paciente</dt>
+                    <dd>{{ citaSeleccionada.paciente?.nombre }} {{ citaSeleccionada.paciente?.apellido }}</dd>
 
-            <dt>Profesional</dt>
-            <dd>{{ citaSeleccionada.profesional?.nombre }} {{ citaSeleccionada.profesional?.apellido }} ({{ citaSeleccionada.profesional?.especialidad }})</dd>
+                    <dt>Profesional</dt>
+                    <dd>{{ citaSeleccionada.profesional?.nombre }} {{ citaSeleccionada.profesional?.apellido }} ({{ citaSeleccionada.profesional?.especialidad }})</dd>
 
-            <dt>Servicio</dt>
-            <dd>{{ citaSeleccionada.servicio?.nombre }}</dd>
+                    <dt>Servicio</dt>
+                    <dd>{{ citaSeleccionada.servicio?.nombre }}</dd>
 
-            <dt>Inicio</dt>
-            <dd>{{ formatearFecha(citaSeleccionada.inicio) }}</dd>
+                    <dt>Inicio</dt>
+                    <dd>{{ formatearFecha(citaSeleccionada.inicio) }}</dd>
 
-            <dt>Fin</dt>
-            <dd>{{ formatearFecha(citaSeleccionada.fin) }}</dd>
+                    <dt>Fin</dt>
+                    <dd>{{ formatearFecha(citaSeleccionada.fin) }}</dd>
 
-            <dt>Estado</dt>
-            <dd>
-              <span class="badge" :style="{ backgroundColor: colorPorEstado(citaSeleccionada.estado) }">
-                {{ citaSeleccionada.estado }}
-              </span>
-            </dd>
+                    <dt>Estado</dt>
+                    <dd>
+                      <span class="badge" :style="{ backgroundColor: colorPorEstado(citaSeleccionada.estado) }">
+                        {{ citaSeleccionada.estado }}
+                      </span>
+                    </dd>
 
-            <dt>Observaciones</dt>
-            <dd>{{ citaSeleccionada.observaciones || '—' }}</dd>
-          </dl>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" @click="cerrarModal">Cerrar</button>
-        </div>
-      </div>
-    </div>
+                    <dt>Observaciones</dt>
+                    <dd>{{ citaSeleccionada.observaciones || '—' }}</dd>
+                  </dl>
+      </template>
+      <template #pie>
+        <button type="button" class="secundario" @click="cerrarModal">Cerrar</button>
+      </template>
+    </AdminModal>
   </main>
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onActivated, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 import { getCitas, getCita, getProfesionales } from '../api/client.js';
 import FullCalendar from '@fullcalendar/vue3';
@@ -100,11 +105,14 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import Card from '../components/Card.vue';
+import AdminModal from '../components/AdminModal.vue';
 import { ESTADOS_CITA, COLORES_ESTADO_CITA } from '../constants/sigca.js';
 
 const auth = useAuthStore();
 const error = ref('');
 const calendarRef = ref(null);
+// Evita responderle al calendario cuando ya se salió de la pantalla (cambios rápidos de opción).
+let activo = true;
 const citaSeleccionada = ref(null);
 
 const filtroProfesional = ref('');
@@ -131,7 +139,7 @@ const calendarOptions = {
   events: cargarEventos,
   eventClick: verDetalle,
   locale: esLocale,
-  height: 600,
+  height: 'auto',
   headerToolbar,
   weekends: true,
   dayMaxEventRows: 3,
@@ -141,9 +149,10 @@ const calendarOptions = {
 async function cargarProfesionales() {
   try {
     const datos = await getProfesionales(auth.token, { activo: 'true' });
+    if (!activo) return;
     profesionales.value = datos.profesionales || [];
   } catch (e) {
-    error.value = e.message;
+    if (activo) error.value = e.message;
   }
 }
 
@@ -162,6 +171,7 @@ async function cargarEventos(info, successCallback, failureCallback) {
     params.desde = info.startStr;
     params.hasta = info.endStr;
     const datos = await getCitas(auth.token, params);
+    if (!activo) return;
     const eventos = datos.citas.map(c => ({
       id: c._id,
       title: `${c.paciente?.nombre || ''} ${c.paciente?.apellido || ''} — ${c.servicio?.nombre || c.servicio}`,
@@ -179,16 +189,27 @@ async function cargarEventos(info, successCallback, failureCallback) {
     }));
     successCallback(eventos);
   } catch (e) {
+    if (!activo) return;
     error.value = e.message;
     failureCallback(e);
   }
 }
 
 function recargar() {
-  if (calendarRef.value?.getApi) {
+  if (activo && calendarRef.value?.getApi) {
     calendarRef.value.getApi().refetchEvents();
   }
 }
+
+// El calendario se conserva en memoria al cambiar de opción: al volver se refrescan los datos y el tamaño.
+let primeraVez = true;
+onActivated(() => {
+  if (primeraVez) { primeraVez = false; return; }
+  const api = calendarRef.value?.getApi?.();
+  if (!api) return;
+  api.updateSize();
+  api.refetchEvents();
+});
 
 function colorPorEstado(estado) {
   return coloresEstados[estado] || '#1a5c8a';
@@ -217,59 +238,10 @@ function formatearFecha(fecha) {
   });
 }
 
-onUnmounted(() => {
-  // cleanup
+onBeforeUnmount(() => {
+  activo = false;
 });
 
 // Cargar profesionales al montar
 cargarProfesionales();
 </script>
-
-<style scoped>
-.contenedor { max-width: 1100px; margin: 2rem auto; font-family: sans-serif; }
-.error { color: red; margin-bottom: 1rem; }
-
-.filtros-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.campo { display: flex; flex-direction: column; gap: 0.25rem; }
-.campo label { font-size: 0.85rem; color: #555; }
-.campo select, .campo input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-
-.leyenda { display: flex; flex-wrap: wrap; gap: 1rem; }
-.leyenda-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
-.leyenda-color { width: 16px; height: 16px; border-radius: 3px; }
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.modal-header h2 { margin: 0; }
-.btn-cerrar { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; }
-.modal-body dl { display: grid; grid-template-columns: 120px 1fr; gap: 0.5rem 1rem; margin: 0; }
-.modal-body dt { font-weight: bold; color: #444; }
-.modal-body dd { margin: 0; }
-.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; color: white; font-size: 0.85rem; }
-.modal-footer { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
-.btn { padding: 0.5rem 1rem; background: #1a5c8a; color: white; border: none; border-radius: 4px; cursor: pointer; }
-.btn:hover { background: #154a70; }
-</style>

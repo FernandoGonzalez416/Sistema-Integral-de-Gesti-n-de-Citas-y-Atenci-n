@@ -1,28 +1,20 @@
 <template>
   <main class="contenedor">
-    <h1>Responsables</h1>
+    <div class="cab-pagina">
+      <div>
+        <h1>Responsables</h1>
+        <p class="ayuda">Tutores y familiares vinculados a los pacientes.</p>
+      </div>
+      <button type="button" class="principal" @click="abrirNuevo">
+        <Icono name="plus" :size="18" /> Nuevo responsable
+      </button>
+    </div>
     <p v-if="error" class="error">{{ error }}</p>
 
-    <Card titulo="Registrar responsable">
-      <form @submit.prevent="crear">
-        <div class="fila">
-          <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre" />
-          <FormField etiqueta="Apellido" v-model="form.apellido" placeholder="Apellido" />
-        </div>
-        <div class="fila">
-          <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
-          <FormField etiqueta="Email (obligatorio)" type="email" v-model="form.email" placeholder="correo@ejemplo.com" />
-        </div>
-        <FormField etiqueta="Dirección (obligatoria)" v-model="form.direccion" placeholder="Calle, número, colonia" />
-        <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
-        <FormField etiqueta="Parentesco" v-model="form.parentesco" placeholder="Padre, Madre, Tutor..." />
-        <button type="submit">Registrar</button>
-      </form>
-    </Card>
 
     <Card titulo="Buscar">
       <div class="fila">
-        <FormField etiqueta="Buscar (nombre, apellido, tel, email, parentesco)" v-model="busqueda" />
+        <FormField etiqueta="Buscar (nombre, apellido, tel, email, parentesco)" v-model="busqueda" @keyup.enter="cargar" />
         <FormField etiqueta="Activos" v-model="soloActivos" type="checkbox" />
       </div>
       <button @click="cargar">Buscar</button>
@@ -56,6 +48,36 @@
         <button @click="pagina++" :disabled="pagina >= Math.ceil(total / limite)">Siguiente »</button>
       </div>
     </Card>
+
+    <AdminModal
+      :abierto="formAbierto"
+      :titulo="editando ? 'Editar responsable' : 'Registrar responsable'"
+      subtitulo="Datos de contacto y parentesco con el paciente."
+      icono="family"
+      :bloquear="guardando"
+      @cerrar="cerrarForm"
+    >
+      <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+    <form @submit.prevent="crear">
+            <div class="fila">
+              <FormField etiqueta="Nombre" v-model="form.nombre" placeholder="Nombre" />
+              <FormField etiqueta="Apellido" v-model="form.apellido" placeholder="Apellido" />
+            </div>
+            <div class="fila">
+              <FormField etiqueta="Teléfono" v-model="form.telefono" placeholder="0000-0000" />
+              <FormField etiqueta="Email (obligatorio)" type="email" v-model="form.email" placeholder="correo@ejemplo.com" />
+            </div>
+            <FormField etiqueta="Dirección (obligatoria)" v-model="form.direccion" placeholder="Calle, número, colonia" />
+            <FormField etiqueta="Foto URL" v-model="form.fotoUrl" placeholder="Opcional" />
+            <FormField etiqueta="Parentesco" v-model="form.parentesco" placeholder="Padre, Madre, Tutor..." />
+            <div class="acciones">
+        <button type="submit" class="principal" :disabled="guardando">
+          {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Registrar responsable') }}
+        </button>
+        <button type="button" class="secundario" :disabled="guardando" @click="cerrarForm">Cancelar</button>
+      </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -67,6 +89,8 @@ import {
 } from '../api/client.js';
 import Card from '../components/Card.vue';
 import FormField from '../components/FormField.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const responsables = ref([]);
@@ -83,6 +107,9 @@ const form = reactive({
 });
 
 const editando = ref(false);
+const formAbierto = ref(false);
+const guardando = ref(false);
+const errorForm = ref('');
 
 async function cargar() {
   try {
@@ -106,22 +133,42 @@ function limpiar() {
   editando.value = false;
 }
 
+function abrirNuevo() {
+  limpiar();
+  errorForm.value = '';
+  formAbierto.value = true;
+}
+
+function cerrarForm() {
+  if (guardando.value) return;
+  formAbierto.value = false;
+  errorForm.value = '';
+  limpiar();
+}
+
 async function crear() {
   try {
     error.value = '';
+    errorForm.value = '';
+    guardando.value = true;
     if (editando.value) {
       await updateResponsable(auth.token, form._id, { ...form });
     } else {
       await createResponsable(auth.token, { ...form });
     }
-    limpiar();
+    guardando.value = false;
+    cerrarForm();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
+  } finally {
+    guardando.value = false;
   }
 }
 
 function editar(r) {
+  errorForm.value = '';
+  formAbierto.value = true;
   editando.value = true;
   Object.assign(form, r);
 }
@@ -138,13 +185,3 @@ async function toggleActivo(r) {
 
 onMounted(cargar);
 </script>
-
-<style scoped>
-.contenedor { max-width: 900px; margin: 2rem auto; font-family: sans-serif; }
-.error { color: red; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-.paginacion { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
-</style>

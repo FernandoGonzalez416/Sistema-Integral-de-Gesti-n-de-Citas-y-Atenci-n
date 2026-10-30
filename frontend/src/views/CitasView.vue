@@ -1,6 +1,6 @@
 <template>
   <main class="contenedor">
-    <div class="cabecera">
+    <div class="cab-pagina">
       <div>
         <h1>{{ esProfesional ? 'Mis citas' : 'Citas' }}</h1>
         <p class="ayuda">
@@ -9,7 +9,9 @@
             : 'Crea, reprograma y cambia el estado de las citas. El backend valida horarios, traslapes y transiciones.' }}
         </p>
       </div>
-      <button v-if="!esProfesional" class="principal" @click="abrirNueva">+ Nueva cita</button>
+      <button v-if="!esProfesional" type="button" class="principal" @click="abrirNueva">
+        <Icono name="plus" :size="18" /> Nueva cita
+      </button>
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -64,55 +66,6 @@
       </div>
     </Card>
 
-    <Card v-if="formAbierto && !esProfesional" :titulo="editando ? 'Reprogramar cita' : 'Nueva cita'">
-      <form @submit.prevent="guardar">
-        <div class="fila">
-          <label class="campo">
-            <span>Paciente *</span>
-            <select v-model="form.pacienteId" required>
-              <option value="">Selecciona un paciente</option>
-              <option v-for="p in pacientes" :key="p._id" :value="p._id">
-                {{ p.nombre }} {{ p.apellido }}
-              </option>
-            </select>
-          </label>
-          <label class="campo">
-            <span>Profesional *</span>
-            <select v-model="form.profesionalId" required>
-              <option value="">Selecciona un profesional</option>
-              <option v-for="p in profesionales" :key="p._id" :value="p._id">
-                {{ p.nombre }} {{ p.apellido }} ({{ p.especialidad }})
-              </option>
-            </select>
-          </label>
-        </div>
-        <div class="fila">
-          <label class="campo">
-            <span>Servicio *</span>
-            <select v-model="form.servicioId" required>
-              <option value="">Selecciona un servicio</option>
-              <option v-for="s in servicios" :key="s._id" :value="s._id">
-                {{ s.nombre }} — {{ formatoMoneda(s.precioCentavos) }} ({{ s.duracionMinutos }} min)
-              </option>
-            </select>
-          </label>
-          <label class="campo">
-            <span>Inicio *</span>
-            <input type="datetime-local" v-model="form.inicio" required />
-          </label>
-        </div>
-        <label class="campo">
-          <span>Observaciones (opcional)</span>
-          <textarea v-model="form.observaciones" rows="2" maxlength="1000"></textarea>
-        </label>
-        <div class="acciones">
-          <button type="submit" class="principal" :disabled="guardando">
-            {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Crear cita') }}
-          </button>
-          <button type="button" class="secundario" @click="cerrarFormulario">Cancelar</button>
-        </div>
-      </form>
-    </Card>
 
     <Card titulo="Listado de citas">
       <div v-if="cargando">Cargando…</div>
@@ -168,6 +121,65 @@
         <button class="secundario" @click="pagina++" :disabled="pagina >= Math.ceil(total / limite)">Siguiente »</button>
       </div>
     </Card>
+
+    <!-- Ventanita para crear o reprogramar una cita -->
+    <AdminModal
+      :abierto="formAbierto && !esProfesional"
+      :titulo="editando ? 'Reprogramar cita' : 'Nueva cita'"
+      :subtitulo="editando ? 'Cambia la fecha, el profesional o el servicio.' : 'El sistema valida horarios y traslapes al guardar.'"
+      icono="calendar"
+      :bloquear="guardando"
+      @cerrar="cerrarFormulario"
+    >
+      <p v-if="errorForm" class="error" role="alert">{{ errorForm }}</p>
+    <form @submit.prevent="guardar">
+            <div class="fila">
+              <label class="campo">
+                <span>Paciente *</span>
+                <select v-model="form.pacienteId" required>
+                  <option value="">Selecciona un paciente</option>
+                  <option v-for="p in pacientes" :key="p._id" :value="p._id">
+                    {{ p.nombre }} {{ p.apellido }}
+                  </option>
+                </select>
+              </label>
+              <label class="campo">
+                <span>Profesional *</span>
+                <select v-model="form.profesionalId" required>
+                  <option value="">Selecciona un profesional</option>
+                  <option v-for="p in profesionales" :key="p._id" :value="p._id">
+                    {{ p.nombre }} {{ p.apellido }} ({{ p.especialidad }})
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="fila">
+              <label class="campo">
+                <span>Servicio *</span>
+                <select v-model="form.servicioId" required>
+                  <option value="">Selecciona un servicio</option>
+                  <option v-for="s in servicios" :key="s._id" :value="s._id">
+                    {{ s.nombre }} — {{ formatoMoneda(s.precioCentavos) }} ({{ s.duracionMinutos }} min)
+                  </option>
+                </select>
+              </label>
+              <label class="campo">
+                <span>Inicio *</span>
+                <input type="datetime-local" v-model="form.inicio" required />
+              </label>
+            </div>
+            <label class="campo">
+              <span>Observaciones (opcional)</span>
+              <textarea v-model="form.observaciones" rows="2" maxlength="1000"></textarea>
+            </label>
+            <div class="acciones">
+              <button type="submit" class="principal" :disabled="guardando">
+                {{ guardando ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Crear cita') }}
+              </button>
+              <button type="button" class="secundario" @click="cerrarFormulario">Cancelar</button>
+            </div>
+          </form>
+    </AdminModal>
   </main>
 </template>
 
@@ -181,6 +193,8 @@ import {
 import { ESTADOS_CITA, COLORES_ESTADO_CITA } from '../constants/sigca.js';
 import { formatoMoneda } from '../composables/catalogo.js';
 import Card from '../components/Card.vue';
+import AdminModal from '../components/AdminModal.vue';
+import Icono from '../components/Icono.vue';
 
 const auth = useAuthStore();
 const esProfesional = computed(() => auth.usuario?.rol === 'PROFESIONAL');
@@ -196,6 +210,7 @@ const limite = 20;
 const cargando = ref(false);
 const guardando = ref(false);
 const error = ref('');
+const errorForm = ref('');
 const mensaje = ref('');
 
 const filtros = reactive({ estado: '', desde: '', hasta: '', paciente: '', profesional: '', servicio: '' });
@@ -270,10 +285,12 @@ function limpiarFormulario() {
 
 function abrirNueva() {
   limpiarFormulario();
+  errorForm.value = '';
   formAbierto.value = true;
 }
 
 function abrirEditar(c) {
+  errorForm.value = '';
   editando.value = true;
   formAbierto.value = true;
   Object.assign(form, {
@@ -287,13 +304,16 @@ function abrirEditar(c) {
 }
 
 function cerrarFormulario() {
+  if (guardando.value) return;
   formAbierto.value = false;
+  errorForm.value = '';
   limpiarFormulario();
 }
 
 async function guardar() {
   try {
     error.value = '';
+    errorForm.value = '';
     mensaje.value = '';
     guardando.value = true;
     const datos = {
@@ -310,10 +330,11 @@ async function guardar() {
       await createCita(auth.token, datos);
       mensaje.value = 'Cita creada';
     }
+    guardando.value = false;
     cerrarFormulario();
     await cargar();
   } catch (e) {
-    error.value = e.message;
+    errorForm.value = e.message;
   } finally {
     guardando.value = false;
   }
@@ -357,34 +378,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.contenedor { max-width: 1150px; margin: 2rem auto; font-family: sans-serif; }
-.cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-.cabecera h1 { margin-bottom: 0.25rem; }
-.ayuda { color: #555; margin-top: 0; }
-.error { color: #c0392b; }
-.ok { color: #1e7e34; }
-.filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; }
-.campo { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.5rem; }
-.campo > span { font-size: 0.85rem; color: #555; }
-.campo select, .campo input, .campo textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font: inherit; }
-.fila { display: flex; gap: 1rem; }
-.fila > * { flex: 1; }
-.acciones { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.acciones-celda { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-button { padding: 0.45rem 0.8rem; border: 1px solid #1a5c8a; border-radius: 4px; background: #1a5c8a; color: #fff; cursor: pointer; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.principal { background: #1a5c8a; }
-.secundario { background: #6c757d; border-color: #6c757d; }
-.peligro { background: #c0392b; border-color: #c0392b; }
-.mini { padding: 0.3rem 0.55rem; font-size: 0.82rem; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; vertical-align: top; }
-.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; color: #fff; font-size: 0.82rem; }
-.paginacion { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; }
-@media (max-width: 720px) {
-  .cabecera, .fila { flex-direction: column; }
-  .cabecera { align-items: stretch; }
-}
-</style>
